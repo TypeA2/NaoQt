@@ -36,6 +36,7 @@ class NaoQt : public QMainWindow {
 
 	public:
 	NaoQt();
+	~NaoQt();
 
 	private slots:
 	void openFile() {}
@@ -50,6 +51,10 @@ class NaoQt : public QMainWindow {
 	void setupModel();
 
 	QVector<QVector<QStandardItem*>> discoverDirectory(QDir &dir);
+
+	QFileInfo disassembleBinary(QFileInfo input);
+
+	QString m_tempdir;
 
 	QStandardItemModel *m_fsmodel;
 	QTreeView *m_view;

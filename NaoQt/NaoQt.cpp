@@ -18,10 +18,15 @@
 
 #include <QtConcurrent>
 
+#include <Zydis/Zydis.h>
+
 #include "Utils.h"
-#include "NaoDisasmView.h"
 
 NaoQt::NaoQt() : QMainWindow() {
+
+	m_tempdir = Utils::cleanDirPath(QCoreApplication::applicationDirPath() + "/Temp");
+
+	QDir().mkdir(m_tempdir);
 
 	this->setMinimumSize(540, 360);
 	this->resize(960, 640);
@@ -29,7 +34,10 @@ NaoQt::NaoQt() : QMainWindow() {
 	this->setupMenuBar();
 
 	this->setupModel();
+}
 
+NaoQt::~NaoQt() {
+	QDir(m_tempdir).removeRecursively();
 }
 
 void NaoQt::setupModel() {
@@ -323,9 +331,31 @@ void NaoQt::changeFolder(const QModelIndex &index) {
 		changePath(m_pathDisplay->text() + row.at(0)->data(Qt::DisplayRole).toString());
 	} else if (row.at(2)->data(NaoQt::MimeTypeRole).toString() == "application/x-ms-dos-executable") {
 
-		NaoDisasmView *disasm = new NaoDisasmView(m_pathDisplay->text() + row.at(0)->data(Qt::DisplayRole).toString(), this);
+		QString fname = row.at(0)->data(Qt::DisplayRole).toString();
 
-		disasm->show();
+		QFutureWatcher<QFileInfo> *watcher = new QFutureWatcher<QFileInfo>(this);
+
+		connect(watcher, &QFutureWatcher<QFileInfo>::finished, this, [this, watcher, fname]() {
+
+			QFileInfo result = watcher->result();
+
+			if (result.exists()) {
+				QDesktopServices::openUrl(QUrl::fromLocalFile(result.absoluteFilePath()));
+			} else {
+
+				QMessageBox::warning(
+					this,
+					"Warning",
+					QString("Could not open the file \"%0\"").arg(fname)
+				);
+
+			}
+
+			watcher->deleteLater();
+		});
+
+		watcher->setFuture(QtConcurrent::run(this, &NaoQt::disassembleBinary,
+			m_pathDisplay->text() + fname));
 
 	} else {
 
@@ -341,4 +371,88 @@ void NaoQt::changeFolder(const QModelIndex &index) {
 
 
 	}
+}
+
+QFileInfo NaoQt::disassembleBinary(QFileInfo input) {
+
+	if (!input.exists()) {
+		qFatal("Path does not exist");
+
+		return QFileInfo();
+	}
+
+	QFileInfo ret(m_tempdir + input.completeBaseName() + ".asm");
+
+	QFile infile(input.absoluteFilePath());
+	infile.open(QIODevice::ReadOnly);
+
+	QFile outfile(ret.absoluteFilePath());
+	outfile.open(QIODevice::Text | QIODevice::WriteOnly);
+
+	ZydisDecoder decoder;
+	ZydisFormatter formatter;
+	
+	{
+		if (!ZYDIS_SUCCESS(ZydisDecoderInit(&decoder,
+			ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_ADDRESS_WIDTH_64))) {
+			qFatal("ZydisDecoderInit failed");
+
+			return QFileInfo();
+		}
+
+		if (!ZYDIS_SUCCESS(ZydisFormatterInit(&formatter,
+			ZYDIS_FORMATTER_STYLE_INTEL)) ||
+			!ZYDIS_SUCCESS(ZydisFormatterSetProperty(&formatter,
+				ZYDIS_FORMATTER_PROP_FORCE_MEMSEG, ZYDIS_TRUE)) ||
+			!ZYDIS_SUCCESS(ZydisFormatterSetProperty(&formatter,
+				ZYDIS_FORMATTER_PROP_FORCE_MEMSIZE, ZYDIS_TRUE))) {
+			qFatal("ZydisFormatterInit failed");
+
+			return QFileInfo();
+		}
+	}
+	
+
+	char inputBuf[ZYDIS_MAX_INSTRUCTION_LENGTH * 1024];
+	qint64 readThisTime = 0;
+
+	//char newline = '\n';
+
+	do {
+		readThisTime = infile.read(inputBuf, sizeof(inputBuf));
+
+		ZydisDecodedInstruction instruction;
+		ZydisStatus status;
+
+		qint64 offset = 0;
+
+		while ((status = ZydisDecoderDecodeBuffer(&decoder, &inputBuf[offset],
+			readThisTime - offset, offset, &instruction)) != ZYDIS_STATUS_NO_MORE_DATA) {
+
+			if (!ZYDIS_SUCCESS(status)) {
+				++offset;
+
+				continue;
+			}
+
+			char outputBuf[256];
+			ZydisFormatterFormatInstruction(
+				&formatter, &instruction, outputBuf, sizeof(outputBuf)
+			);
+
+			QString outstring = QString(outputBuf);
+
+			outfile.write(QByteArray(outputBuf).append('\n'));
+
+			offset += instruction.length;
+		}
+
+		if (offset < sizeof(inputBuf)) {
+			memmove(inputBuf, &inputBuf[offset], sizeof(inputBuf) - offset);
+		}
+	} while (readThisTime == sizeof(inputBuf));
+
+	outfile.close();
+	
+	return ret;
 }

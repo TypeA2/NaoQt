@@ -39,15 +39,9 @@
     <ClCompile Include="Utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="NaoDisasmView.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="NaoQt.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="NaoDisasmView.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
