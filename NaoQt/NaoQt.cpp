@@ -15,6 +15,7 @@
 #include <QFutureWatcher>
 #include <QDesktopServices>
 #include <QMessageBox>
+#include <QProgressDialog>
 
 #include <QtConcurrent>
 
@@ -47,6 +48,7 @@ void NaoQt::setupModel() {
 
 	QHBoxLayout *pathDisplayLayout = new QHBoxLayout(m_centralLayout->widget());
 
+	m_refreshView = new QPushButton(QIcon(":/icon/refresh.png"), "", pathDisplayLayout->widget());
 	m_pathDisplay = new NaoLineEdit(pathDisplayLayout->widget());
 	m_browsePath = new QPushButton(" Browse", pathDisplayLayout->widget());
 
@@ -63,10 +65,12 @@ void NaoQt::setupModel() {
 	m_view->setModel(m_fsmodel);
 	m_view->setEditTriggers(QTreeView::NoEditTriggers);
 	m_view->setRootIsDecorated(false);
+	m_view->setContextMenuPolicy(Qt::CustomContextMenu);
 
 	changePath(root);
 
-	connect(m_view, &QTreeView::doubleClicked, this, &NaoQt::changeFolder);
+	connect(m_view, &QTreeView::doubleClicked, this, &NaoQt::viewInteraction);
+	connect(m_view, &QTreeView::customContextMenuRequested, this, &NaoQt::viewContextMenu);
 
 	QHeaderView *headerView = m_view->header();
 
@@ -80,9 +84,11 @@ void NaoQt::setupModel() {
 	m_browsePath->setMaximumHeight(22);
 	m_browsePath->setIcon(QFileIconProvider().icon(QFileIconProvider::Folder));
 
+	connect(m_refreshView, &QPushButton::released, this, &NaoQt::refreshView);
 	connect(m_browsePath, &QPushButton::released, this, &NaoQt::openFolder);
 	connect(m_pathDisplay, &QLineEdit::editingFinished, this, &NaoQt::pathDisplayChanged);
 
+	pathDisplayLayout->addWidget(m_refreshView);
 	pathDisplayLayout->addWidget(m_pathDisplay);
 	pathDisplayLayout->addWidget(m_browsePath);
 	pathDisplayLayout->setContentsMargins(4, 4, 4, 0);
@@ -121,6 +127,12 @@ void NaoQt::setupMenuBar() {
 	menu->addMenu(fileMenu);
 
 	this->setMenuBar(menu);
+}
+
+
+
+void NaoQt::refreshView() {
+	changePath(m_pathDisplay->text());
 }
 
 void NaoQt::pathDisplayChanged() {
@@ -174,7 +186,7 @@ void NaoQt::changePath(QString path) {
 			if (row.at(0)->data(NaoQt::IsFolderRole).toBool()) {
 				m_fsmodel->item(newRow)->setIcon(ficonprovider.icon(QFileIconProvider::Folder));
 			} else {
-				m_fsmodel->item(newRow)->setIcon(ficonprovider.icon(row.at(0)->data(Qt::DisplayRole).toString()));
+				m_fsmodel->item(newRow)->setIcon(ficonprovider.icon(row.at(0)->text()));
 			}
 
 		}
@@ -182,6 +194,7 @@ void NaoQt::changePath(QString path) {
 		m_view->resizeColumnToContents(0);
 		m_view->resizeColumnToContents(1);
 		m_view->resizeColumnToContents(2);
+		m_view->resizeColumnToContents(3);
 
 		m_view->setFocus();
 
@@ -265,7 +278,7 @@ void NaoQt::sortColumn(int index, Qt::SortOrder order) {
 			}
 		}
 
-		return a.at(0)->data(Qt::DisplayRole).toString().compare(b.at(0)->data(Qt::DisplayRole).toString(), Qt::CaseInsensitive) < 0;
+		return a.at(0)->text().compare(b.at(0)->text(), Qt::CaseInsensitive) < 0;
 	});
 
 	std::sort(files.begin(), files.end(), [&index](QList<QStandardItem *> a, QList<QStandardItem *> b) -> bool {
@@ -279,8 +292,8 @@ void NaoQt::sortColumn(int index, Qt::SortOrder order) {
 				return sizeA > sizeB;
 			}
 		} else if (index == 2) { // Sort by type
-			QString typeA = a.at(2)->data(Qt::DisplayRole).toString();
-			QString typeB = b.at(2)->data(Qt::DisplayRole).toString();
+			QString typeA = a.at(2)->text();
+			QString typeB = b.at(2)->text();
 
 			// Sort by type if not equal
 			if (typeA != typeB) {
@@ -297,7 +310,7 @@ void NaoQt::sortColumn(int index, Qt::SortOrder order) {
 		}
 
 		// Fallback alphabetical sort
-		return a.at(0)->data(Qt::DisplayRole).toString().compare(b.at(0)->data(Qt::DisplayRole).toString(), Qt::CaseInsensitive) < 0;
+		return a.at(0)->text().compare(b.at(0)->text(), Qt::CaseInsensitive) < 0;
 	});
 
 	if (order == Qt::AscendingOrder) {
@@ -319,61 +332,161 @@ void NaoQt::sortColumn(int index, Qt::SortOrder order) {
 	}
 }
 
-void NaoQt::changeFolder(const QModelIndex &index) {
-	QVector<QStandardItem*> row = {
+
+QVector<QStandardItem*> NaoQt::getRow(const QModelIndex &index) {
+	return {
 		m_fsmodel->item(index.row(), 0),
 		m_fsmodel->item(index.row(), 1),
 		m_fsmodel->item(index.row(), 2),
 		m_fsmodel->item(index.row(), 3)
 	};
+}
+
+void NaoQt::viewInteraction(const QModelIndex &index) {
+	
+	QVector<QStandardItem*> row = getRow(index);
 
 	if (row.at(0)->data(NaoQt::IsFolderRole).toBool()) {
-		changePath(m_pathDisplay->text() + row.at(0)->data(Qt::DisplayRole).toString());
+		changePath(m_pathDisplay->text() + row.at(0)->text());
 	} else if (row.at(2)->data(NaoQt::MimeTypeRole).toString() == "application/x-ms-dos-executable") {
 
-		QString fname = row.at(0)->data(Qt::DisplayRole).toString();
-
-		QFutureWatcher<QFileInfo> *watcher = new QFutureWatcher<QFileInfo>(this);
-
-		connect(watcher, &QFutureWatcher<QFileInfo>::finished, this, [this, watcher, fname]() {
-
-			QFileInfo result = watcher->result();
-
-			if (result.exists()) {
-				QDesktopServices::openUrl(QUrl::fromLocalFile(result.absoluteFilePath()));
-			} else {
-
-				QMessageBox::warning(
-					this,
-					"Warning",
-					QString("Could not open the file \"%0\"").arg(fname)
-				);
-
-			}
-
-			watcher->deleteLater();
-		});
-
-		watcher->setFuture(QtConcurrent::run(this, &NaoQt::disassembleBinary,
-			m_pathDisplay->text() + fname));
+		this->disassembleBinary(m_pathDisplay->text() + row.at(0)->text());
 
 	} else {
 
 		qDebug() << row.at(2)->data(NaoQt::MimeTypeRole).toString();
 
-		if (!QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text() + row.at(0)->data(Qt::DisplayRole).toString()))) {
+		if (!QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text() + row.at(0)->text()))) {
 			QMessageBox::critical(
 				this,
 				"Error",
-				QString("Failed opening the file:\n\n%0").arg(m_pathDisplay->text() + row.at(0)->data(Qt::DisplayRole).toString())
+				QString("Failed opening the file:\n\n%0").arg(m_pathDisplay->text() + row.at(0)->text())
 			);
 		}
 
 
 	}
+
 }
 
-QFileInfo NaoQt::disassembleBinary(QFileInfo input) {
+void NaoQt::viewContextMenu(const QPoint &pos) {
+
+	QModelIndex clickedIndex = m_view->indexAt(pos);
+
+	qDebug() << clickedIndex << clickedIndex.row();
+
+	QVector<QStandardItem*> row = getRow(clickedIndex);
+	
+	QMenu *ctxMenu = new QMenu(m_view);
+
+	if (row.at(0) == nullptr) {
+		// TODO open in explorer and reload folder when clicking on no items
+	} else if (row.at(0)->data(NaoQt::IsFolderRole).toBool()) {
+
+		QString targetDir = row.at(0)->text();
+
+		QAction *openFolderAct = new QAction("Open", ctxMenu);
+		QAction *openInExplorerAct = new QAction("Open in Explorer", ctxMenu);
+
+		connect(openFolderAct, &QAction::triggered, this, [this, targetDir, ctxMenu]() {
+			changePath(Utils::cleanDirPath(m_pathDisplay->text() + targetDir));
+		});
+		connect(openFolderAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
+
+		connect(openInExplorerAct, &QAction::triggered, this, [this, targetDir, ctxMenu]() {
+			QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text() + targetDir));
+		});
+		connect(openInExplorerAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
+
+
+		ctxMenu->addAction(openFolderAct);
+		ctxMenu->addAction(openInExplorerAct);
+	} else {
+
+		QAction *openFileAct = new QAction("Open", ctxMenu);
+		QAction *showInExplorerAct = new QAction("Open containing folder", ctxMenu);
+
+		connect(openFileAct, &QAction::triggered, this, [this, clickedIndex]() {
+			m_view->doubleClicked(clickedIndex);
+		});
+		connect(openFileAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
+
+		connect(showInExplorerAct, &QAction::triggered, this, [this]() {
+		//	QProcessEnvironment::systemEnvironment().searchInPath
+			QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text()));
+		});
+		connect(showInExplorerAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
+
+		ctxMenu->addAction(openFileAct);
+		ctxMenu->addAction(showInExplorerAct);
+	}
+
+	ctxMenu->popup(m_view->viewport()->mapToGlobal(pos));
+
+}
+
+
+
+void NaoQt::disassembleBinary(QString path) {
+	QFileInfo infile = QFileInfo(path);
+
+	QFutureWatcher<QFileInfo> *watcher = new QFutureWatcher<QFileInfo>(this);
+
+	connect(watcher, &QFutureWatcher<QFileInfo>::finished, this, [this, watcher, infile]() {
+
+		QFileInfo result = watcher->result();
+
+		if (m_disassemblyCanceled) {
+			QFile outfile(result.absoluteFilePath());
+			outfile.remove();
+
+			QMessageBox::information(
+				this,
+				"Canceled",
+				"Disassembly canceled",
+				QMessageBox::Ok
+			);
+
+		} else if (result.exists()) {
+			QDesktopServices::openUrl(QUrl::fromLocalFile(result.absoluteFilePath()));
+		} else {
+
+			QMessageBox::warning(
+				this,
+				"Warning",
+				QString("Could not open the file \"%0\"").arg(infile.fileName())
+			);
+
+		}
+
+		watcher->deleteLater();
+		m_disassemblyProgress->deleteLater();
+	});
+
+	m_disassemblyProgress = new QProgressDialog(
+		QString("Disassembling %0...").arg(infile.fileName()),
+		"Cancel", 0, infile.size(), this,
+		Qt::WindowCloseButtonHint);
+
+	m_disassemblyCanceled = false;
+
+	m_disassemblyProgress->show();
+
+	connect(this, &NaoQt::disassemblyProgress, this, &NaoQt::disassemblyProgressHandler);
+
+	connect(m_disassemblyProgress, &QProgressDialog::canceled, this, [this, infile]() {
+		m_disassemblyCanceled = true;
+	});
+
+	watcher->setFuture(QtConcurrent::run(this, &NaoQt::disassembleBinaryImpl,
+		infile.absoluteFilePath()));
+}
+
+void NaoQt::disassemblyProgressHandler(qint64 now) {
+	m_disassemblyProgress->setValue(now);
+}
+
+QFileInfo NaoQt::disassembleBinaryImpl(QFileInfo input) {
 
 	if (!input.exists()) {
 		qFatal("Path does not exist");
@@ -381,7 +494,11 @@ QFileInfo NaoQt::disassembleBinary(QFileInfo input) {
 		return QFileInfo();
 	}
 
-	QFileInfo ret(m_tempdir + input.completeBaseName() + ".asm");
+	QFileInfo ret(m_tempdir + input.fileName() + ".asm");
+
+	if (ret.exists()) {
+		return ret;
+	}
 
 	QFile infile(input.absoluteFilePath());
 	infile.open(QIODevice::ReadOnly);
@@ -415,10 +532,17 @@ QFileInfo NaoQt::disassembleBinary(QFileInfo input) {
 
 	char inputBuf[ZYDIS_MAX_INSTRUCTION_LENGTH * 1024];
 	qint64 readThisTime = 0;
+	qint64 readTotal = 0;
 
-	//char newline = '\n';
+	const QByteArray endl = QByteArray(1, '\n');
+	QByteArray outputBuf(256, '\0');
 
 	do {
+
+		if (m_disassemblyCanceled) {
+			break;
+		}
+
 		readThisTime = infile.read(inputBuf, sizeof(inputBuf));
 
 		ZydisDecodedInstruction instruction;
@@ -435,14 +559,13 @@ QFileInfo NaoQt::disassembleBinary(QFileInfo input) {
 				continue;
 			}
 
-			char outputBuf[256];
+			outputBuf.fill('\0');
 			ZydisFormatterFormatInstruction(
-				&formatter, &instruction, outputBuf, sizeof(outputBuf)
+				&formatter, &instruction, outputBuf.data(), outputBuf.size()
 			);
 
-			QString outstring = QString(outputBuf);
-
-			outfile.write(QByteArray(outputBuf).append('\n'));
+			outfile.write(outputBuf.data());
+			outfile.write(endl);
 
 			offset += instruction.length;
 		}
@@ -450,6 +573,9 @@ QFileInfo NaoQt::disassembleBinary(QFileInfo input) {
 		if (offset < sizeof(inputBuf)) {
 			memmove(inputBuf, &inputBuf[offset], sizeof(inputBuf) - offset);
 		}
+
+		emit disassemblyProgress(readTotal += readThisTime);
+
 	} while (readThisTime == sizeof(inputBuf));
 
 	outfile.close();

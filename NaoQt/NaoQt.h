@@ -16,6 +16,7 @@ class QVBoxLayout;
 class QPushButton;
 class QTreeView;
 class QStandardItem;
+class QProgressDialog;
 
 class NaoLineEdit : public QLineEdit {
 	Q_OBJECT
@@ -38,33 +39,45 @@ class NaoQt : public QMainWindow {
 	NaoQt();
 	~NaoQt();
 
+	signals:
+	void disassemblyProgress(qint64 progress);
+
 	private slots:
 	void openFile() {}
 	void openFolder();
 	void sortColumn(int index, Qt::SortOrder order);
 	void pathDisplayChanged();
+	void refreshView();
 	void changePath(QString path);
-	void changeFolder(const QModelIndex &index);
+	void viewInteraction(const QModelIndex &index);
+	void viewContextMenu(const QPoint &pos);
+	void disassemblyProgressHandler(qint64 now);
 
 	private:
 	void setupMenuBar();
 	void setupModel();
 
+	QVector<QStandardItem*> getRow(const QModelIndex &index);
+
 	QVector<QVector<QStandardItem*>> discoverDirectory(QDir &dir);
 
-	QFileInfo disassembleBinary(QFileInfo input);
+	void disassembleBinary(QString path);
+	QFileInfo disassembleBinaryImpl(QFileInfo input);
 
 	QString m_tempdir;
+	QString m_prevPath;
 
 	QStandardItemModel *m_fsmodel;
 	QTreeView *m_view;
 
 	QWidget *m_centralWidget;
 	QVBoxLayout *m_centralLayout;
+	QPushButton *m_refreshView;
 	NaoLineEdit *m_pathDisplay;
 	QPushButton *m_browsePath;
 
-	QString m_prevPath;
+	QProgressDialog *m_disassemblyProgress;
+	bool m_disassemblyCanceled;
 
 	enum FileInfoRole {
 		IsFolderRole = Qt::UserRole + 1,
