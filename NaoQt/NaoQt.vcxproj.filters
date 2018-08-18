@@ -39,9 +39,21 @@
     <ClCompile Include="Utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="VideoHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UTFReader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="NaoQt.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="VideoHandler.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="UTFReader.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

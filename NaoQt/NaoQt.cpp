@@ -22,22 +22,25 @@
 #include <Zydis/Zydis.h>
 
 #include "Utils.h"
+#include "VideoHandler.h"
 
 NaoQt::NaoQt() : QMainWindow() {
 
+	// Create the temporary directory
 	m_tempdir = Utils::cleanDirPath(QCoreApplication::applicationDirPath() + "/Temp");
-
 	QDir().mkdir(m_tempdir);
 
+	// Setup the window
 	this->setMinimumSize(540, 360);
 	this->resize(960, 640);
 
 	this->setupMenuBar();
-
 	this->setupModel();
 }
 
 NaoQt::~NaoQt() {
+	
+	// Remove the temporary directory
 	QDir(m_tempdir).removeRecursively();
 }
 
@@ -63,8 +66,8 @@ void NaoQt::setupModel() {
 
 	m_view = new QTreeView(this);
 	m_view->setModel(m_fsmodel);
-	m_view->setEditTriggers(QTreeView::NoEditTriggers);
-	m_view->setRootIsDecorated(false);
+	m_view->setEditTriggers(QTreeView::NoEditTriggers); // Non-editable
+	m_view->setRootIsDecorated(false); // Remove the caret
 	m_view->setContextMenuPolicy(Qt::CustomContextMenu);
 
 	changePath(root);
@@ -132,6 +135,7 @@ void NaoQt::setupMenuBar() {
 
 
 void NaoQt::refreshView() {
+	// Reload the current folder
 	changePath(m_pathDisplay->text());
 }
 
@@ -141,19 +145,24 @@ void NaoQt::pathDisplayChanged() {
 
 	QFileInfo finfo(path);
 
-	if (!finfo.exists()) {
-		changePath(m_prevPath);
-	} else if (finfo.isDir()) {
-		changePath(path);
-	} else if (path.contains(QDir::separator())) {
-		while (!finfo.isDir()) {
+	if (path.contains(QDir::separator())) {
+
+		// If the path is invalid go up as many levels as needed until it is valid
+		while (!QFileInfo(path).isDir()) {
 			int i = path.lastIndexOf(QDir::separator());
 
 			path = path.mid(0, i);
 		}
 
 		changePath(path);
+	} else if (!finfo.exists()) {
+		// Revert to the previous entry if the new entry does not exist
+		changePath(m_prevPath);
+	} else if (finfo.isDir()) {
+		// Open the newly entered directory if it exists
+		changePath(path);
 	}
+	
 }
 
 void NaoQt::changePath(QString path) {
@@ -376,19 +385,31 @@ void NaoQt::viewInteraction(const QModelIndex &index) {
 
 	} else {
 
-		qDebug() << row.at(2)->data(NaoQt::MimeTypeRole).toString();
+		QString fname = row.at(0)->text();
 
-		if (!QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text() + row.at(0)->text()))) {
-			QMessageBox::critical(
-				this,
-				"Error",
-				QString("Failed opening the file:\n\n%0").arg(m_pathDisplay->text() + row.at(0)->text())
-			);
+		if (fname.endsWith(".usm")) {
+
+			VideoHandler *converter = new VideoHandler(m_pathDisplay->text() + fname, this);
+
+			if (!converter->convertUSM(m_tempdir, VideoHandler::MKV)) {
+
+				QMessageBox::warning(
+					this,
+					"Error",
+					converter->lastError()
+				);
+			}
+
+		} else {
+			if (!QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text() + fname))) {
+				QMessageBox::critical(
+					this,
+					"Error",
+					QString("Failed opening the file:\n\n%0").arg(m_pathDisplay->text() + fname)
+				);
+			}
 		}
-
-
 	}
-
 }
 
 void NaoQt::viewContextMenu(const QPoint &pos) {
