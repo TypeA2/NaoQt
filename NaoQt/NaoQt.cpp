@@ -224,7 +224,7 @@ QVector<QVector<QStandardItem*>> NaoQt::discoverDirectory(QDir &dir) {
 		QStandardItem *size = new QStandardItem(item.isDir() ? "" : Utils::getShortSize(item.size()));
 		size->setData(item.isDir() ? -1 : item.size(), NaoQt::ItemSizeRole);
 
-		QStandardItem *type = new QStandardItem(Utils::ucFirst(mime.comment()));
+		QStandardItem *type = new QStandardItem(Utils::ucFirst(getFileDescription(mime, item)));
 		type->setData(mime.name(), NaoQt::MimeTypeRole);
 
 		QStandardItem *date = new QStandardItem(item.lastModified().toString("yyyy-MM-dd hh:mm"));
@@ -235,6 +235,28 @@ QVector<QVector<QStandardItem*>> NaoQt::discoverDirectory(QDir &dir) {
 
 	return ret;
 }
+
+QString NaoQt::getFileDescription(const QMimeType &mime, const QFileInfo &info) {
+	
+	QString ext = info.suffix();
+
+	if (ext == "cpk") {
+		return "CPK archive";
+	} else if (ext == "usm") {
+		return "USM video";
+	} else if (ext == "enlMeta") {
+		return "Enlighten data";
+	} else if (ext == "bnk") {
+		return "Wwise SoundBank";
+	} else if (ext == "wem" || ext == "wsp") {
+		return "Wwise audio";
+	}
+
+	return mime.comment();
+
+}
+
+
 
 void NaoQt::openFolder() {
 	QString path = QFileDialog::getExistingDirectory(
@@ -373,14 +395,24 @@ void NaoQt::viewContextMenu(const QPoint &pos) {
 
 	QModelIndex clickedIndex = m_view->indexAt(pos);
 
-	qDebug() << clickedIndex << clickedIndex.row();
-
 	QVector<QStandardItem*> row = getRow(clickedIndex);
 	
 	QMenu *ctxMenu = new QMenu(m_view);
 
 	if (row.at(0) == nullptr) {
-		// TODO open in explorer and reload folder when clicking on no items
+		QAction *refreshDirAct = new QAction("Refresh view", ctxMenu);
+		QAction *openInExplorerAct = new QAction("Open in Explorer", ctxMenu);
+
+		connect(refreshDirAct, &QAction::triggered, this, &NaoQt::refreshView);
+		connect(refreshDirAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
+
+		connect(openInExplorerAct, &QAction::triggered, this, [this]() {
+			QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text()));
+		});
+		connect(openInExplorerAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
+
+		ctxMenu->addAction(refreshDirAct);
+		ctxMenu->addAction(openInExplorerAct);
 	} else if (row.at(0)->data(NaoQt::IsFolderRole).toBool()) {
 
 		QString targetDir = row.at(0)->text();
@@ -388,12 +420,12 @@ void NaoQt::viewContextMenu(const QPoint &pos) {
 		QAction *openFolderAct = new QAction("Open", ctxMenu);
 		QAction *openInExplorerAct = new QAction("Open in Explorer", ctxMenu);
 
-		connect(openFolderAct, &QAction::triggered, this, [this, targetDir, ctxMenu]() {
+		connect(openFolderAct, &QAction::triggered, this, [this, targetDir]() {
 			changePath(Utils::cleanDirPath(m_pathDisplay->text() + targetDir));
 		});
 		connect(openFolderAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
 
-		connect(openInExplorerAct, &QAction::triggered, this, [this, targetDir, ctxMenu]() {
+		connect(openInExplorerAct, &QAction::triggered, this, [this, targetDir]() {
 			QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text() + targetDir));
 		});
 		connect(openInExplorerAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);

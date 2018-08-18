@@ -4,6 +4,7 @@
 #include <QLineEdit>
 #include <QTimer>
 #include <QDir>
+#include <QMimeType>
 
 #ifdef QT_DEBUG
 #include <QDebug>
@@ -56,6 +57,8 @@ class NaoQt : public QMainWindow {
 	private:
 	void setupMenuBar();
 	void setupModel();
+
+	QString getFileDescription(const QMimeType &mime, const QFileInfo &info);
 
 	QVector<QStandardItem*> getRow(const QModelIndex &index);
 
