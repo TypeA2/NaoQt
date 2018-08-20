@@ -54,11 +54,22 @@ class UTFReader : public QObject {
 		Data = 0x0B
 	};
 
+
+	//inline quint16 fieldCount() const { return m_fields->count(); }
+	inline quint32 rowCount() const { return m_rows->count(); }
+	inline quint32 stringsStart() const { return m_stringsStart; }
+
+	inline QByteArray& utf() const { return m_buffer->buffer(); }
+
+	QVariant getData(quint32 row, QString name) const;
+
 	private:
 
 	QBuffer *m_buffer;
 
-	QVector<Field> m_fields;
-	QVector<QVector<Field>> m_rows;
+	QVector<Field> *m_fields;
+	QVector<QVector<Row>> *m_rows;
+
+	quint32 m_stringsStart;
 };
 

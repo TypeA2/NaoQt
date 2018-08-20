@@ -1,8 +1,11 @@
 #include "VideoHandler.h"
 
+#include <QMessageBox>
+
 #include <QtEndian>
 
 #include "UTFReader.h"
+#include "BinaryUtils.h"
 
 #ifdef QT_DEBUG
 #include <QDebug>
@@ -23,8 +26,8 @@ QString VideoHandler::lastError() {
 QString VideoHandler::exstensionForFormat(OutputFormat fmt) {
 
 	switch (fmt) {
-		case MKV:
-			return ".mkv";
+		case AVI:
+			return ".avi";
 			break;
 
 		default:
@@ -52,20 +55,192 @@ bool VideoHandler::convertUSM(QDir outdir, OutputFormat format) {
 	}
 
 	ASSERT(infile.seek(8), "VideoHandler::convertUSM  -  Could not seek in input file (1)");
-
-
 	quint16 headerSize = qFromBigEndian<qint16>(infile.read(2));
 	ASSERT(headerSize == 0x18, "VideoHandler::convertUSM  -  Expected header size of 24");
-
 	quint16 footerSize = qFromBigEndian<qint16>(infile.read(2));
-
-	ASSERT(qFromBigEndian<qint16>(infile.read(2)) != 1, "VideoHandler::convertUSM  -  Expected CRID block type 1");
+	ASSERT(qFromBigEndian<qint16>(infile.read(4)) != 1, "VideoHandler::convertUSM  -  Expected CRID block type 1");
 	ASSERT(infile.seek(infile.pos() + 8), "VideoHandler::convertUSM  -  Could not seek in input file (2)");
+	ASSERT(qFromBigEndian<quint32>(infile.read(4)) == 0 && qFromBigEndian<quint32>(infile.read(4)) == 0,
+		"VideoHandler::convertUSM  -  Invalid CRID format");
+
+	struct Stream {
+		QString filename;
+		quint64 filesize;
+		quint64 avbps;
+		quint32 stmid;
+		quint32 minbuf;
+	};
+
+	quint32 streamCount;
+	QMap<quint32, bool> ready;
+	QVector<Stream> streams;
 
 	try {
-		UTFReader::readUTF(&infile);
+		UTFReader *info = new UTFReader(UTFReader::readUTF(&infile));
+
+		// 1 row per stream plus a file description row
+		streamCount = info->rowCount() - 1;
+		for (quint32 i = 1 /* Skip the first (file description) stream */; i <= streamCount; ++i) {
+			Stream stream;
+			stream.filename = info->getData(i, "filename").toString();
+			stream.filesize = info->getData(i, "filesize").toULongLong();
+			stream.avbps = info->getData(i, "avbps").toULongLong();
+			stream.stmid = info->getData(i, "stmid").toUInt();
+			stream.minbuf = info->getData(i, "minbuf").toUInt();
+
+			streams.append(stream);
+
+			ready.insert(stream.stmid, false);
+		}
+
 	} catch (UTFException &e) {
-		qDebug() << e.what();
+		m_lastError = e.what();
+		return false;
+	}
+
+	ASSERT(infile.seek(infile.pos() + footerSize) , "VideoHandler::convertUSM  -  Could not seek in input file(3)");
+
+	struct Chunk {
+		qint64 offset;
+		quint32 stmid;
+		quint32 size;
+		quint16 headerSize;
+		quint16 footerSize;
+		quint32 type;
+
+		enum Type {
+			Data = 0,
+			Info = 1,
+			Meta = 3
+		};
+	};
+	QVector<Chunk> chunks;
+	struct VideoInfo {
+		quint32 width;
+		quint32 height;
+		quint8 mpegDcprec;
+		bool mpegCodec;
+		quint32 totalFrames;
+		quint32 framerateN;
+		quint32 framerateD;
+	} videoInfo;
+	struct AudioInfo {
+		quint32 sampleRate;
+		quint32 sampleCount;
+	} audioInfo;
+
+	while (ready.values().contains(false)) {
+		Chunk chunk;
+		chunk.offset = infile.pos();
+		chunk.stmid = qFromBigEndian<quint32>(infile.read(4));
+		chunk.size = qFromBigEndian<quint32>(infile.read(4));
+		chunk.headerSize = qFromBigEndian<quint16>(infile.read(2));
+		chunk.footerSize = qFromBigEndian<quint16>(infile.read(2));
+		chunk.type = qFromBigEndian<quint32>(infile.read(4));
+		chunks.append(chunk);
+
+		infile.seek(infile.pos() + 16);
+
+		if (chunk.type == Chunk::Info) {
+			try {
+				UTFReader *info = new UTFReader(UTFReader::readUTF(&infile));
+
+				QByteArray identifier = info->utf().mid(info->stringsStart() + 7, 14);
+
+				/*
+				
+				Metadata type VIDEO_SEEKINFO contains per row:
+				ofs_byte - The offset in bytes from the start of the entire .usm file of this seek point
+				ofs_frmid - Which frame this seek point corresponds too
+
+				Not used since it only effectively maps to the original file (little gain from doing all the maths)
+
+				*/
+
+				if (identifier == QByteArray("VIDEO_HDRINFO", 14)) {
+					videoInfo.width = info->getData(0, "width").toUInt();
+					videoInfo.height = info->getData(0, "height").toUInt();
+					videoInfo.mpegDcprec = info->getData(0, "mpeg_dcprec").toUInt();
+					videoInfo.mpegCodec = info->getData(0, "mpeg_codec").toBool();
+					videoInfo.totalFrames = info->getData(0, "total_frames").toUInt();
+					videoInfo.framerateN = info->getData(0, "framerate_n").toUInt();
+					videoInfo.framerateD = info->getData(0, "framerate_d").toUInt();
+				} else if (identifier == QByteArray("AUDIO_HDRINFO", 14)) {
+					audioInfo.sampleRate = info->getData(0, "sampling_rate").toUInt();
+					audioInfo.sampleCount = info->getData(0, "total_samples").toUInt();
+				}				
+
+			} catch (UTFException &e) {
+				m_lastError = e.what();
+				return false;
+			}
+		} else {
+			if (chunk.size - chunk.headerSize - chunk.footerSize == 32) {
+				if (QString::fromLatin1(infile.read(32)) == "#CONTENTS END   ===============" || infile.atEnd()) {
+					ready[chunk.stmid] = true;
+				}
+			} else {
+				infile.seek(infile.pos() + (chunk.size - chunk.headerSize - chunk.footerSize));
+			}
+		}
+
+		infile.seek(infile.pos() + chunk.footerSize);
+	}
+
+	QVector<Chunk> videoChunks;
+	std::copy_if(chunks.begin(), chunks.end(), std::back_inserter(videoChunks),
+		[](const Chunk &chunk) -> bool {
+		return chunk.stmid == '@SFV' && chunk.type == Chunk::Data;
+	});
+	QVector<Chunk> audioChunks;
+	std::copy_if(chunks.begin(), chunks.end(), std::back_inserter(audioChunks),
+		[](const Chunk &chunk) -> bool {
+		return chunk.stmid == '@SFA' && chunk.type == Chunk::Data;
+	});
+
+	if (videoChunks.size()) {
+		QFile mpegOut(outdir.absolutePath() + QDir::separator() + m_input.completeBaseName() + ".mpeg");
+		mpegOut.open(QIODevice::WriteOnly);
+
+		for (Chunk chunk : videoChunks) {
+			infile.seek(chunk.offset + chunk.headerSize + 8);
+
+			qint64 remaining = chunk.size - chunk.headerSize - chunk.footerSize;
+			const quint32 pageSize = BinaryUtils::getPageSize();
+			while (remaining > pageSize) {
+				mpegOut.write(infile.read(pageSize));
+				remaining -= pageSize;
+			}
+
+			if (remaining) {
+				mpegOut.write(infile.read(remaining));
+			}
+		}
+
+		mpegOut.close();
+	}
+
+	if (audioChunks.size()) {
+		QFile mpegOut(outdir.absolutePath() + QDir::separator() + m_input.completeBaseName() + ".adx");
+		mpegOut.open(QIODevice::WriteOnly);
+
+		for (Chunk chunk : audioChunks) {
+			//qDebug() << chunk.offset << chunk.headerSize << chunk.footerSize << (chunk.size - chunk.headerSize - chunk.footerSize);
+			infile.seek(chunk.offset + chunk.headerSize + 8);
+
+			qint64 remaining = chunk.size - chunk.headerSize - chunk.footerSize;
+			const quint32 pageSize = BinaryUtils::getPageSize();
+			while (remaining > pageSize) {
+				mpegOut.write(infile.read(pageSize));
+				remaining -= pageSize;
+			}
+
+			if (remaining) {
+				mpegOut.write(infile.read(remaining));
+			}
+		}
+
+		mpegOut.close();
 	}
 
 	return true;

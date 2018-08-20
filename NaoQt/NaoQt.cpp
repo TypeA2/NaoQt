@@ -61,8 +61,8 @@ void NaoQt::setupModel() {
 	m_fsmodel->setHeaderData(2, Qt::Horizontal, "Type");
 	m_fsmodel->setHeaderData(3, Qt::Horizontal, "Date");
 
-	QString root = Steam::getGamePath("NieRAutomata",
-		QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0));
+	QString root = /*Steam::getGamePath("NieRAutomata",
+		QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0));*/"C:\\Users\\Nuan\\Downloads";
 
 	m_view = new QTreeView(this);
 	m_view->setModel(m_fsmodel);
@@ -391,7 +391,7 @@ void NaoQt::viewInteraction(const QModelIndex &index) {
 
 			VideoHandler *converter = new VideoHandler(m_pathDisplay->text() + fname, this);
 
-			if (!converter->convertUSM(m_tempdir, VideoHandler::MKV)) {
+			if (!converter->convertUSM(m_tempdir, VideoHandler::AVI)) {
 
 				QMessageBox::warning(
 					this,

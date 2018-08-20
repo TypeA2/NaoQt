@@ -14,12 +14,12 @@ class VideoHandler : public QObject {
 	QString lastError();
 
 	enum OutputFormat {
-		MKV
+		AVI
 	};
 
 	static QString exstensionForFormat(OutputFormat fmt);
 
-	bool convertUSM(QDir outdir, OutputFormat format = MKV);
+	bool convertUSM(QDir outdir, OutputFormat format = AVI);
 
 	private:
 	

@@ -7,7 +7,16 @@
 #define ASSERT(cond, msg) if (!(cond)) { throw UTFException(msg); }
 
 QByteArray UTFReader::readUTF(QIODevice *in) {
-	ASSERT(in->read(4) == QByteArray("@UTF", 4), "UTFReader::readUTF  -  Invalid @UTF fourCC");
+	if (!in->isOpen()) {
+		ASSERT(in->open(QIODevice::ReadOnly), "UTFReader::readUTF  -  Could not open input device for reading");
+	}
+
+	if (in->read(4) != QByteArray("@UTF", 4)) {
+		in->seek(in->pos() + 8);
+
+		ASSERT(in->read(4) == QByteArray("@UTF", 4), "UTFReader::readUTF  -  Invalid @UTF fourCC");
+	}
+	
 
 	quint32 size = qFromBigEndian<quint32>(in->read(4)) + 8;
 	ASSERT(in->seek(in->pos() - 8), "Could not seek");
@@ -19,19 +28,22 @@ QByteArray UTFReader::readUTF(QIODevice *in) {
 UTFReader::UTFReader(QByteArray utf) {
 	m_buffer = new QBuffer(&utf);
 
-	ASSERT(m_buffer->read(4) == QByteArray("@UTF", 4), "UTFReader::readUTF  -  Invalid @UTF fourCC");
+	ASSERT(m_buffer->open(QIODevice::ReadOnly), "UTFReader::UTFReader  -  Could not open buffer for reading");
+	ASSERT(m_buffer->read(4) == QByteArray("@UTF", 4), "UTFReader::UTFReader  -  Invalid @UTF fourCC");
 
 	// Read the header
 	quint32 tableSize = qFromBigEndian<quint32>(m_buffer->read(4));
 	m_buffer->seek(m_buffer->pos() + 1); // unused byte
 	quint8 encoding = *m_buffer->read(1).data(); // Shift-JIS if 0, else UTF-8
 	quint16 rowsStart = qFromBigEndian<quint16>(m_buffer->read(2)) + 8;
-	quint32 stringsStart = qFromBigEndian<quint32>(m_buffer->read(4)) + 8;
+	m_stringsStart = qFromBigEndian<quint32>(m_buffer->read(4)) + 8;
 	quint32 dataStart = qFromBigEndian<quint32>(m_buffer->read(4)) + 8;
 	quint32 tableNameOffset = qFromBigEndian<quint32>(m_buffer->read(4)) + 8;
 	quint16 fieldCount = qFromBigEndian<quint16>(m_buffer->read(2));
 	quint16 rowAlign = qFromBigEndian<quint16>(m_buffer->read(2));
 	quint32 rowCount = qFromBigEndian<quint32>(m_buffer->read(4));
+
+	m_fields = new QVector<Field>();
 
 	for (quint16 i = 0; i < fieldCount; ++i) {
 		Field field;
@@ -41,7 +53,7 @@ UTFReader::UTFReader(QByteArray utf) {
 			field.namePos = qFromBigEndian<quint32>(m_buffer->read(4));
 
 			qint64 pos = m_buffer->pos();
-			m_buffer->seek(stringsStart + field.namePos);
+			m_buffer->seek(m_stringsStart + field.namePos);
 			field.name = BinaryUtils::readString(m_buffer);
 			m_buffer->seek(pos);
 		}
@@ -62,7 +74,7 @@ UTFReader::UTFReader(QByteArray utf) {
 				{
 					quint32 offset = qFromBigEndian<quint32>(m_buffer->read(4));
 					qint64 pos = m_buffer->pos();
-					m_buffer->seek(stringsStart + offset);
+					m_buffer->seek(m_stringsStart + offset);
 
 					// read in appropiate encoding. Shift-JIS is still null-terminated, only the byte format is weird.
 					field.constVal = QVariant::fromValue(
@@ -87,9 +99,10 @@ UTFReader::UTFReader(QByteArray utf) {
 			}
 		}
 	
-		m_fields.append(field);
+		m_fields->append(field);
 	}
 
+	m_rows = new QVector<QVector<Row>>();
 	m_buffer->seek(rowsStart);
 
 	for (quint32 j = 0; j < rowCount; ++j) {
@@ -98,14 +111,14 @@ UTFReader::UTFReader(QByteArray utf) {
 		for (quint16 i = 0; i < fieldCount; ++i) {
 			Row row;
 
-			quint32 flag = m_fields.at(i).flags & 0xF0;
+			quint32 flag = m_fields->at(i).flags & 0xF0;
 
 			if (flag & ConstVal) {
-				row.val = m_fields.at(i).constVal;
+				row.val = m_fields->at(i).constVal;
 				rows.append(row);
 				continue;
 			} else if (flag & RowVal) {
-				row.type = m_fields.at(i).flags & 0x0F;
+				row.type = m_fields->at(i).flags & 0x0F;
 				row.pos = m_buffer->pos();
 
 				switch (row.type) {
@@ -123,7 +136,7 @@ UTFReader::UTFReader(QByteArray utf) {
 					{
 						quint32 offset = qFromBigEndian<quint32>(m_buffer->read(4));
 						qint64 pos = m_buffer->pos();
-						m_buffer->seek(stringsStart + offset);
+						m_buffer->seek(m_stringsStart + offset);
 
 						// read in appropiate encoding. Shift-JIS is still null-terminated, only the byte format is weird.
 						row.val = QVariant::fromValue(
@@ -151,8 +164,19 @@ UTFReader::UTFReader(QByteArray utf) {
 			rows.append(row);
 		}
 
-		m_rows.append(row);
+		m_rows->append(rows);
 	}
+}
+
+QVariant UTFReader::getData(quint32 row, QString name) const {
+
+	for (quint16 i = 0; i < m_fields->count(); ++i) {
+		if (m_fields->at(i).name == name) {
+			return m_rows->at(row).at(i).val;
+		}
+	}
+
+	return QVariant();
 }
 
 UTFReader::~UTFReader() {}
