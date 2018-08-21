@@ -2,7 +2,7 @@
 
 #include <QDir>
 
-#define ASSERT(cond, msg) if (!(cond)) { m_lastError = msg; return false;}
+#define ASSERT(cond, msg) if (!(cond)) { m_lastError = msg; return false; }
 
 class VideoHandler : public QObject {
 	Q_OBJECT

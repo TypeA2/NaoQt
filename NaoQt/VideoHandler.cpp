@@ -4,6 +4,9 @@
 
 #include <QtEndian>
 
+#include <Windows.h>
+#include <AviFmt.h>
+
 #include "UTFReader.h"
 #include "BinaryUtils.h"
 
@@ -143,9 +146,10 @@ bool VideoHandler::convertUSM(QDir outdir, OutputFormat format) {
 
 		if (chunk.type == Chunk::Info) {
 			try {
-				UTFReader *info = new UTFReader(UTFReader::readUTF(&infile));
+				QByteArray utf = UTFReader::readUTF(&infile);
+				UTFReader *info = new UTFReader(utf);
 
-				QByteArray identifier = info->utf().mid(info->stringsStart() + 7, 14);
+				QByteArray identifier = utf.mid(info->stringsStart() + 7, 14);
 
 				/*
 				
@@ -197,7 +201,187 @@ bool VideoHandler::convertUSM(QDir outdir, OutputFormat format) {
 		[](const Chunk &chunk) -> bool {
 		return chunk.stmid == '@SFA' && chunk.type == Chunk::Data;
 	});
+	ASSERT(videoChunks.size() || audioChunks.size(), "VideoHandler::convertUSM  -  No video or audio present");
 
+	quint32 listAVIsize = 0;
+	qint64 listAVIofs = output.pos();
+	output.write("RIFF\0\0\0\0", 8);
+	listAVIsize += output.write("AVI ", 4);
+	{
+		quint32 listHDRLsize = 0;
+		qint64 listHDRLofs = output.pos();
+		listAVIsize += output.write("LIST\0\0\0\0", 8);
+		listHDRLsize += output.write("hdrl", 4);
+
+		{
+			quint32 chunkAVIHsize = 0;
+			qint64 chunkAVIHofs = output.pos();
+			listHDRLsize += output.write("avih\0\0\0\0", 8);
+
+			MainAVIHeader hdr;
+			hdr.dwMicroSecPerFrame = 1000000. / (videoInfo.framerateN / static_cast<double>(videoInfo.framerateD));
+			hdr.dwMaxBytesPerSec = 0xfffff7; // Nothing in particular
+			hdr.dwPaddingGranularity = 0;
+			hdr.dwFlags = 0; // Nothing (yet)
+			hdr.dwTotalFrames = videoInfo.totalFrames;
+			hdr.dwInitialFrames = 0;
+			hdr.dwStreams = streamCount;
+			hdr.dwSuggestedBufferSize = streams.at(0).minbuf;
+			hdr.dwWidth = videoInfo.width;
+			hdr.dwHeight = videoInfo.height;
+
+			chunkAVIHsize += output.write(reinterpret_cast<char*>(&hdr), sizeof(MainAVIHeader));
+			output.seek(chunkAVIHofs + 4);
+			output.write(reinterpret_cast<char*>(&chunkAVIHsize), 4);
+			output.seek(output.pos() + chunkAVIHsize);
+			listHDRLsize += chunkAVIHsize;
+		}
+		for (int i = 0; i < streamCount; ++i) {
+			Stream stream = streams.at(i);
+			bool video = stream.stmid == '@SFV';
+
+			quint32 listSTRLsize = 0;
+			qint64 listSTRLofs = output.pos();
+			listHDRLsize += output.write("LIST\0\0\0\0", 8);
+			listSTRLsize += output.write("strl", 4);
+
+			{
+				quint32 chunkSTRHsize = 0;
+				qint64 chunkSTRHofs = output.pos();
+				listSTRLsize += output.write("strh\0\0\0\0", 8);
+
+				AVIStreamHeader hdr;
+				hdr.fccType = video ? streamtypeVIDEO : streamtypeAUDIO;
+				hdr.fccHandler = video ?
+					((videoInfo.mpegCodec) ? mmioFOURCC('m', 'p', 'g', '1') : mmioFOURCC('\0', '\0', '\0', '\0')) : 1;
+				hdr.dwFlags = 0;
+				hdr.wPriority = 0;
+				hdr.wLanguage = 0;
+				hdr.dwInitialFrames = 0;
+				hdr.dwScale = video ? videoInfo.framerateD : 1;
+				hdr.dwRate = video ? videoInfo.framerateN : audioInfo.sampleRate;
+				hdr.dwStart = 0;
+				hdr.dwLength = video ? videoInfo.totalFrames : audioInfo.sampleCount;
+				hdr.dwSuggestedBufferSize = stream.minbuf;
+				hdr.dwQuality = -1;
+				hdr.dwSampleSize = video ? 0 : 4; // ADX is limited to 16 bits and 2 channels
+				hdr.rcFrame.left = 0;
+				hdr.rcFrame.top = video ? videoInfo.width : 0;
+
+				chunkSTRHsize += output.write(reinterpret_cast<char*>(&hdr), sizeof(AVIStreamHeader));
+				output.seek(chunkSTRHofs + 4);
+				output.write(reinterpret_cast<char*>(&chunkSTRHsize), 4);
+				output.seek(output.pos() + chunkSTRHsize);
+				listSTRLsize += chunkSTRHsize;
+			}
+			{
+				quint32 chunkSTRFsize = 0;
+				qint64 chunkSTRFofs = output.pos();
+				listSTRLsize += output.write("strf\0\0\0\0", 8);
+
+				if (video) {
+					BITMAPINFOHEADER fmt;
+					fmt.biSize = sizeof(BITMAPINFOHEADER);
+					fmt.biWidth = videoInfo.width;
+					fmt.biHeight = videoInfo.height;
+					fmt.biPlanes = 1;
+					fmt.biBitCount = 24;
+					fmt.biCompression = mmioFOURCC('m', 'p', 'g', '1');
+					fmt.biSizeImage = videoInfo.width * videoInfo.height * 3; // width * height * (24 / 8)
+					fmt.biXPelsPerMeter = 0;
+					fmt.biYPelsPerMeter = 0;
+					fmt.biClrUsed = 0;
+					fmt.biClrImportant = 0;
+
+					chunkSTRFsize += output.write(reinterpret_cast<char*>(&fmt), sizeof(BITMAPINFOHEADER));
+				} else {
+					WAVEFORMATEX fmt;
+					fmt.wFormatTag = 1;;
+					fmt.nChannels = 2;
+					fmt.nSamplesPerSec = audioInfo.sampleRate;
+					fmt.nAvgBytesPerSec = audioInfo.sampleRate * 4;
+					fmt.nBlockAlign = 4;
+					fmt.wBitsPerSample = 16;
+
+					chunkSTRFsize += output.write(reinterpret_cast<char*>(&fmt), sizeof(BITMAPINFOHEADER));
+				}
+
+				output.seek(chunkSTRFofs + 4);
+				output.write(reinterpret_cast<char*>(&chunkSTRFsize), 4);
+				output.seek(output.pos() + chunkSTRFsize);
+				listSTRLsize += chunkSTRFsize;
+			}
+			{
+				quint32 chunkSTRNsize = 0;
+				qint64 chunkSTRNofs = output.pos();
+				listSTRLsize += output.write("strn\0\0\0\0", 8);
+
+				chunkSTRNsize += output.write(stream.filename.toLatin1().data(), stream.filename.length());
+
+				output.seek(chunkSTRNofs + 4);
+				output.write(reinterpret_cast<char*>(&chunkSTRNsize), 4);
+				output.seek(output.pos() + chunkSTRNsize);
+				listSTRLsize += chunkSTRNsize;
+			}
+
+			output.seek(listSTRLofs + 4);
+			output.write(reinterpret_cast<char*>(&listSTRLsize), 4);
+			output.seek(output.pos() + listSTRLsize);
+			listHDRLsize += listSTRLsize;
+		}
+
+		output.seek(listHDRLofs + 4);
+		output.write(reinterpret_cast<char*>(&listHDRLsize), 4);
+		output.seek(output.pos() + listHDRLsize);
+		listAVIsize += listHDRLsize;
+	}
+	{
+		quint32 listMOVIsize = 0;
+		qint64 listMOVIofs = output.pos();
+		listAVIsize += output.write("LIST\0\0\0\0", 8);
+		listMOVIsize += output.write("movi", 4);
+
+		for (Chunk chunk : videoChunks) {
+			quint32 chunk00DCsize = 0;
+			qint64 chunk00DCofs = output.pos();
+			listMOVIsize += output.write("00dc\0\0\0\0", 8);
+
+			infile.seek(chunk.offset + chunk.headerSize + 8);
+
+			qint64 remaining = chunk.size - chunk.headerSize - chunk.footerSize;
+			const quint32 pageSize = BinaryUtils::getPageSize();
+			// TODO index chunks
+
+			while (remaining > pageSize) {
+				chunk00DCsize += output.write(infile.read(pageSize));
+				remaining -= pageSize;
+			}
+
+			if (remaining) {
+				chunk00DCsize += output.write(infile.read(remaining));
+			}
+
+			if (chunk00DCsize % 2 == 1) {
+				chunk00DCsize += output.write("\0", 1); // Everything explodes if we don't pad to multiples of 2
+			}
+
+			output.seek(chunk00DCofs + 4);
+			output.write(reinterpret_cast<char*>(&chunk00DCsize), 4);
+			output.seek(output.pos() + chunk00DCsize);
+			listMOVIsize += chunk00DCsize;
+		}
+
+		output.seek(listMOVIofs + 4);
+		output.write(reinterpret_cast<char*>(&listMOVIsize), 4);
+		output.seek(output.pos() + listMOVIsize);
+		listAVIsize += listMOVIsize;
+	}
+	output.seek(listAVIofs + 4);
+	output.write(reinterpret_cast<char*>(&listAVIsize), 4);
+	output.seek(output.pos() + listAVIsize);
+	output.close();
+
+	/*
 	if (videoChunks.size()) {
 		QFile mpegOut(outdir.absolutePath() + QDir::separator() + m_input.completeBaseName() + ".mpeg");
 		mpegOut.open(QIODevice::WriteOnly);
@@ -241,7 +425,7 @@ bool VideoHandler::convertUSM(QDir outdir, OutputFormat format) {
 		}
 
 		mpegOut.close();
-	}
+	}*/
 
 	return true;
 }
