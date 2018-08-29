@@ -61,8 +61,8 @@ void NaoQt::setupModel() {
 	m_fsmodel->setHeaderData(2, Qt::Horizontal, "Type");
 	m_fsmodel->setHeaderData(3, Qt::Horizontal, "Date");
 
-	QString root = /*Steam::getGamePath("NieRAutomata",
-		QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0));*/"C:\\Users\\Nuan\\Downloads";
+	QString root = Steam::getGamePath("NieRAutomata",
+		QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0));//"C:\\Users\\Nuan\\Downloads";
 
 	m_view = new QTreeView(this);
 	m_view->setModel(m_fsmodel);
@@ -391,7 +391,7 @@ void NaoQt::viewInteraction(const QModelIndex &index) {
 
 			VideoHandler *converter = new VideoHandler(m_pathDisplay->text() + fname, this);
 
-			if (!converter->convertUSM(m_tempdir, VideoHandler::AVI)) {
+			if (!converter->convertUSM(m_tempdir, VideoHandler::MKV)) {
 
 				QMessageBox::warning(
 					this,
@@ -399,6 +399,8 @@ void NaoQt::viewInteraction(const QModelIndex &index) {
 					converter->lastError()
 				);
 			}
+
+			QDesktopServices::openUrl(QUrl::fromLocalFile(converter->result().absoluteFilePath()));
 
 		} else {
 			if (!QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text() + fname))) {
@@ -465,7 +467,6 @@ void NaoQt::viewContextMenu(const QPoint &pos) {
 		connect(openFileAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
 
 		connect(showInExplorerAct, &QAction::triggered, this, [this]() {
-		//	QProcessEnvironment::systemEnvironment().searchInPath
 			QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text()));
 		});
 		connect(showInExplorerAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);

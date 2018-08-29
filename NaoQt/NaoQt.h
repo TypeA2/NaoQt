@@ -9,6 +9,7 @@
 #ifdef QT_DEBUG
 #include <QDebug>
 #else
+#undef qDebug
 #define qDebug() QStringList()
 #endif
 

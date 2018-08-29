@@ -80,7 +80,7 @@ UTFReader::UTFReader(QByteArray utf) {
 					field.constVal = QVariant::fromValue(
 						QTextCodec::codecForName(
 						(encoding == 0) ? "Shift-JIS" : "UTF-8")->toUnicode(
-							BinaryUtils::readString(m_buffer).toLatin1()));
+							BinaryUtils::readString(m_buffer).toUtf8()));
 					m_buffer->seek(pos);
 
 					break;
@@ -142,7 +142,7 @@ UTFReader::UTFReader(QByteArray utf) {
 						row.val = QVariant::fromValue(
 							QTextCodec::codecForName(
 							(encoding == 0) ? "Shift-JIS" : "UTF-8")->toUnicode(
-								BinaryUtils::readString(m_buffer).toLatin1()));
+								BinaryUtils::readString(m_buffer).toUtf8()));
 						m_buffer->seek(pos);
 						break;
 					}

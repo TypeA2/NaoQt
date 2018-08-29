@@ -45,6 +45,12 @@
     <ClCompile Include="UTFReader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BinaryUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AVChunkBasedFile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="NaoQt.h">
@@ -54,6 +60,9 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="UTFReader.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="AVChunkBasedFile.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
@@ -67,6 +76,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vdf_parser.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BinaryUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

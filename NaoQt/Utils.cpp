@@ -103,6 +103,20 @@ namespace Utils {
 
 		return str;
 	}
+
+	QString cleanFilePath(QString str) {
+		str = QDir::toNativeSeparators(str);
+
+		if (str.at(0) == QDir::separator()) {
+			str = QDir::rootPath() + str.mid(1);
+		}
+
+		if (str.at(0).isLetter() && str.at(0).isLower()) {
+			str = Utils::ucFirst(str);
+		}
+
+		return str;
+	}
 }
 
 namespace Steam {
@@ -117,7 +131,7 @@ namespace Steam {
 	QStringList getSteamInstallFolders() {
 		// <steampath>/SteamApps/libraryfolders.vdf contains all our install folders
 
-		std::ifstream libfolders((getSteamPath() + "/SteamApps/libraryfolders.vdf").toLatin1().constData());
+		std::ifstream libfolders((getSteamPath() + "/SteamApps/libraryfolders.vdf").toUtf8().constData());
 		tyti::vdf::object root = tyti::vdf::read(libfolders);
 
 		QStringList retlist = QStringList(getSteamPath());

@@ -17,6 +17,9 @@ namespace Utils {
 
 	// Cleanup directory path
 	QString cleanDirPath(QString str);
+
+	// Cleanup file path
+	QString cleanFilePath(QString str);
 }
 
 namespace Steam {
