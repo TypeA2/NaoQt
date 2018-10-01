@@ -28,6 +28,24 @@
       <Extensions>moc;h;cpp</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
+    <Filter Include="Header Files\Decoders">
+      <UniqueIdentifier>{30077c28-10eb-409e-b918-da05d4a536af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Utils">
+      <UniqueIdentifier>{acf6fa63-3251-4e8d-99ce-a19d5cf13800}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Wrappers">
+      <UniqueIdentifier>{77526ee4-cf13-484e-94f3-ec808ae9a8bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Decoders">
+      <UniqueIdentifier>{935bd8d1-7674-4eab-8eea-5f189aa2d2e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utils">
+      <UniqueIdentifier>{a51d2c7e-6945-4ca7-9648-467838a166e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Wrappers">
+      <UniqueIdentifier>{723c7fae-7d44-487e-b6cb-8a639333c8b4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -36,34 +54,52 @@
     <ClCompile Include="NaoQt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="VideoHandler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="UTFReader.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils.cpp">
+      <Filter>Source Files\Utils</Filter>
     </ClCompile>
     <ClCompile Include="BinaryUtils.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="AVChunkBasedFile.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="ChunkBasedFile.cpp">
+      <Filter>Source Files\Wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="AVConverter.cpp">
+      <Filter>Source Files\Wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="USMDemuxer.cpp">
+      <Filter>Source Files\Decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="ADXDecoder.cpp">
+      <Filter>Source Files\Decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="AVOptionsDialog.cpp">
+      <Filter>Source Files\Wrappers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="NaoQt.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="VideoHandler.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <QtMoc Include="UTFReader.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Decoders</Filter>
     </QtMoc>
-    <QtMoc Include="AVChunkBasedFile.h">
-      <Filter>Header Files</Filter>
+    <QtMoc Include="ChunkBasedFile.h">
+      <Filter>Header Files\Wrappers</Filter>
+    </QtMoc>
+    <QtMoc Include="AVConverter.h">
+      <Filter>Header Files\Wrappers</Filter>
+    </QtMoc>
+    <QtMoc Include="USMDemuxer.h">
+      <Filter>Header Files\Decoders</Filter>
+    </QtMoc>
+    <QtMoc Include="ADXDecoder.h">
+      <Filter>Header Files\Decoders</Filter>
+    </QtMoc>
+    <QtMoc Include="AVOptionsDialog.h">
+      <Filter>Header Files\Wrappers</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
@@ -73,13 +109,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vdf_parser.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="BinaryUtils.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="vdf_parser.hpp">
+      <Filter>Header Files\Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="Error.h">
+      <Filter>Header Files\Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

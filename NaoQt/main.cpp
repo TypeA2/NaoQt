@@ -1,16 +1,14 @@
 #include "NaoQt.h"
 #include <QtWidgets/QApplication>
 
-#include <QtAV\QtAV>
+#include <QtAV/QtAV_Global.h>
 
-int main(int argc, char *argv[]) {
-	QApplication a(argc, argv);
+int main(int argc, char* argv[]) {
+    QApplication a(argc, argv);
 
-
-	QtAV::setLogLevel(QtAV::LogCritical);
-
-
-	NaoQt w;
-	w.show();
-	return a.exec();
+    setLogLevel(QtAV::LogCritical);
+    
+    NaoQt w;
+    w.show();
+    return a.exec();
 }
