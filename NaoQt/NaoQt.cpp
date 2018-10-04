@@ -56,7 +56,7 @@ void NaoQt::setupModel() {
     m_fsmodel->setHeaderData(2, Qt::Horizontal, "Type");
     m_fsmodel->setHeaderData(3, Qt::Horizontal, "Date");
     QString root = Steam::getGamePath("NieRAutomata",
-        QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0));
+        QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0)) + "/data";
 
     m_view = new QTreeView(m_centralWidget);
     m_view->setModel(m_fsmodel);
@@ -212,31 +212,41 @@ void NaoQt::changePath(const QString& path) {
 
 QVector<QVector<QStandardItem*>> NaoQt::discoverDirectory(QDir& dir) {
 
-    QFileInfoList entries = dir.entryInfoList(QDir::AllEntries | QDir::NoDot, QDir::IgnoreCase | QDir::DirsFirst);
+    QStringList parts = Utils::cleanDirPath(dir.absolutePath()).split(QDir::separator());
+
+    quint64 part = std::find_if(parts.begin(), parts.end(), [](const QString& part) { return part.endsWith(".cpk"); }) - parts.begin();
 
     QVector<QVector<QStandardItem*>> ret;
 
-    QMimeDatabase mimedb;
+    if (part != static_cast<quint64>(parts.size())) {
+        QFileInfo cpk(parts.mid(0, part + 1).join(QDir::separator()));
 
-    for (const QFileInfo& item : entries) {
+        qDebug() << cpk;
+    } else {
+        QFileInfoList entries = dir.entryInfoList(QDir::AllEntries | QDir::NoDot, QDir::IgnoreCase | QDir::DirsFirst);
 
-        QMimeType mime = mimedb.mimeTypeForFile(item);
+        QMimeDatabase mimedb;
 
-        QStandardItem* name = new QStandardItem(item.fileName());
-        name->setData(item.isDir(), IsFolderRole);
+        for (const QFileInfo& item : entries) {
 
-        QStandardItem* size = new QStandardItem(item.isDir() ? "" : Utils::getShortSize(item.size()));
-        size->setData(item.isDir() ? -1 : item.size(), ItemSizeRole);
+            QMimeType mime = mimedb.mimeTypeForFile(item);
 
-        QStandardItem* type = new QStandardItem(Utils::ucFirst(getFileDescription(mime, item)));
-        type->setData(mime.name(), MimeTypeRole);
+            QStandardItem* name = new QStandardItem(item.fileName());
+            name->setData(item.isDir(), IsFolderRole);
 
-        QStandardItem* date = new QStandardItem(item.lastModified().toString("yyyy-MM-dd hh:mm"));
-        date->setData(item.lastModified(), LastModifiedRole);
+            QStandardItem* size = new QStandardItem(item.isDir() ? "" : Utils::getShortSize(item.size()));
+            size->setData(item.isDir() ? -1 : item.size(), ItemSizeRole);
 
-        ret.push_back({ name, size, type, date });
+            QStandardItem* type = new QStandardItem(Utils::ucFirst(getFileDescription(mime, item)));
+            type->setData(mime.name(), MimeTypeRole);
+
+            QStandardItem* date = new QStandardItem(item.lastModified().toString("yyyy-MM-dd hh:mm"));
+            date->setData(item.lastModified(), LastModifiedRole);
+
+            ret.push_back({ name, size, type, date });
+        }
     }
-
+    
     return ret;
 }
 
@@ -394,6 +404,9 @@ void NaoQt::viewInteraction(const QModelIndex& index) {
             this->deinterleaveVideo(m_pathDisplay->text() + fname,
                 Utils::cleanFilePath(m_tempdir + fname.mid(0, fname.length() - 4) + ".avi"),
                 AVConverter::ContainerFormat_AVI);
+        } else if (fname.endsWith(".cpk")) {
+
+            changePath(m_pathDisplay->text() + fname);
 
         } else {
             if (!QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text() + fname))) {
@@ -506,8 +519,6 @@ void NaoQt::deinterleaveSaveAs(const QModelIndex& index) {
         deinterleaveVideo(m_pathDisplay->text() + row.at(0)->text(), target, AVConverter::ContainerFormat_AVI, false);
     }
 }
-
-
 
 void NaoQt::deinterleaveVideo(const QString& in, const QString& out, AVConverter::VideoContainerFormat fmt, bool open) {
     QFutureWatcher<bool>* watcher = new QFutureWatcher<bool>(this);
@@ -680,24 +691,22 @@ QFileInfo NaoQt::disassembleBinaryImpl(const QFileInfo& input) {
     ZydisDecoder decoder;
     ZydisFormatter formatter;
     
-    {
-        if (!ZYDIS_SUCCESS(ZydisDecoderInit(&decoder,
-            ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_ADDRESS_WIDTH_64))) {
-            qFatal("ZydisDecoderInit failed");
+    if (!ZYDIS_SUCCESS(ZydisDecoderInit(&decoder,
+        ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_ADDRESS_WIDTH_64))) {
+        qFatal("ZydisDecoderInit failed");
 
-            return QFileInfo();
-        }
+        return QFileInfo();
+    }
 
-        if (!ZYDIS_SUCCESS(ZydisFormatterInit(&formatter,
-            ZYDIS_FORMATTER_STYLE_INTEL)) ||
-            !ZYDIS_SUCCESS(ZydisFormatterSetProperty(&formatter,
-                ZYDIS_FORMATTER_PROP_FORCE_MEMSEG, ZYDIS_TRUE)) ||
-            !ZYDIS_SUCCESS(ZydisFormatterSetProperty(&formatter,
-                ZYDIS_FORMATTER_PROP_FORCE_MEMSIZE, ZYDIS_TRUE))) {
-            qFatal("ZydisFormatterInit failed");
+    if (!ZYDIS_SUCCESS(ZydisFormatterInit(&formatter,
+        ZYDIS_FORMATTER_STYLE_INTEL)) ||
+        !ZYDIS_SUCCESS(ZydisFormatterSetProperty(&formatter,
+            ZYDIS_FORMATTER_PROP_FORCE_MEMSEG, ZYDIS_TRUE)) ||
+        !ZYDIS_SUCCESS(ZydisFormatterSetProperty(&formatter,
+            ZYDIS_FORMATTER_PROP_FORCE_MEMSIZE, ZYDIS_TRUE))) {
+        qFatal("ZydisFormatterInit failed");
 
-            return QFileInfo();
-        }
+        return QFileInfo();
     }
     
 
