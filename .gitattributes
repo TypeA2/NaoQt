@@ -1,6 +1,6 @@
-ffmpeg/ linguist-vendored
-QtAV/ linguist-vendored
-Zydis/ linguist-vendored
+ffmpeg/* linguist-vendored
+QtAV/* linguist-vendored
+Zydis/* linguist-vendored
 
 ###############################################################################
 # Set default behavior to automatically normalize line endings.
