@@ -7,6 +7,7 @@
 #include <QMimeType>
 
 #include "AVConverter.h"
+#include "CPKReader.h"
 
 class QStandardItemModel;
 class QVBoxLayout;
@@ -56,16 +57,17 @@ class NaoQt : public QMainWindow {
     void deinterleaveRemuxingStartedHandler();
     void deinterleaveCancelHandler();
 
+    void extractCpkFile(const QString& source);
 
     private:
     void setupMenuBar();
     void setupModel();
 
-    static QString getFileDescription(const QMimeType& mime, const QFileInfo &info);
+    static QString getFileDescription(const QFileInfo &info, const QMimeType& mime = QMimeType());
 
     QVector<QStandardItem*> getRow(const QModelIndex& index);
 
-    static QVector<QVector<QStandardItem*>> discoverDirectory(QDir& dir);
+    QVector<QVector<QStandardItem*>> discoverDirectory(QString& dir);
 
     void disassembleBinary(const QString& path);
     QFileInfo disassembleBinaryImpl(const QFileInfo& input);
@@ -74,7 +76,6 @@ class NaoQt : public QMainWindow {
     bool deinterleaveVideoImpl(const QString& in, const QString& out, AVConverter::VideoContainerFormat fmt, bool rewrite);
 
     void deinterleaveSaveAs(const QModelIndex& index);
-
 
     QString m_tempdir;
     QString m_prevPath;
@@ -93,6 +94,12 @@ class NaoQt : public QMainWindow {
 
     AVConverter* m_usmConverter;
     QProgressDialog* m_adxConversionProgress;
+
+    QFile m_cpkFile;
+    CPKReader* m_cpkReader;
+    QVector<CPKReader::FileInfo> m_cpkFileContents;
+    QStringList m_cpkDirContents;
+    bool m_isInCpk;
 
     enum FileInfoRole {
         IsFolderRole = Qt::UserRole + 1,

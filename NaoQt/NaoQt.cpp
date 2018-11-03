@@ -19,6 +19,7 @@
 
 #include "Utils.h"
 #include "USMDemuxer.h"
+#include "ChunkBasedFile.h"
 
 NaoQt::NaoQt() {
 
@@ -63,6 +64,9 @@ void NaoQt::setupModel() {
     m_view->setEditTriggers(QTreeView::NoEditTriggers); // Non-editable
     m_view->setRootIsDecorated(false); // Remove the caret
     m_view->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_view->setUniformRowHeights(true);
+    m_view->setAnimated(false);
+    m_view->setItemsExpandable(false);
 
     changePath(root);
 
@@ -169,15 +173,14 @@ void NaoQt::changePath(const QString& path) {
     m_pathDisplay->setText(prettyPath);
     m_prevPath = prettyPath;
 
-    while (m_fsmodel->rowCount() > 0) {
-        m_fsmodel->takeRow(0);
+    if (m_fsmodel->rowCount() > 0) {
+        m_fsmodel->removeRows(0, m_fsmodel->rowCount());
     }
 
     // Templates are a mistake
     QFutureWatcher<QVector<QVector<QStandardItem*>>>* watcher = new QFutureWatcher<QVector<QVector<QStandardItem*>>>(this);
 
     connect(watcher, &QFutureWatcher<QVector<QVector<QStandardItem*>>>::finished, this, [watcher, this, prettyPath]() {
-
         QVector<QVector<QStandardItem*>> result = watcher->result();
 
         QFileIconProvider ficonprovider;
@@ -206,77 +209,124 @@ void NaoQt::changePath(const QString& path) {
 
     });
 
-    watcher->setFuture(QtConcurrent::run(discoverDirectory, rootDir));
+    watcher->setFuture(QtConcurrent::run(this, &NaoQt::discoverDirectory, prettyPath));
 
 }
 
-QVector<QVector<QStandardItem*>> NaoQt::discoverDirectory(QDir& dir) {
+QVector<QVector<QStandardItem*>> NaoQt::discoverDirectory(QString& dir) {
 
-    QStringList parts = Utils::cleanDirPath(dir.absolutePath()).split(QDir::separator());
+    QStringList parts = Utils::cleanDirPath(dir).split(QDir::separator());
+    parts.removeLast();
 
     quint64 part = std::find_if(parts.begin(), parts.end(), [](const QString& part) { return part.endsWith(".cpk"); }) - parts.begin();
 
     QVector<QVector<QStandardItem*>> ret;
 
     if (part != static_cast<quint64>(parts.size())) {
-        QFileInfo cpk(parts.mid(0, part + 1).join(QDir::separator()));
 
-        qDebug() << cpk;
+        m_fsmodel->setHeaderData(3, Qt::Horizontal, "Compressed");
+
+        m_isInCpk = true;
+
+        if (m_cpkFile.fileName() != parts.mid(0, part + 1).join(QDir::separator())) {
+            if (m_cpkFile.isOpen()) {
+                m_cpkFile.close();
+            }
+
+            m_cpkFile.setFileName(parts.mid(0, part + 1).join(QDir::separator()));
+            m_cpkFile.open(QIODevice::ReadOnly);
+            m_cpkReader = new CPKReader(&m_cpkFile);
+
+            m_cpkFileContents = m_cpkReader->fileInfo();
+
+            m_cpkDirContents = m_cpkReader->dirs().toList();
+            m_cpkDirContents.append("..");
+            m_cpkDirContents.sort(Qt::CaseInsensitive);
+        }
+
+        QString subdir = parts.mid(part + 1).join("/");
+
+        for (const QString& folder : m_cpkDirContents) {
+            if (folder.isEmpty() || folder.contains("/") || folder == subdir ||
+                (!folder.startsWith(subdir) && folder != "..")) {
+                continue;
+            }
+
+            QVector<QStandardItem*> row(4);
+
+            row[0] = new QStandardItem(folder);
+            row[0]->setData(true, IsFolderRole);
+
+            row[1] = new QStandardItem("");
+            row[2] = new QStandardItem("");
+            row[3] = new QStandardItem("");
+
+            ret.push_back(row);
+        }
+
+        for (CPKReader::FileInfo file : m_cpkFileContents) {
+            if (file.dir != subdir) {
+                continue;
+            }
+
+            QVector<QStandardItem*> row(4);
+
+            row[0] = new QStandardItem(file.name);
+            row[0]->setData(false, IsFolderRole);
+
+            row[1] = new QStandardItem(Utils::getShortSize(file.extractedSize));
+            row[1]->setData(file.extractedSize, ItemSizeRole);
+
+            row[2] = new QStandardItem(Utils::ucFirst(getFileDescription(QFileInfo(file.name))));
+            row[3] = new QStandardItem(((file.size == file.extractedSize) ? "No" :
+                QString("Yes (%0%)").arg(qRound(100. * static_cast<double>(file.size) / file.extractedSize))));
+
+            ret.push_back(row);
+        }
+
     } else {
-        QFileInfoList entries = dir.entryInfoList(QDir::AllEntries | QDir::NoDot, QDir::IgnoreCase | QDir::DirsFirst);
 
+        m_fsmodel->setHeaderData(3, Qt::Horizontal, "Date");
+
+        if (m_isInCpk) {
+            m_cpkFile.close();
+
+            delete m_cpkReader;
+
+            m_cpkFileContents.clear();
+            m_cpkDirContents.clear();
+        }
+
+        m_isInCpk = false;
+
+        QDir currentDir(dir);
+        QFileInfoList entries = currentDir.entryInfoList(QDir::AllEntries | QDir::NoDot, QDir::IgnoreCase | QDir::DirsFirst);
+        
         QMimeDatabase mimedb;
 
         for (const QFileInfo& item : entries) {
-
             QMimeType mime = mimedb.mimeTypeForFile(item);
 
-            QStandardItem* name = new QStandardItem(item.fileName());
-            name->setData(item.isDir(), IsFolderRole);
+            QVector<QStandardItem*> row(4);
 
-            QStandardItem* size = new QStandardItem(item.isDir() ? "" : Utils::getShortSize(item.size()));
-            size->setData(item.isDir() ? -1 : item.size(), ItemSizeRole);
+            row[0] = new QStandardItem(item.fileName());
+            row[0]->setData(item.isDir(), IsFolderRole);
 
-            QStandardItem* type = new QStandardItem(Utils::ucFirst(getFileDescription(mime, item)));
-            type->setData(mime.name(), MimeTypeRole);
+            row[1] = new QStandardItem(item.isDir() ? "" : Utils::getShortSize(item.size()));
+            row[1]->setData(item.isDir() ? -1 : item.size(), ItemSizeRole);
 
-            QStandardItem* date = new QStandardItem(item.lastModified().toString("yyyy-MM-dd hh:mm"));
-            date->setData(item.lastModified(), LastModifiedRole);
+            row[2] = new QStandardItem(Utils::ucFirst(getFileDescription(item, mime)));
+            row[2]->setData(mime.name(), MimeTypeRole);
 
-            ret.push_back({ name, size, type, date });
+            row[3] = new QStandardItem(item.lastModified().toString("yyyy-MM-dd hh:mm"));
+            row[3]->setData(item.lastModified(), LastModifiedRole);
+
+            ret.push_back(row);
         }
     }
     
     return ret;
 }
-
-QString NaoQt::getFileDescription(const QMimeType &mime, const QFileInfo &info) {
-    
-    QString ext = info.suffix();
-
-    if (ext == "cpk") {
-        return "CPK archive";
-    } 
-    
-    if (ext == "usm") {
-        return "USM video";
-    } 
-    
-    if (ext == "enlMeta") {
-        return "Enlighten data";
-    } 
-    
-    if (ext == "bnk") {
-        return "Wwise SoundBank";
-    } 
-    
-    if (ext == "wem" || ext == "wsp") {
-        return "Wwise audio";
-    }
-
-    return mime.comment();
-}
-
 
 
 void NaoQt::openFolder() {
@@ -408,7 +458,7 @@ void NaoQt::viewInteraction(const QModelIndex& index) {
 
             changePath(m_pathDisplay->text() + fname);
 
-        } else {
+        } else if (!m_isInCpk) {
             if (!QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text() + fname))) {
                 QMessageBox::critical(this, "Error",
                     QString("Failed opening file:\n\n%0").arg(m_pathDisplay->text() + fname));
@@ -427,38 +477,43 @@ void NaoQt::viewContextMenu(const QPoint& pos) {
 
     if (row.at(0) == nullptr) {
         QAction* refreshDirAct = new QAction("Refresh view", ctxMenu);
-        QAction* openInExplorerAct = new QAction("Open in Explorer", ctxMenu);
+        
 
         connect(refreshDirAct, &QAction::triggered, this, &NaoQt::refreshView);
         connect(refreshDirAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
 
-        connect(openInExplorerAct, &QAction::triggered, this, [this]() {
-            QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text()));
-        });
-        connect(openInExplorerAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
-
-
         ctxMenu->addAction(refreshDirAct);
-        ctxMenu->addAction(openInExplorerAct);
+        
+        if (!m_isInCpk) {
+            QAction* openInExplorerAct = new QAction("Open in Explorer", ctxMenu);
+
+            connect(openInExplorerAct, &QAction::triggered, this, [this]() {
+                QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text()));
+            });
+            connect(openInExplorerAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
+
+            ctxMenu->addAction(openInExplorerAct);
+        }
     } else if (row.at(0)->data(IsFolderRole).toBool()) {
         QString targetDir = row.at(0)->text();
 
         QAction* openFolderAct = new QAction("Open", ctxMenu);
-        QAction* openInExplorerAct = new QAction("Open in Explorer", ctxMenu);
+        
 
         connect(openFolderAct, &QAction::triggered, this, [this, targetDir]() {
             changePath(Utils::cleanDirPath(m_pathDisplay->text() + targetDir));
         });
         connect(openFolderAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
-
-        connect(openInExplorerAct, &QAction::triggered, this, [this, targetDir]() {
-            QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text() + targetDir));
-        });
-        connect(openInExplorerAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
-
-
         ctxMenu->addAction(openFolderAct);
-        ctxMenu->addAction(openInExplorerAct);
+
+        if (!m_isInCpk) {
+            QAction* openInExplorerAct = new QAction("Open in Explorer", ctxMenu);
+            connect(openInExplorerAct, &QAction::triggered, this, [this, targetDir]() {
+                QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text() + targetDir));
+            });
+            connect(openInExplorerAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
+            ctxMenu->addAction(openInExplorerAct);
+        }
     } else if(row.at(0)->text().endsWith(".usm")) {
         QAction* playFileAct = new QAction("Play", ctxMenu);
         QAction* saveAsAct = new QAction("Save as", ctxMenu);
@@ -484,7 +539,7 @@ void NaoQt::viewContextMenu(const QPoint& pos) {
         ctxMenu->addAction(saveAsAct);
         ctxMenu->addSeparator();
         ctxMenu->addAction(showInExplorerAct);
-    } else {
+    } else if (!m_isInCpk) {
         QAction* openFileAct = new QAction("Open", ctxMenu);
         QAction* showInExplorerAct = new QAction("Open containing folder", ctxMenu);
 
@@ -498,14 +553,54 @@ void NaoQt::viewContextMenu(const QPoint& pos) {
         });
         connect(showInExplorerAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
 
-
         ctxMenu->addAction(openFileAct);
         ctxMenu->addAction(showInExplorerAct);
+    } else {
+        QAction* extractToAct = new QAction("Extract to...", ctxMenu);
+
+        connect(extractToAct, &QAction::triggered, this, [this, row]() {
+            extractCpkFile(m_pathDisplay->text() + row.at(0)->text());
+        });
+        connect(extractToAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
+
+        ctxMenu->addAction(extractToAct);
     }
 
     ctxMenu->popup(m_view->viewport()->mapToGlobal(pos));
 
 }
+
+
+
+void NaoQt::extractCpkFile(const QString& source) {
+    QStringList parts = source.split(QDir::separator());
+
+    quint64 part = std::find_if(parts.begin(), parts.end(), [](const QString& part) { return part.endsWith(".cpk"); }) - parts.begin();
+
+    QString subpath = parts.mid(part + 1).join(QDir::separator());
+
+    CPKReader::FileInfo info = m_cpkReader->fileInfo(subpath.replace(QDir::separator(), '/'));
+    
+    QString target = QFileDialog::getSaveFileName(this, "Extract file",
+        Utils::cleanFilePath(parts.mid(0, part).join(QDir::separator()) + QDir::separator() + info.name));
+
+    if (!target.isEmpty()) {
+        ChunkBasedFile* file = m_cpkReader->file(subpath);
+        file->seek(0);
+
+        QFile output(target);
+        output.open(QIODevice::WriteOnly);
+
+        if (info.size != info.extractedSize) {
+            output.write(CPKReader::decompressCRILAYLA(file->read(info.size)));
+        } else {
+            output.write(file->read(info.size));
+        }
+
+        output.close();
+    }
+}
+
 
 
 void NaoQt::deinterleaveSaveAs(const QModelIndex& index) {
@@ -558,7 +653,6 @@ void NaoQt::deinterleaveVideo(const QString& in, const QString& out, AVConverter
 }
 
 void NaoQt::deinterleaveProgressHandler(double now, double max) {
-    //qDebug() << now << max;
     if (m_adxConversionProgress->maximum() != max * 1000) {
         m_adxConversionProgress->setMaximum(max * 1000);
     }
@@ -761,4 +855,49 @@ QFileInfo NaoQt::disassembleBinaryImpl(const QFileInfo& input) {
     outfile.close();
     
     return ret;
+}
+
+
+
+QString NaoQt::getFileDescription(const QFileInfo &info, const QMimeType& mime) {
+
+    QString ext = info.suffix();
+
+    if (ext == "cpk") {
+        return "CPK archive";
+    }
+
+    if (ext == "usm") {
+        return "USM video";
+    }
+
+    if (ext == "enlMeta") {
+        return "Enlighten data";
+    }
+
+    if (ext == "bnk") {
+        return "Wwise SoundBank";
+    }
+
+    if (ext == "wem" || ext == "wsp") {
+        return "Wwise audio";
+    }
+
+    if (ext == "dat") {
+        return "DAT archive";
+    }
+
+    if (ext == "dtt") {
+        return "DAT texture archive";
+    }
+
+    if (ext == "wtp") {
+        return "DDS texture archive";
+    }
+
+    if (ext == "wtb") {
+        return "Model data";
+    }
+
+    return mime.isValid() ? mime.comment() : " ";
 }

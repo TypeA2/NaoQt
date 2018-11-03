@@ -41,7 +41,7 @@ namespace Utils {
         }
 
         return QString("%0 %1").arg(size)
-            .arg(bits ? "bit" : "B");
+            .arg(bits ? "bit" : ((size == 1) ? "byte" : "bytes"));
     }
 
     QString getShortTime(double time) {

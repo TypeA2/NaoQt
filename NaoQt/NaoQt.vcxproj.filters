@@ -78,6 +78,9 @@
     <ClCompile Include="AVOptionsDialog.cpp">
       <Filter>Source Files\Wrappers</Filter>
     </ClCompile>
+    <ClCompile Include="CPKReader.cpp">
+      <Filter>Source Files\Decoders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="NaoQt.h">
@@ -119,6 +122,9 @@
     </ClInclude>
     <ClInclude Include="Error.h">
       <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="CPKReader.h">
+      <Filter>Header Files\Decoders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
