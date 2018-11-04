@@ -57,7 +57,8 @@ class NaoQt : public QMainWindow {
     void deinterleaveRemuxingStartedHandler();
     void deinterleaveCancelHandler();
 
-    void extractCpkFile(const QString& source);
+    void extractCpkFile(const QString& source, QString target = QString());
+    void extractCpkFolder(const QString& dir);
 
     private:
     void setupMenuBar();

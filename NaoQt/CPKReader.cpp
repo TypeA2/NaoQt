@@ -13,13 +13,7 @@ if (!(cond)) { \
 CPKReader::CPKReader(QIODevice* input) {
     m_input = input;
 
-    try {
-        init();
-    } catch (const CPKException& e) {
-        qDebug() << e.what();
-
-        throw;
-    }
+    init();
 }
 
 CPKReader::~CPKReader() {
@@ -105,6 +99,8 @@ QByteArray CPKReader::decompressCRILAYLA(const QByteArray& file) {
 
     quint32 uncompressedSize = qFromLittleEndian<quint32>(file.mid(8, 4));
     quint32 uncompressedHeaderOffset = qFromLittleEndian<quint32>(file.mid(12, 4));
+
+    qDebug() << uncompressedSize;
     
     result = QByteArray(uncompressedSize + 256, '\0');
     result.replace(0, 256, file.mid(uncompressedHeaderOffset + 16, 256));
