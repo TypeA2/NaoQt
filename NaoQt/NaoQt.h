@@ -40,6 +40,8 @@ class NaoQt : public QMainWindow {
 
     signals:
     void disassemblyProgress(qint64 progress);
+    void extractCpkProgress(const QString& file, quint64 read, quint64 write);
+    void extractCpkError(QString message);
 
     private slots:
     void openFile() {}
@@ -60,6 +62,8 @@ class NaoQt : public QMainWindow {
     void extractCpkFile(const QString& source, QString target = QString());
     void extractCpkFolder(const QString& dir);
     void extractCpk(const QString& file);
+    void extractCpkImpl(const QString& basePath, CPKReader* reader);
+    void extractCpkProgressHandler(const QString& file, quint64 read, quint64 write);
 
     private:
     void setupMenuBar();
@@ -93,15 +97,20 @@ class NaoQt : public QMainWindow {
 
     QProgressDialog* m_disassemblyProgress;
     bool m_disassemblyCanceled;
+    QMetaObject::Connection m_disassemblyProgressCon;
+    QMetaObject::Connection m_disassmeblyCancelCon;
 
     AVConverter* m_usmConverter;
     QProgressDialog* m_adxConversionProgress;
+    QMetaObject::Connection m_adxConversionCancelCon;
 
     QFile m_cpkFile;
     CPKReader* m_cpkReader;
     QVector<CPKReader::FileInfo> m_cpkFileContents;
     QStringList m_cpkDirContents;
     bool m_isInCpk;
+    QProgressDialog* m_cpkExtractionProgress;
+    bool m_cancelCpkExtraction;
 
     enum FileInfoRole {
         IsFolderRole = Qt::UserRole + 1,

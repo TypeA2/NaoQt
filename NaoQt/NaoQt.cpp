@@ -68,6 +68,7 @@ void NaoQt::setupModel() {
     m_view->setAnimated(false);
     m_view->setItemsExpandable(false);
 
+    m_isInCpk = false;
     changePath(root);
 
     connect(m_view, &QTreeView::doubleClicked, this, &NaoQt::viewInteraction);
@@ -716,31 +717,62 @@ void NaoQt::extractCpk(const QString& file) {
             (void) outdir.mkpath(Utils::cleanDirPath(basePath + QDir::separator() + dir));
         }
 
+        quint64 totalBytesRead = 0;
+        quint64 totalBytesWrite = 0;
+
         for (const CPKReader::FileInfo& entry : reader->fileInfo()) {
-            QString subpath = entry.dir + (entry.dir.isEmpty() ? "" : "/") + entry.name;
-            QString targetPath = Utils::cleanFilePath(basePath + QDir::separator() + subpath);
-
-            ChunkBasedFile* entryFile = reader->file(subpath);
-
-            if (!entryFile || !entryFile->seek(0)) {
-                break;
-            }
-
-            QFile output(targetPath);
-            output.open(QIODevice::WriteOnly);
-
-            if (entry.size != entry.extractedSize) {
-                output.write(CPKReader::decompressCRILAYLA(entryFile->read(entry.size)));
-            } else {
-                output.write(entryFile->read(entry.size));
-            }
-
-            output.close();
+            totalBytesRead += entry.size;
+            totalBytesWrite += entry.extractedSize;
         }
+
+        m_cpkExtractionProgress = new QProgressDialog(
+            "Extracting CPK file...", "Cancel", 0, totalBytesRead + totalBytesWrite,
+            this, Qt::WindowCloseButtonHint);
+        m_cpkExtractionProgress->setMinimumWidth(320);
+
+        
+        m_cpkExtractionProgress->show();
 
         delete reader;
         cpkFile.close();
     }
+}
+
+void NaoQt::extractCpkImpl(const QString& basePath, CPKReader* reader) {
+    for (const CPKReader::FileInfo& entry : reader->fileInfo()) {
+        QString subpath = entry.dir + (entry.dir.isEmpty() ? "" : "/") + entry.name;
+        QString targetPath = Utils::cleanFilePath(basePath + QDir::separator() + subpath);
+
+        ChunkBasedFile* entryFile = reader->file(subpath);
+
+        if (!entryFile) {
+            emit extractCpkError("Retrieved file pointer is invalid");
+            break;
+        }
+        
+        if (!entryFile->seek(0)) {
+            emit extractCpkError("Could not seek to start of file");
+            break;
+        }
+
+        emit extractCpkProgress(subpath, entry.size, entry.extractedSize);
+
+        QFile output(targetPath);
+        output.open(QIODevice::WriteOnly);
+
+        if (entry.size != entry.extractedSize) {
+            output.write(CPKReader::decompressCRILAYLA(entryFile->read(entry.size)));
+        } else {
+            output.write(entryFile->read(entry.size));
+        }
+
+        output.close();
+    }
+}
+
+void NaoQt::extractCpkProgressHandler(const QString& file, quint64 read, quint64 write) {
+    m_cpkExtractionProgress->setValue(m_cpkExtractionProgress->value() + read + write);
+    m_cpkExtractionProgress->setLabelText(file);
 }
 
 
@@ -780,6 +812,8 @@ void NaoQt::deinterleaveVideo(const QString& in, const QString& out, AVConverter
 
         m_adxConversionProgress->deleteLater();
         watcher->deleteLater();
+
+        disconnect(m_adxConversionCancelCon);
     });
 
     m_adxConversionProgress = new QProgressDialog(
@@ -879,6 +913,9 @@ void NaoQt::disassembleBinary(const QString& path) {
 
         watcher->deleteLater();
         m_disassemblyProgress->deleteLater();
+
+        disconnect(m_disassemblyProgressCon);
+        disconnect(m_disassmeblyCancelCon);
     });
 
     m_disassemblyProgress = new QProgressDialog(
@@ -890,9 +927,9 @@ void NaoQt::disassembleBinary(const QString& path) {
 
     m_disassemblyProgress->show();
 
-    connect(this, &NaoQt::disassemblyProgress, this, &NaoQt::disassemblyProgressHandler);
+    m_disassemblyProgressCon = connect(this, &NaoQt::disassemblyProgress, this, &NaoQt::disassemblyProgressHandler);
 
-    connect(m_disassemblyProgress, &QProgressDialog::canceled, this, [this, infile]() {
+    m_disassmeblyCancelCon = connect(m_disassemblyProgress, &QProgressDialog::canceled, this, [this, infile]() {
         m_disassemblyCanceled = true;
     });
 
