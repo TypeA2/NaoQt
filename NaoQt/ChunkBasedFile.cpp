@@ -10,31 +10,38 @@ bool ChunkBasedFile::Chunk::operator==(const Chunk& other) const {
 
 
 
-ChunkBasedFile::ChunkBasedFile(QVector<Chunk>& chunks, QIODevice* input, QObject* parent)
+ChunkBasedFile::ChunkBasedFile(const QVector<Chunk>& chunks, QIODevice* input, QObject* parent)
     : QIODevice(parent) {
     m_chunks = chunks;
     m_input = input;
     m_currentChunk = &m_chunks.first();
     m_currentChunkIndex = 0;
-    m_currentPos = 0;
+    m_currentPos = -1;
     m_bytesLeftChunk = m_currentChunk->size;
 
     m_totalSize = 0;
-    for (Chunk chunk : chunks) {
+    for (const Chunk& chunk : m_chunks) {
         m_totalSize += chunk.size;
     }
+}
 
-    m_input->seek(m_chunks.first().start);
+ChunkBasedFile::ChunkBasedFile(const Chunk& chunk, QIODevice* input, QObject* parent)
+    : QIODevice(parent) {
+    m_chunks.append(chunk);
+    m_input = input;
+    m_currentChunk = &m_chunks.first();
+    m_currentChunkIndex = 0;
+    m_currentPos = -1;
+    m_bytesLeftChunk = chunk.size;
+    m_totalSize = chunk.size;
+
 }
 
 
 
 bool ChunkBasedFile::open(OpenMode mode) {
-    if (mode != ReadOnly) {
-        return false;
-    }
-
-    m_input->seek(m_chunks.first().start);
+    ASSERT(mode == ReadOnly);
+    //ASSERT(m_input->seek(m_chunks.first().start));
 
     setOpenMode(mode | Unbuffered);
     return true;
@@ -115,20 +122,21 @@ qint64 ChunkBasedFile::writeData(const char* data, qint64 len) {
 }
 
 bool ChunkBasedFile::seek(qint64 pos) {
-    QIODevice::seek(pos);
-    if (pos > m_totalSize) {
-        return false;
-    }
+    ASSERT(QIODevice::seek(pos));
+    ASSERT(pos <= m_totalSize)
 
     if (pos == m_currentPos) {
         return true;
     }
 
-    setChunk(&(*std::find_if(m_chunks.begin(), m_chunks.end(),
-        [pos](const Chunk& ch) { return (ch.startPos + ch.size > pos); })));
+    if (m_chunks.size() > 1) {
+        setChunk(&(*std::find_if(m_chunks.begin(), m_chunks.end(),
+            [pos](const Chunk& ch) { return (ch.startPos + ch.size > pos); })));
+    }
 
     m_bytesLeftChunk = m_currentChunk->size - (pos - m_currentChunk->startPos);
-    m_input->seek(m_currentChunk->start + (pos - m_currentChunk->startPos));
+    ASSERT(m_input->seek(m_currentChunk->start + (pos - m_currentChunk->startPos)));
     m_currentPos = pos;
+
     return true;
 }

@@ -226,9 +226,7 @@ QVector<QVector<QStandardItem*>> NaoQt::discoverDirectory(QString& dir) {
 
         m_fsmodel->setHeaderData(3, Qt::Horizontal, "Compressed");
 
-        m_isInCpk = true;
-
-        if (m_cpkFile.fileName() != parts.mid(0, part + 1).join(QDir::separator())) {
+        if (!m_isInCpk) {
             if (m_cpkFile.isOpen()) {
                 m_cpkFile.close();
             }
@@ -243,6 +241,8 @@ QVector<QVector<QStandardItem*>> NaoQt::discoverDirectory(QString& dir) {
             m_cpkDirContents.append("..");
             m_cpkDirContents.sort(Qt::CaseInsensitive);
         }
+
+        m_isInCpk = true;
 
         QString subdir = parts.mid(part + 1).join("/");
 
@@ -261,7 +261,7 @@ QVector<QVector<QStandardItem*>> NaoQt::discoverDirectory(QString& dir) {
             row[0]->setData(true, IsFolderRole);
 
             row[1] = new QStandardItem("");
-            row[2] = new QStandardItem("");
+            row[2] = new QStandardItem("Directory");
             row[3] = new QStandardItem("");
 
             ret.push_back(row);
@@ -315,7 +315,7 @@ QVector<QVector<QStandardItem*>> NaoQt::discoverDirectory(QString& dir) {
             row[0] = new QStandardItem(item.fileName());
             row[0]->setData(item.isDir(), IsFolderRole);
 
-            row[1] = new QStandardItem(item.isDir() ? "" : Utils::getShortSize(item.size()));
+            row[1] = new QStandardItem(item.isDir() ? "Directory" : Utils::getShortSize(item.size()));
             row[1]->setData(item.isDir() ? -1 : item.size(), ItemSizeRole);
 
             row[2] = new QStandardItem(Utils::ucFirst(getFileDescription(item, mime)));
@@ -501,8 +501,6 @@ void NaoQt::viewContextMenu(const QPoint& pos) {
         QString targetDir = row.at(0)->text();
 
         QAction* openFolderAct = new QAction("Open", ctxMenu);
-        
-
         connect(openFolderAct, &QAction::triggered, this, [this, targetDir]() {
             changePath(Utils::cleanDirPath(m_pathDisplay->text() + targetDir));
         });
@@ -526,7 +524,7 @@ void NaoQt::viewContextMenu(const QPoint& pos) {
 
             ctxMenu->addAction(extractCpkFolderAct);
         }
-    } else if(row.at(0)->text().endsWith(".usm")) {
+    } else if (row.at(0)->text().endsWith(".usm")) {
         QAction* playFileAct = new QAction("Play", ctxMenu);
         QAction* saveAsAct = new QAction("Save as", ctxMenu);
         QAction* showInExplorerAct = new QAction("Open in Explorer", ctxMenu);
@@ -545,12 +543,36 @@ void NaoQt::viewContextMenu(const QPoint& pos) {
             QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text()));
         });
         connect(showInExplorerAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
-        
+
 
         ctxMenu->addAction(playFileAct);
         ctxMenu->addAction(saveAsAct);
         ctxMenu->addSeparator();
         ctxMenu->addAction(showInExplorerAct);
+    } else if (row.at(0)->text().endsWith(".cpk")) {
+        QString targetFile = row.at(0)->text();
+
+        QAction* openArchiveAct = new QAction("Open", ctxMenu);
+        connect(openArchiveAct, &QAction::triggered, this, [this, targetFile]() {
+            changePath(Utils::cleanDirPath(m_pathDisplay->text() + targetFile));
+        });
+        connect(openArchiveAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
+        ctxMenu->addAction(openArchiveAct);
+
+        QAction* extractCpkFolderAct = new QAction("Extract to...", this);
+        connect(extractCpkFolderAct, &QAction::triggered, this, [this, targetFile]() {
+            this->extractCpk(m_pathDisplay->text() + targetFile);
+        });
+        connect(extractCpkFolderAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
+        ctxMenu->addAction(extractCpkFolderAct);
+
+        QAction* openInExplorerAct = new QAction("Open in Explorer", ctxMenu);
+        connect(openInExplorerAct, &QAction::triggered, this, [this]() {
+            QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text()));
+        });
+        connect(openInExplorerAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
+
+        ctxMenu->addAction(openInExplorerAct);
     } else if (!m_isInCpk) {
         QAction* openFileAct = new QAction("Open", ctxMenu);
         QAction* showInExplorerAct = new QAction("Open containing folder", ctxMenu);
@@ -606,19 +628,21 @@ void NaoQt::extractCpkFile(const QString& source, QString target) {
             return;
         }
 
-        file->seek(0);
+        if (!file->seek(0)) {
+            QMessageBox::critical(this, "Fatal error", "Could not seek in input file");
+
+            return;
+        }
 
         CPKReader::FileInfo inf = m_cpkReader->fileInfo(subpath);
-        // TODO data000.cpk/effects/cubemap/001.wtp decompresses incorrectly
-        qDebug() << inf.size << inf.extractedSize << file->size();
 
         QFile output(target);
         output.open(QIODevice::WriteOnly);
 
         if (info.size != info.extractedSize) {
-            qDebug() << output.write(CPKReader::decompressCRILAYLA(file->read(info.size)));
+            output.write(CPKReader::decompressCRILAYLA(file->read(info.size)));
         } else {
-            qDebug() << output.write(file->read(info.size));
+            output.write(file->read(info.size));
         }
 
         output.close();
@@ -653,8 +677,6 @@ void NaoQt::extractCpkFolder(const QString& dir) {
                     + QDir::separator() + file.dir + QDir::separator() + file.name);
                 QString targetPath = Utils::cleanFilePath(outdir.absolutePath() + QDir::separator() +
                     file.dir.remove(0, (parts.mid(part + 1).join('/') + dir).length()) + QDir::separator() + file.name);
-
-                qDebug() << "Extracting:\n" << sourcePath << "\n\nTo:\n" << targetPath;
                 
                 (void) outdir.mkpath(targetPath.mid(0, targetPath.lastIndexOf(QDir::separator())));
 
@@ -664,6 +686,62 @@ void NaoQt::extractCpkFolder(const QString& dir) {
     }
 }
 
+void NaoQt::extractCpk(const QString& file) {
+    // TODO progress bar
+
+    QString target = QFileDialog::getExistingDirectory(this, "Extract archive", file);
+
+    if (!target.isEmpty()) {
+        QString basePath = file;
+        basePath.replace('.', '_');
+
+        QDir outdir(basePath + QDir::separator());
+
+        if (outdir.exists()) {
+            if (QMessageBox::question(this, "Confirm overwrite",
+                "Directory already exists, overwrite any duplicate files?",
+                QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::No) {
+                return;
+            }
+        }
+
+        (void) outdir.mkpath(basePath);
+
+        QFile cpkFile(file);
+        cpkFile.open(QIODevice::ReadOnly);
+
+        CPKReader* reader = new CPKReader(&cpkFile);
+
+        for (const QString& dir : reader->dirs()) {
+            (void) outdir.mkpath(Utils::cleanDirPath(basePath + QDir::separator() + dir));
+        }
+
+        for (const CPKReader::FileInfo& entry : reader->fileInfo()) {
+            QString subpath = entry.dir + (entry.dir.isEmpty() ? "" : "/") + entry.name;
+            QString targetPath = Utils::cleanFilePath(basePath + QDir::separator() + subpath);
+
+            ChunkBasedFile* entryFile = reader->file(subpath);
+
+            if (!entryFile || !entryFile->seek(0)) {
+                break;
+            }
+
+            QFile output(targetPath);
+            output.open(QIODevice::WriteOnly);
+
+            if (entry.size != entry.extractedSize) {
+                output.write(CPKReader::decompressCRILAYLA(entryFile->read(entry.size)));
+            } else {
+                output.write(entryFile->read(entry.size));
+            }
+
+            output.close();
+        }
+
+        delete reader;
+        cpkFile.close();
+    }
+}
 
 
 

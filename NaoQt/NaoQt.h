@@ -59,6 +59,7 @@ class NaoQt : public QMainWindow {
 
     void extractCpkFile(const QString& source, QString target = QString());
     void extractCpkFolder(const QString& dir);
+    void extractCpk(const QString& file);
 
     private:
     void setupMenuBar();

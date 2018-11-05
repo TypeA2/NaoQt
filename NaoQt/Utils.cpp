@@ -70,13 +70,14 @@ namespace Utils {
     QString sanitizeFileName(QString& fname) {
         // because Platinum Games thinks : is valid for filenames
 
-        const QString illegalChars = R"(\\/:?"<>|)";
+        const QString illegalChars = R"(\\/:?"'<>|)";
 
         for (QString::iterator it = fname.begin();
                 it != fname.end(); ++it) {
 
-            if (illegalChars.contains(*it))
+            if (illegalChars.contains(*it)) {
                 *it = '_';
+            }
         }
 
         return fname;

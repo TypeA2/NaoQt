@@ -69,14 +69,11 @@ void CPKReader::init() {
 
             m_fileInfo.insert((!entry.dir.isEmpty() ? entry.dir + "/" : "") + entry.name, entry);
 
-            QVector<ChunkBasedFile::Chunk> chunk;
-            chunk.append({
+            ChunkBasedFile* embeddedFile = new ChunkBasedFile({
                 static_cast<qint64>(entry.offset + entry.extraOffset),
                 static_cast<qint64>(entry.size),
                 0
-            });
-
-            ChunkBasedFile* embeddedFile = new ChunkBasedFile(chunk, m_input);
+                }, m_input);
             
             embeddedFile->open(QIODevice::ReadOnly);
 
@@ -99,8 +96,6 @@ QByteArray CPKReader::decompressCRILAYLA(const QByteArray& file) {
 
     quint32 uncompressedSize = qFromLittleEndian<quint32>(file.mid(8, 4));
     quint32 uncompressedHeaderOffset = qFromLittleEndian<quint32>(file.mid(12, 4));
-
-    qDebug() << uncompressedSize;
     
     result = QByteArray(uncompressedSize + 256, '\0');
     result.replace(0, 256, file.mid(uncompressedHeaderOffset + 16, 256));

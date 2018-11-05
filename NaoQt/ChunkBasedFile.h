@@ -29,15 +29,18 @@ class ChunkBasedFile : public QIODevice {
         return output;
     }
 
-    ChunkBasedFile(QVector<Chunk>& chunks, QIODevice* input, QObject* parent = nullptr);
-
+    ChunkBasedFile(const QVector<Chunk>& chunks, QIODevice* input, QObject* parent = nullptr);
+    ChunkBasedFile(const Chunk& chunk, QIODevice* input, QObject* parent = nullptr);
 
     bool open(OpenMode mode) override;
     void close() override;
     bool isSequential() const override { return false; }
-    bool seek(qint64 pos) override ;
+    bool seek(qint64 pos) override;
     qint64 pos() const override { return m_currentPos; }
     qint64 size() const override { return m_totalSize; }
+    QIODevice* device() const { return m_input; }
+    const QVector<Chunk>& chunks() const { return m_chunks; }
+    const Chunk& currentChunk() const { return *m_currentChunk; }
 
     protected:
     qint64 readData(char* data, qint64 maxSize) override;
