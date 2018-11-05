@@ -56,8 +56,8 @@ void NaoQt::setupModel() {
     m_fsmodel->setHeaderData(1, Qt::Horizontal, "Size");
     m_fsmodel->setHeaderData(2, Qt::Horizontal, "Type");
     m_fsmodel->setHeaderData(3, Qt::Horizontal, "Date");
-    QString root = "F:\\Games\\NieRAutomata\\data";//Steam::getGamePath("NieRAutomata",
-        //QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0)) + "/data";
+    QString root = Steam::getGamePath("NieRAutomata",
+        QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0)) + "/data";
 
     m_view = new QTreeView(m_centralWidget);
     m_view->setModel(m_fsmodel);
