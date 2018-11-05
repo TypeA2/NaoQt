@@ -323,7 +323,8 @@ bool AVConverter::remux(QIODevice* output, VideoContainerFormat fmt) {
                 [](USMDemuxer::Chunk c) -> qint64 { return c.offset + c.headerSize + 8; },
                 [](USMDemuxer::Chunk c) -> qint64 { return c.size - c.headerSize - c.footerSize; });
         ChunkBasedFile* videoCbf = new ChunkBasedFile(videoCbfChunks, m_input, this);
-        videoCbf->open(QIODevice::ReadOnly);
+        ASSERT(videoCbf->open(QIODevice::ReadOnly));
+        ASSERT(videoCbf->seek(0));
 
         if (m_canceled) {
             usmDemuxer->deleteLater();

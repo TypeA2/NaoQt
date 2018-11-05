@@ -56,8 +56,8 @@ void NaoQt::setupModel() {
     m_fsmodel->setHeaderData(1, Qt::Horizontal, "Size");
     m_fsmodel->setHeaderData(2, Qt::Horizontal, "Type");
     m_fsmodel->setHeaderData(3, Qt::Horizontal, "Date");
-    QString root = Steam::getGamePath("NieRAutomata",
-        QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0)) + "/data";
+    QString root = "F:\\Games\\NieRAutomata\\data";//Steam::getGamePath("NieRAutomata",
+        //QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0)) + "/data";
 
     m_view = new QTreeView(m_centralWidget);
     m_view->setModel(m_fsmodel);
@@ -708,10 +708,10 @@ void NaoQt::extractCpk(const QString& file) {
 
         (void) outdir.mkpath(basePath);
 
-        QFile cpkFile(file);
-        cpkFile.open(QIODevice::ReadOnly);
+        QFile* cpkFile = new QFile(file);
+        cpkFile->open(QIODevice::ReadOnly);
 
-        CPKReader* reader = new CPKReader(&cpkFile);
+        CPKReader* reader = new CPKReader(cpkFile);
 
         for (const QString& dir : reader->dirs()) {
             (void) outdir.mkpath(Utils::cleanDirPath(basePath + QDir::separator() + dir));
@@ -730,16 +730,44 @@ void NaoQt::extractCpk(const QString& file) {
             this, Qt::WindowCloseButtonHint);
         m_cpkExtractionProgress->setMinimumWidth(320);
 
+        m_cancelCpkExtraction = false;
+
+        connect(m_cpkExtractionProgress, &QProgressDialog::canceled, this, [this]() {
+            m_cancelCpkExtraction = true;
+        });
         
         m_cpkExtractionProgress->show();
 
-        delete reader;
-        cpkFile.close();
+        m_cpkExtractionProgressCon = connect(this, &NaoQt::extractCpkProgress, this, &NaoQt::extractCpkProgressHandler);
+
+        QFutureWatcher<void>* watcher = new QFutureWatcher<void>(this);
+
+        connect(watcher, &QFutureWatcher<void>::finished, this, [this, watcher, reader, cpkFile]() {
+            m_cpkExtractionProgress->close();
+
+
+
+            disconnect(m_cpkExtractionProgressCon);
+
+            m_cpkExtractionProgress->deleteLater();
+
+            delete reader;
+            cpkFile->close();
+
+            watcher->deleteLater();
+        });
+
+        watcher->setFuture(QtConcurrent::run(this, &NaoQt::extractCpkImpl, basePath, reader));
+        
     }
 }
 
 void NaoQt::extractCpkImpl(const QString& basePath, CPKReader* reader) {
     for (const CPKReader::FileInfo& entry : reader->fileInfo()) {
+        if (m_cancelCpkExtraction) {
+            break;
+        }
+
         QString subpath = entry.dir + (entry.dir.isEmpty() ? "" : "/") + entry.name;
         QString targetPath = Utils::cleanFilePath(basePath + QDir::separator() + subpath);
 

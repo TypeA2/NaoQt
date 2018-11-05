@@ -48,7 +48,6 @@ bool ChunkBasedFile::open(OpenMode mode) {
 }
 
 void ChunkBasedFile::close() {
-    m_input->close();
     setOpenMode(NotOpen);
 }
 

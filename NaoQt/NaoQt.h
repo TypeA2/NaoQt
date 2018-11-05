@@ -111,6 +111,7 @@ class NaoQt : public QMainWindow {
     bool m_isInCpk;
     QProgressDialog* m_cpkExtractionProgress;
     bool m_cancelCpkExtraction;
+    QMetaObject::Connection m_cpkExtractionProgressCon;
 
     enum FileInfoRole {
         IsFolderRole = Qt::UserRole + 1,
