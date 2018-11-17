@@ -21,6 +21,9 @@ namespace Utils {
     // Cleanup file path
     QString cleanFilePath(QString str);
 
+    // Cleanup generic path
+    QString cleanGenericPath(QString str);
+
     // Round up a to a multiple of b
     template <typename T, typename M>
     typename std::enable_if<std::is_integral<T>::value, T>::type roundUp(T a, M b) {

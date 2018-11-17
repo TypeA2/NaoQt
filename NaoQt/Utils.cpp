@@ -11,32 +11,32 @@ namespace Utils {
         // bitshift by n * 10 to divide by 1024^n, then divide by 1024. to get a float value with 3 decimals.
 
         if (size > 0x1000000000000000) {
-            return QString("%0 Ei%1").arg((size >> 50) / 1024., 0, 'f', 3)
+            return QString("%0 Ei%1").arg((size >> 50) / 1024., 0, 'f', 1)
                 .arg(bits ? "bit" : "B");
         }
         
         if (size > 0x4000000000000) {
-            return QString("%0 Pi%1").arg((size >> 40) / 1024., 0, 'f', 3)
+            return QString("%0 Pi%1").arg((size >> 40) / 1024., 0, 'f', 1)
                 .arg(bits ? "bit" : "B");
         }
         
         if (size > 0x10000000000) {
-            return QString("%0 Ti%1").arg((size >> 30) / 1024., 0, 'f', 3)
+            return QString("%0 Ti%1").arg((size >> 30) / 1024., 0, 'f', 1)
                 .arg(bits ? "bit" : "B");
         }
         
         if (size > 0x40000000) {
-            return QString("%0 Gi%1").arg((size >> 20) / 1024., 0, 'f', 3)
+            return QString("%0 Gi%1").arg((size >> 20) / 1024., 0, 'f', 1)
                 .arg(bits ? "bit" : "B");
         }
         
         if (size > 0x100000) {
-            return QString("%0 Mi%1").arg((size >> 10) / 1024., 0, 'f', 3)
+            return QString("%0 Mi%1").arg((size >> 10) / 1024., 0, 'f', 1)
                 .arg(bits ? "bit" : "B");
         }
         
         if (size > 0x400) {
-            return QString("%0 Ki%1").arg(size / 1024., 0, 'f', 3)
+            return QString("%0 Ki%1").arg(size / 1024., 0, 'f', 1)
                 .arg(bits ? "bit" : "B");
         }
 
@@ -117,6 +117,10 @@ namespace Utils {
         }
 
         return str;
+    }
+
+    QString cleanGenericPath(QString str) {
+        return cleanFilePath(str);
     }
 }
 

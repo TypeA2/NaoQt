@@ -46,6 +46,18 @@
     <Filter Include="Source Files\Wrappers">
       <UniqueIdentifier>{723c7fae-7d44-487e-b6cb-8a639333c8b4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Entities">
+      <UniqueIdentifier>{aa612147-993f-43ce-8a3f-129bef66070a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Entities">
+      <UniqueIdentifier>{cf0ef44c-4aae-4406-aef5-6055ffc7c754}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Devices">
+      <UniqueIdentifier>{310ae94b-847f-413a-a185-342dd79d9da6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Devices">
+      <UniqueIdentifier>{1b82ca91-0b43-43d5-8132-2344a7e3d567}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -81,6 +93,27 @@
     <ClCompile Include="CPKReader.cpp">
       <Filter>Source Files\Decoders</Filter>
     </ClCompile>
+    <ClCompile Include="DATReader.cpp">
+      <Filter>Source Files\Decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="NaoFSP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectoryEntity.cpp">
+      <Filter>Source Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="DiskFileDevice.cpp">
+      <Filter>Source Files\Devices</Filter>
+    </ClCompile>
+    <ClCompile Include="DiskFileEntity.cpp">
+      <Filter>Source Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="NaoEntity.cpp">
+      <Filter>Source Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="NaoFileDevice.cpp">
+      <Filter>Source Files\Devices</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="NaoQt.h">
@@ -104,6 +137,9 @@
     <QtMoc Include="AVOptionsDialog.h">
       <Filter>Header Files\Wrappers</Filter>
     </QtMoc>
+    <QtMoc Include="NaoFSP.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="NaoQt.rc">
@@ -125,6 +161,24 @@
     </ClInclude>
     <ClInclude Include="CPKReader.h">
       <Filter>Header Files\Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="DATReader.h">
+      <Filter>Header Files\Decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectoryEntity.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="NaoFileDevice.h">
+      <Filter>Header Files\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="NaoEntity.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="DiskFileDevice.h">
+      <Filter>Header Files\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="DiskFileEntity.h">
+      <Filter>Header Files\Entities</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
