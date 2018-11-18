@@ -114,6 +114,12 @@
     <ClCompile Include="NaoFileDevice.cpp">
       <Filter>Source Files\Devices</Filter>
     </ClCompile>
+    <ClCompile Include="PartialFileDevice.cpp">
+      <Filter>Source Files\Devices</Filter>
+    </ClCompile>
+    <ClCompile Include="CPKArchiveEntity.cpp">
+      <Filter>Source Files\Entities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="NaoQt.h">
@@ -178,6 +184,12 @@
       <Filter>Header Files\Devices</Filter>
     </ClInclude>
     <ClInclude Include="DiskFileEntity.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="PartialFileDevice.h">
+      <Filter>Header Files\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="CPKArchiveEntity.h">
       <Filter>Header Files\Entities</Filter>
     </ClInclude>
   </ItemGroup>

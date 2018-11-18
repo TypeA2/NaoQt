@@ -2,7 +2,7 @@
 
 #include "NaoFileDevice.h"
 
-class QFile;
+#include <QFile>
 
 class DiskFileDevice : public NaoFileDevice {
     public:
@@ -16,6 +16,6 @@ class DiskFileDevice : public NaoFileDevice {
     qint64 size() const override;
 
     private:
-    QFile* m_device;
+    QFile m_device;
 };
 

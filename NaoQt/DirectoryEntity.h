@@ -22,4 +22,3 @@ class DirectoryEntity : public NaoEntity {
 
     QVector<NaoEntity*> m_cachedContents;
 };
-

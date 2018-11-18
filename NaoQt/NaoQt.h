@@ -3,19 +3,14 @@
 #include <QMainWindow>
 #include <QLineEdit>
 #include <QTimer>
-#include <QDir>
 #include <QMimeType>
 
 #include "AVConverter.h"
-#include "CPKReader.h"
 
-class QStandardItemModel;
 class QVBoxLayout;
 class QPushButton;
-class QTreeView;
-class QStandardItem;
-class QProgressDialog;
-class AVOptionsDialog;
+class QTreeWidget;
+class QTreeWidgetItem;
 class NaoFSP;
 
 class NaoLineEdit : public QLineEdit {
@@ -39,18 +34,17 @@ class NaoQt : public QMainWindow {
     NaoQt();
     ~NaoQt();
 
-    signals:
+    //signals:
     //void disassemblyProgress(qint64 progress);
     //void extractCpkProgress(const QString& file, quint64 read, quint64 write);
     //void extractCpkError(QString message);
 
     private slots:
-    //void openFile() {}
     void openFolder();
     void sortColumn(int index, Qt::SortOrder order);
     void pathDisplayChanged();
     void refreshView();
-    void viewInteraction(const QModelIndex& index);
+    void viewInteraction(QTreeWidgetItem* item, int column);
     void viewContextMenu(const QPoint& pos);
 
     void changePath(const QString& path);
@@ -72,9 +66,7 @@ class NaoQt : public QMainWindow {
     void setupMenuBar();
     void setupModel();
 
-    //static QString getFileDescription(const QFileInfo &info, const QMimeType& mime = QMimeType());
-
-    //QVector<QStandardItem*> getRow(const QModelIndex& index);
+    void _pathChangeCleanup();
 
     //QVector<QVector<QStandardItem*>> discoverDirectory(QString& dir);
 
@@ -91,8 +83,7 @@ class NaoQt : public QMainWindow {
     QString m_tempdir;
     QString m_prevPath;
 
-    QStandardItemModel* m_fsmodel;
-    QTreeView* m_view;
+    QTreeWidget* m_view;
 
     QWidget* m_centralWidget;
     QVBoxLayout* m_centralLayout;
@@ -122,6 +113,8 @@ class NaoQt : public QMainWindow {
         IsFolderRole = Qt::UserRole + 1,
         ItemSizeRole,
         MimeTypeRole,
-        LastModifiedRole
+        LastModifiedRole,
+
+        EntityRole
     };
 };

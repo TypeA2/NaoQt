@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QVector>
+#include <QDateTime>
+#include <QVariant>
 
 class NaoFileDevice;
 
@@ -16,6 +18,7 @@ class NaoEntity {
 
     virtual NaoFileDevice* device() = 0;
 
+    virtual QDateTime lastModified() const { return QDateTime(); }
     virtual QString fullpath() const { return _m_fullPath; };
     virtual QString name() const { return _m_name; };
 
@@ -23,3 +26,5 @@ class NaoEntity {
     QString _m_fullPath;
     QString _m_name;
 };
+
+Q_DECLARE_METATYPE(NaoEntity*)

@@ -6,19 +6,25 @@
 
 class DiskFileDevice;
 
-class DiskFileEntity : public NaoEntity {
+class CPKArchiveEntity : public NaoEntity {
     public:
-    DiskFileEntity(const QString& path);
-    ~DiskFileEntity() override;
+    CPKArchiveEntity(const QString& path);
+    ~CPKArchiveEntity() override;
 
     bool hasChildren() override;
     QVector<NaoEntity*> children() override;
 
     NaoFileDevice* device() override;
 
-    QDateTime lastModified() const override;
+    
 
     private:
+
+    QVector<NaoEntity*> _getContents();
+
+    QFileInfo m_thisFile;
     DiskFileDevice* m_device;
-    QFileInfo m_info;
+
+    QVector<NaoEntity*> m_cachedContents;
 };
+

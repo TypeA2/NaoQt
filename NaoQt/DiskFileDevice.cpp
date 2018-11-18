@@ -3,15 +3,13 @@
 #include <QFile>
 
 DiskFileDevice::DiskFileDevice(const QString& path) {
-    m_device = new QFile(path);
+    m_device.setFileName(path);
 }
 
 DiskFileDevice::~DiskFileDevice() {
-    if (m_device->isOpen()) {
-        m_device->close();
+    if (m_device.isOpen()) {
+        m_device.close();
     }
-
-    m_device->deleteLater();
 }
 
 /* --===-- Public Members --===-- */
@@ -19,7 +17,7 @@ DiskFileDevice::~DiskFileDevice() {
 bool DiskFileDevice::open(OpenMode mode) {
     switch (mode) {
         case Read:
-            return m_device->open(QIODevice::ReadOnly);
+            return m_device.open(QIODevice::ReadOnly);
     }
 
     return false;
@@ -27,29 +25,29 @@ bool DiskFileDevice::open(OpenMode mode) {
 
 
 QByteArray DiskFileDevice::read(qint64 size) {
-    return m_device->read(size);
+    return m_device.read(size);
 }
 
 bool DiskFileDevice::seek(qint64 pos, SeekPos start) {
     switch (start) {
         case Beg:
-            return m_device->seek(pos);
+            return m_device.seek(pos);
         
         case Cur:
-            return m_device->seek(m_device->pos() + pos);
+            return m_device.seek(m_device.pos() + pos);
 
         case End:
-            return m_device->seek(m_device->size() - pos);
+            return m_device.seek(m_device.size() - pos);
     }
 
     return false;
 }
 
 qint64 DiskFileDevice::pos() const {
-    return m_device->pos();
+    return m_device.pos();
 }
 
 qint64 DiskFileDevice::size() const {
-    return m_device->size();
+    return m_device.size();
 }
 

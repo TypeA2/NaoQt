@@ -15,8 +15,10 @@ class NaoFSP : public QObject {
     void changePath(QString to);
     void changePath();
 
+    const QString& currentPath() const;
+    const NaoEntity* currentEntity() const;
     const QVector<NaoEntity*>& entities() const;
-
+    
     static QString getFileDescription(const QString& path);
     static QString getHighestDirectory(QString path);
 
@@ -28,11 +30,13 @@ class NaoFSP : public QObject {
 
     private:
 
+    void _pathChangeCleanup();
+
     void _changePathToDirectory(const QString& target);
 
     QString m_path;
 
-    NaoEntity* m_currentEntry;
+    NaoEntity* m_currentEntity;
 
     QVector<NaoEntity*> m_entities;
 };

@@ -14,7 +14,7 @@
 NaoFSP::NaoFSP(const QString& path, QObject* parent) : QObject(parent) {
     m_path = path;
 
-    m_currentEntry = nullptr;
+    m_currentEntity = nullptr;
 }
 
 NaoFSP::~NaoFSP() {
@@ -30,7 +30,11 @@ void NaoFSP::changePath() {
 }
 
 void NaoFSP::changePath(QString to) {
+    _pathChangeCleanup();
+
     to = Utils::cleanGenericPath(to);
+
+    qDebug() << "Changing path to" << to;
 
     QString targetDir = getHighestDirectory(to);
 
@@ -48,20 +52,42 @@ void NaoFSP::changePath(QString to) {
     watcher->setFuture(future);
 }
 
+const NaoEntity* NaoFSP::currentEntity() const {
+    return const_cast<const NaoEntity*>(m_currentEntity);
+}
+
+
 const QVector<NaoEntity*>& NaoFSP::entities() const {
     return m_entities;
 }
 
 /* --===-- Private Members --===-- */
 
+void NaoFSP::_pathChangeCleanup() {
+    //for (NaoEntity* entity : m_entities) {
+    //    delete entity;
+    //}
+
+    //m_entities.clear();
+
+    delete m_currentEntity;
+    
+}
+
+
 void NaoFSP::_changePathToDirectory(const QString& target) {
     DirectoryEntity* dirEnt = new DirectoryEntity(target);
 
-    m_currentEntry = dirEnt;
+    m_currentEntity = dirEnt;
 
     m_entities = dirEnt->children();
 
 }
+
+const QString& NaoFSP::currentPath() const {
+    return m_path;
+}
+
 
 /* --===-- Private Slots --===-- */
 

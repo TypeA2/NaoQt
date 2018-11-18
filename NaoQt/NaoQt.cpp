@@ -1,30 +1,23 @@
 #include "NaoQt.h"
 
 #include <QMenuBar>
-#include <QTreeView>
-#include <QStandardItemModel>
 #include <QFileIconProvider>
 #include <QVector>
 #include <QHeaderView>
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QFileDialog>
+#include <QTreeWidget>
 #include <QDesktopServices>
-#include <QMessageBox>
-#include <QProgressDialog>
 
 #include <QtConcurrent>
 
 #include "NaoFSP.h"
 
-#include <Zydis/Zydis.h>
-
 #include "Utils.h"
 
 #include "NaoEntity.h"
 #include "NaoFileDevice.h"
-#include "USMDemuxer.h"
-#include "ChunkBasedFile.h"
 
 NaoQt::NaoQt() {
 
@@ -67,26 +60,18 @@ void NaoQt::setupModel() {
     m_pathDisplay = new NaoLineEdit(m_centralWidget);
     m_browsePath = new QPushButton(" Browse", m_centralWidget);
 
-    m_fsmodel = new QStandardItemModel(0, 4, m_centralWidget);
-    m_fsmodel->setHeaderData(0, Qt::Horizontal, "Name");
-    m_fsmodel->setHeaderData(1, Qt::Horizontal, "Size");
-    m_fsmodel->setHeaderData(2, Qt::Horizontal, "Type");
-    m_fsmodel->setHeaderData(3, Qt::Horizontal, "Date");
-
-    m_view = new QTreeView(m_centralWidget);
-    m_view->setModel(m_fsmodel);
+    m_view = new QTreeWidget(m_centralWidget);
+    m_view->setColumnCount(4);
     m_view->setEditTriggers(QTreeView::NoEditTriggers); // Non-editable
     m_view->setRootIsDecorated(false); // Remove the caret
     m_view->setContextMenuPolicy(Qt::CustomContextMenu);
     m_view->setUniformRowHeights(true);
     m_view->setAnimated(false);
     m_view->setItemsExpandable(false);
+    m_view->setHeaderLabels({ "Name", "Size", "Type", "Modified" });
 
-    //m_isInCpk = false;
-    // changePath(root);
-
-    connect(m_view, &QTreeView::doubleClicked, this, &NaoQt::viewInteraction);
-    connect(m_view, &QTreeView::customContextMenuRequested, this, &NaoQt::viewContextMenu);
+    connect(m_view, &QTreeWidget::itemDoubleClicked, this, &NaoQt::viewInteraction);
+    connect(m_view, &QTreeWidget::customContextMenuRequested, this, &NaoQt::viewContextMenu);
 
     QHeaderView* headerView = m_view->header();
 
@@ -125,18 +110,15 @@ void NaoQt::setupMenuBar() {
 
     QMenuBar* menu = new QMenuBar(this);
     QMenu* fileMenu = new QMenu("File", menu);
-    //QAction* openFileAct = new QAction("Open file");
     QAction* openFolderAct = new QAction("Open folder");
     QAction* exitAppAct = new QAction("Exit");
 
-    //connect(openFileAct, &QAction::triggered, this, &NaoQt::openFile);
     connect(openFolderAct, &QAction::triggered, this, &NaoQt::openFolder);
     connect(exitAppAct, &QAction::triggered, this, &QMainWindow::close);
 
     openFolderAct->setShortcuts(QKeySequence::Open);
     exitAppAct->setShortcuts(QKeySequence::Quit);
 
-    //fileMenu->addAction(openFileAct);
     fileMenu->addAction(openFolderAct);
     fileMenu->addSeparator();
     fileMenu->addAction(exitAppAct);
@@ -145,6 +127,14 @@ void NaoQt::setupMenuBar() {
 
     this->setMenuBar(menu);
 }
+
+void NaoQt::_pathChangeCleanup() {
+    //if (m_fsmodel->rowCount() > 0) {
+       // m_fsmodel->removeRows(0, m_fsmodel->rowCount());
+    //}
+    m_view->clear();
+}
+
 
 /* --===-- Private Slots --===-- */
 
@@ -162,27 +152,29 @@ void NaoQt::openFolder() {
 
 void NaoQt::sortColumn(int index, Qt::SortOrder order) {
 
-    QVector<QList<QStandardItem* >> dirs;
-    QVector<QList<QStandardItem* >> files;
+    QVector<QTreeWidgetItem*> dirs;
+    QVector<QTreeWidgetItem*> files;
 
     // Leave the first row alone if it's the ".." folder
-    int start = (m_fsmodel->data(m_fsmodel->index(0, 0), Qt::DisplayRole).toString() == "..") ? 1 : 0;
+    //int start = (m_fsmodel->data(m_fsmodel->index(0, 0), Qt::DisplayRole).toString() == "..") ? 1 : 0;
+    int start = (m_view->itemAt(0, 0)->text(0) == "..") ? 1 : 0;
 
-    while (m_fsmodel->rowCount() > start) {
-        QList<QStandardItem* > row = m_fsmodel->takeRow(start);
+    while (m_view->topLevelItemCount() > start) {
+        //QList<QStandardItem* > row = m_fsmodel->takeRow(start);
+        QTreeWidgetItem* row = m_view->takeTopLevelItem(start);
 
-        if (row.at(0)->data(IsFolderRole).toBool()) {
+        if (row->data(0, IsFolderRole).toBool()) {
             dirs.push_back(row);
         } else {
             files.push_back(row);
         }
     }
 
-    std::sort(dirs.begin(), dirs.end(), [&index](QList<QStandardItem* > a, QList<QStandardItem* > b) -> bool {
+    std::sort(dirs.begin(), dirs.end(), [&index](QTreeWidgetItem* a, QTreeWidgetItem* b) -> bool {
 
         if (index == 3) { // Folders do support last modified date sorting
-            QDateTime dateA = a.at(3)->data(LastModifiedRole).toDateTime();
-            QDateTime dateB = b.at(3)->data(LastModifiedRole).toDateTime();
+            QDateTime dateA = a->data(3, LastModifiedRole).toDateTime();
+            QDateTime dateB = b->data(3, LastModifiedRole).toDateTime();
 
             // Sort by last modified date if not equal
             if (dateA != dateB) {
@@ -190,30 +182,31 @@ void NaoQt::sortColumn(int index, Qt::SortOrder order) {
             }
         }
 
-        return a.at(0)->text().compare(b.at(0)->text(), Qt::CaseInsensitive) < 0;
+        //return a.at(0)->text().compare(b.at(0)->text(), Qt::CaseInsensitive) < 0;
+        return a->text(0).compare(b->text(0), Qt::CaseInsensitive) < 0;
     });
 
-    std::sort(files.begin(), files.end(), [&index](QList<QStandardItem* > a, QList<QStandardItem* > b) -> bool {
+    std::sort(files.begin(), files.end(), [&index](QTreeWidgetItem* a, QTreeWidgetItem*  b) -> bool {
 
         if (index == 1) { // Sort by size
-            qint64 sizeA = a.at(1)->data(ItemSizeRole).toLongLong();
-            qint64 sizeB = b.at(1)->data(ItemSizeRole).toLongLong();
+            qint64 sizeA = a->data(1, ItemSizeRole).toLongLong();
+            qint64 sizeB = b->data(1, ItemSizeRole).toLongLong();
 
             // Sort by size if not equal
             if (sizeA != sizeB) {
                 return sizeA > sizeB;
             }
         } else if (index == 2) { // Sort by type
-            QString typeA = a.at(2)->text();
-            QString typeB = b.at(2)->text();
+            QString typeA = a->text(2);
+            QString typeB = b->text(2);
 
             // Sort by type if not equal
             if (typeA != typeB) {
                 return typeA.compare(typeB, Qt::CaseInsensitive) < 0;
             }
         } else if (index == 3) { // Sort by last modified date
-            QDateTime dateA = a.at(3)->data(LastModifiedRole).toDateTime();
-            QDateTime dateB = b.at(3)->data(LastModifiedRole).toDateTime();
+            QDateTime dateA = a->data(3, LastModifiedRole).toDateTime();
+            QDateTime dateB = b->data(3, LastModifiedRole).toDateTime();
 
             // Sort by last modified date if not equal
             if (dateA != dateB) {
@@ -222,24 +215,24 @@ void NaoQt::sortColumn(int index, Qt::SortOrder order) {
         }
 
         // Fallback alphabetical sort
-        return a.at(0)->text().compare(b.at(0)->text(), Qt::CaseInsensitive) < 0;
+        return a->text(0).compare(b->text(0), Qt::CaseInsensitive) < 0;
     });
 
     if (order == Qt::AscendingOrder) {
         for (int i = dirs.size() - 1; i >= 0; --i) {
-            m_fsmodel->appendRow(dirs.at(i));
+            m_view->addTopLevelItem(dirs.at(i));
         }
 
         for (int i = files.size() - 1; i >= 0; --i) {
-            m_fsmodel->appendRow(files.at(i));
+            m_view->addTopLevelItem(files.at(i));
         }
     } else {
         for (int i = 0; i < dirs.size(); ++i) {
-            m_fsmodel->appendRow(dirs.at(i));
+            m_view->addTopLevelItem(dirs.at(i));
         }
 
         for (int i = 0; i < files.size(); ++i) {
-            m_fsmodel->appendRow(files.at(i));
+            m_view->addTopLevelItem(files.at(i));
         }
     }
 }
@@ -275,36 +268,14 @@ void NaoQt::refreshView() {
     changePath(m_pathDisplay->text());
 }
 
-void NaoQt::viewInteraction(const QModelIndex& index) {
+void NaoQt::viewInteraction(QTreeWidgetItem* item, int column) {
+    Q_UNUSED(column);
 
-    /*QVector<QStandardItem*> row = getRow(index);
-
-    if (row.at(0)->data(IsFolderRole).toBool()) {
-        changePath(m_pathDisplay->text() + row.at(0)->text());
-    } else if (row.at(2)->data(MimeTypeRole).toString() == "application/x-ms-dos-executable") {
-
-        this->disassembleBinary(m_pathDisplay->text() + row.at(0)->text());
-
+    if (item->data(0, EntityRole).value<NaoEntity*>()->hasChildren()) {
+        changePath(item->data(0, EntityRole).value<NaoEntity*>()->fullpath());
     } else {
-
-        QString fname = row.at(0)->text();
-
-        if (fname.endsWith(".usm")) {
-
-            this->deinterleaveVideo(m_pathDisplay->text() + fname,
-                Utils::cleanFilePath(m_tempdir + fname.mid(0, fname.length() - 4) + ".avi"),
-                AVConverter::ContainerFormat_AVI);
-        } else if (fname.endsWith(".cpk")) {
-
-            changePath(m_pathDisplay->text() + fname);
-
-        } else if (!m_isInCpk) {
-            if (!QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text() + fname))) {
-                QMessageBox::critical(this, "Error",
-                    QString("Failed opening file:\n\n%0").arg(m_pathDisplay->text() + fname));
-            }
-        }
-    }*/
+        QDesktopServices::openUrl(QUrl::fromLocalFile(item->data(0, EntityRole).value<NaoEntity*>()->fullpath()));
+    }
 }
 
 void NaoQt::viewContextMenu(const QPoint& pos) {
@@ -445,85 +416,40 @@ void NaoQt::viewContextMenu(const QPoint& pos) {
 void NaoQt::changePath(const QString& path) {
 
     m_fsp->changePath(path);
-    
-    /*
-    QDir rootDir(path);
-
-    QString prettyPath = Utils::cleanDirPath(rootDir.absolutePath());
-
-    m_pathDisplay->setText(prettyPath);
-    m_prevPath = prettyPath;
-
-    if (m_fsmodel->rowCount() > 0) {
-        m_fsmodel->removeRows(0, m_fsmodel->rowCount());
-    }
-
-    // Templates are a mistake
-    QFutureWatcher<QVector<QVector<QStandardItem*>>>* watcher = new QFutureWatcher<QVector<QVector<QStandardItem*>>>(this);
-
-    connect(watcher, &QFutureWatcher<QVector<QVector<QStandardItem*>>>::finished, this, [watcher, this, prettyPath]() {
-        QVector<QVector<QStandardItem*>> result = watcher->result();
-
-        QFileIconProvider ficonprovider;
-
-        for (const QVector<QStandardItem*>& row : result) {
-            m_fsmodel->appendRow(row.toList());
-
-            int newRow = m_fsmodel->rowCount() - 1;
-
-            if (row.at(0)->data(IsFolderRole).toBool()) {
-                m_fsmodel->item(newRow)->setIcon(ficonprovider.icon(QFileIconProvider::Folder));
-            } else {
-                m_fsmodel->item(newRow)->setIcon(ficonprovider.icon(row.at(0)->text()));
-            }
-
-        }
-
-        m_view->resizeColumnToContents(0);
-        m_view->resizeColumnToContents(1);
-        m_view->resizeColumnToContents(2);
-        m_view->resizeColumnToContents(3);
-
-        m_view->setFocus();
-
-        watcher->deleteLater();
-
-    });
-
-    watcher->setFuture(QtConcurrent::run(this, &NaoQt::discoverDirectory, prettyPath));*/
 
 }
 
 void NaoQt::fspPathChanged() {
+    _pathChangeCleanup();
+
     QFileIconProvider ficonprovider;
 
     QVector<NaoEntity*> entities = m_fsp->entities();
 
     for (NaoEntity* entity : entities) {
-        QVector<QStandardItem*> row(4);
+        QTreeWidgetItem* row = new QTreeWidgetItem(m_view);
 
-        row[0] = new QStandardItem(entity->name());
-        row[0]->setData(entity->hasChildren(), IsFolderRole);
+        row->setText(0, entity->name());
+        row->setData(0, EntityRole, QVariant::fromValue(entity));
+        row->setData(0, IsFolderRole, entity->hasChildren());
 
-        if (row[0]->data(IsFolderRole).toBool()) {
-            row[1] = new QStandardItem("");
-            row[2] = new QStandardItem("Directory");
-            row[3] = new QStandardItem("");
+        if (row->data(0, IsFolderRole).toBool()) {
+            row->setText(2, "Directory");
         } else {
-            row[1] = new QStandardItem(Utils::getShortSize(entity->device()->size()));
-            row[2] = new QStandardItem(NaoFSP::getFileDescription(entity->fullpath()));
-            row[3] = new QStandardItem("");
+            row->setText(1, Utils::getShortSize(entity->device()->size()));
+            row->setData(1, ItemSizeRole, entity->device()->size());
+            row->setText(2, NaoFSP::getFileDescription(entity->fullpath()));
+            row->setText(3, entity->lastModified().toString("yyyy-MM-dd hh:mm"));
+            row->setData(3, LastModifiedRole, entity->lastModified());
         }
 
-        m_fsmodel->appendRow(row.toList());
-
-        int newRow = m_fsmodel->rowCount() - 1;
-
-        if (row.at(0)->data(IsFolderRole).toBool()) {
-            m_fsmodel->item(newRow)->setIcon(ficonprovider.icon(QFileIconProvider::Folder));
+        if (row->data(0, IsFolderRole).toBool()) {
+            row->setIcon(0, ficonprovider.icon(QFileIconProvider::Folder));
         } else {
-            m_fsmodel->item(newRow)->setIcon(ficonprovider.icon(entity->name()));
+            row->setIcon(0, ficonprovider.icon(QFileInfo(entity->name())));
         }
+
+        m_view->addTopLevelItem(row);
 
     }
 
@@ -532,9 +458,10 @@ void NaoQt::fspPathChanged() {
     m_view->resizeColumnToContents(2);
     m_view->resizeColumnToContents(3);
 
+    m_pathDisplay->setText(m_fsp->currentEntity()->fullpath());
+
     m_view->setFocus();
 }
-
 
 /*
 QVector<QVector<QStandardItem*>> NaoQt::discoverDirectory(QString& dir) {
@@ -656,17 +583,6 @@ QVector<QVector<QStandardItem*>> NaoQt::discoverDirectory(QString& dir) {
     }
     
     return ret;
-}
-*/
-
-/*
-QVector<QStandardItem*> NaoQt::getRow(const QModelIndex& index) {
-    return {
-        m_fsmodel->item(index.row(), 0),
-        m_fsmodel->item(index.row(), 1),
-        m_fsmodel->item(index.row(), 2),
-        m_fsmodel->item(index.row(), 3)
-    };
 }
 */
 
@@ -1126,48 +1042,4 @@ QFileInfo NaoQt::disassembleBinaryImpl(const QFileInfo& input) {
     return ret;
 }
 
-
-
-QString NaoQt::getFileDescription(const QFileInfo &info, const QMimeType& mime) {
-
-    QString ext = info.suffix();
-
-    if (ext == "cpk") {
-        return "CPK archive";
-    }
-
-    if (ext == "usm") {
-        return "USM video";
-    }
-
-    if (ext == "enlMeta") {
-        return "Enlighten data";
-    }
-
-    if (ext == "bnk") {
-        return "Wwise SoundBank";
-    }
-
-    if (ext == "wem" || ext == "wsp") {
-        return "Wwise audio";
-    }
-
-    if (ext == "dat") {
-        return "DAT archive";
-    }
-
-    if (ext == "dtt") {
-        return "DAT texture archive";
-    }
-
-    if (ext == "wtp") {
-        return "DDS texture archive";
-    }
-
-    if (ext == "wtb") {
-        return "Model data";
-    }
-
-    return mime.isValid() ? mime.comment() : " ";
-}
 */
