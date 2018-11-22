@@ -1,30 +1,48 @@
 #pragma once
 
-#include "NaoEntity.h"
+#include "NaoArchiveEntity.h"
 
 #include <QFileInfo>
 
 class DiskFileDevice;
+class PartialFileDevice;
 
-class CPKArchiveEntity : public NaoEntity {
+class CPKArchiveEntity : public NaoArchiveEntity {
     public:
+
+    struct FileInfo {
+        QString origin;
+        QString name;
+        QString dir;
+        QString userString;
+        quint64 offset;
+        quint64 extraOffset;
+        quint64 size;
+        quint64 extractedSize;
+        quint32 id;
+    };
+
     CPKArchiveEntity(const QString& path);
     ~CPKArchiveEntity() override;
 
-    bool hasChildren() override;
     QVector<NaoEntity*> children() override;
+    QVector<NaoEntity*> children(const QString& of) override;
+    QVector<NaoEntity*> directories() override;
+    QVector<NaoEntity*> directories(const QString& of) ;
 
     NaoFileDevice* device() override;
 
-    
-
     private:
 
-    QVector<NaoEntity*> _getContents();
+    bool _readContents();
 
     QFileInfo m_thisFile;
     DiskFileDevice* m_device;
 
-    QVector<NaoEntity*> m_cachedContents;
+    //QVector<NaoEntity*> m_cachedContents;
+
+    QMap<QString, FileInfo> m_fileInfo;
+    QMap<QString, NaoEntity*> m_files;
+    QMap<QString, NaoEntity*> m_dirs;
 };
 

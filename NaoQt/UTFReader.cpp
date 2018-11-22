@@ -4,6 +4,8 @@
 
 #include "BinaryUtils.h"
 
+#include "NaoFileDevice.h"
+
 #include "Error.h"
 #define ASSERT(cond) \
 { \
@@ -33,6 +35,25 @@ QByteArray UTFReader::readUTF(QIODevice* in) {
     return in->read(size);
 }
 
+QByteArray UTFReader::readUTF(NaoFileDevice* in) {
+    in->open(NaoFileDevice::Read);
+
+    if (in->read(4) != QByteArray("@UTF", 4)) {
+        in->seek(8, NaoFileDevice::Cur);
+
+        if (in->read(4) != QByteArray("@UTF", 4)) {
+            return QByteArray();
+        }
+    }
+
+    quint32 size = qFromBigEndian<quint32>(in->read(4)) + 8;
+
+    if (!in->seek(-8, NaoFileDevice::Cur)) {
+        return QByteArray();
+    }
+
+    return in->read(size);
+}
 
 UTFReader::UTFReader(QByteArray utf) {
     m_buffer = new QBuffer(&utf);

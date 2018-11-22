@@ -8,6 +8,8 @@
 
 #include "NaoEntity.h"
 #include "DirectoryEntity.h"
+#include "DiskFileEntity.h"
+#include "CPKArchiveEntity.h"
 
 #include "Utils.h"
 
@@ -15,6 +17,9 @@ NaoFSP::NaoFSP(const QString& path, QObject* parent) : QObject(parent) {
     m_path = path;
 
     m_currentEntity = nullptr;
+    m_currentArchive = nullptr;
+    m_inArchive = false;
+    m_prevInArchive = false;
 }
 
 NaoFSP::~NaoFSP() {
@@ -34,9 +39,9 @@ void NaoFSP::changePath(QString to) {
 
     to = Utils::cleanGenericPath(to);
 
-    qDebug() << "Changing path to" << to;
-
     QString targetDir = getHighestDirectory(to);
+
+    qDebug() << "Changing path to" << to;
 
     QFutureWatcher<void>* watcher = new QFutureWatcher<void>(this);
 
@@ -47,13 +52,15 @@ void NaoFSP::changePath(QString to) {
 
     if (to == targetDir) {
         future = QtConcurrent::run(this, &NaoFSP::_changePathToDirectory, to);
+    } else {
+        future = QtConcurrent::run(this, &NaoFSP::_changePathToArchive, to);
     }
     
     watcher->setFuture(future);
 }
 
 const NaoEntity* NaoFSP::currentEntity() const {
-    return const_cast<const NaoEntity*>(m_currentEntity);
+    return const_cast<const NaoEntity*>(m_inArchive ? m_currentArchive : m_currentEntity);
 }
 
 
@@ -61,28 +68,50 @@ const QVector<NaoEntity*>& NaoFSP::entities() const {
     return m_entities;
 }
 
+bool NaoFSP::inArchive() const {
+    return m_inArchive;
+}
+
+bool NaoFSP::prevInArchive() const {
+    return m_prevInArchive;
+}
+
+
 /* --===-- Private Members --===-- */
 
 void NaoFSP::_pathChangeCleanup() {
-    //for (NaoEntity* entity : m_entities) {
-    //    delete entity;
-    //}
-
-    //m_entities.clear();
-
     delete m_currentEntity;
-    
+    m_currentEntity = nullptr;
 }
 
 
 void NaoFSP::_changePathToDirectory(const QString& target) {
+    m_prevInArchive = m_inArchive;
+    m_inArchive = false;
+
     DirectoryEntity* dirEnt = new DirectoryEntity(target);
 
     m_currentEntity = dirEnt;
 
     m_entities = dirEnt->children();
-
 }
+
+void NaoFSP::_changePathToArchive(const QString& target) {
+    m_prevInArchive = m_inArchive;
+    m_inArchive = true;
+
+    QString archive = getHighestFile(target);
+    
+    if (archive.endsWith(".cpk")) {
+
+        CPKArchiveEntity* archiveEnt = new CPKArchiveEntity(archive);
+
+        m_currentArchive = archiveEnt;
+
+        m_entities = archiveEnt->children("");
+    }
+}
+
 
 const QString& NaoFSP::currentPath() const {
     return m_path;
@@ -97,6 +126,27 @@ void NaoFSP::_currentEntityChanged() {
 
 
 /* --===-- Static Members --===-- */
+
+NaoEntity* NaoFSP::getEntityForFSPath(const QString& path) {
+    QFileInfo info(path);
+
+    if (info.exists()) {
+        if (info.isFile()) {
+            if (path.endsWith(".cpk")) {
+                return new CPKArchiveEntity(path);
+            }
+            
+            return new DiskFileEntity(path);
+        }
+        
+        if (info.isDir() && info.exists()) {
+            return new DirectoryEntity(path);
+        }
+    }
+    
+    return nullptr;
+}
+
 
 QString NaoFSP::getFileDescription(const QString& path) {
     if (path.endsWith("cpk")) {
@@ -143,7 +193,7 @@ QString NaoFSP::getHighestDirectory(QString path) {
 
     QStringList pathElements = path.split(QDir::separator());
 
-    for (int i = 1; i < pathElements.size(); ++i) {
+    for (int i = 1; i < pathElements.size() + 1; ++i) {
         if (!QFileInfo(pathElements.mid(0, i).join(QDir::separator())).isDir()) {
             return pathElements.mid(0, i - 1).join(QDir::separator());
         }
@@ -152,3 +202,17 @@ QString NaoFSP::getHighestDirectory(QString path) {
     return path;
 }
 
+QString NaoFSP::getHighestFile(QString path) {
+    path = Utils::cleanGenericPath(path);
+
+    QStringList pathElements = path.split(QDir::separator());
+
+    for (int i = 1; i < pathElements.size(); ++i) {
+        QFileInfo finfo(pathElements.mid(0, i).join(QDir::separator()));
+        if (!finfo.isDir() && finfo.isFile() && finfo.exists()) {
+            return pathElements.mid(0, i).join(QDir::separator());
+        }
+    }
+
+    return path;
+}

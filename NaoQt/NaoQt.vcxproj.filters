@@ -58,6 +58,18 @@
     <Filter Include="Source Files\Devices">
       <UniqueIdentifier>{1b82ca91-0b43-43d5-8132-2344a7e3d567}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Entities\CPK">
+      <UniqueIdentifier>{eaecc6ed-5747-4b78-8bc1-57f472674f74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Entities\Filesystem">
+      <UniqueIdentifier>{e041464f-19ed-4a03-9aeb-0a0dd069bd85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Entities\CPK">
+      <UniqueIdentifier>{4a4a3fa9-edb2-4e8c-ab7a-adf4817748c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Entities\Filesystem">
+      <UniqueIdentifier>{014e799b-b2ce-416b-8fc6-6e3918d24d92}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -99,14 +111,8 @@
     <ClCompile Include="NaoFSP.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DirectoryEntity.cpp">
-      <Filter>Source Files\Entities</Filter>
-    </ClCompile>
     <ClCompile Include="DiskFileDevice.cpp">
       <Filter>Source Files\Devices</Filter>
-    </ClCompile>
-    <ClCompile Include="DiskFileEntity.cpp">
-      <Filter>Source Files\Entities</Filter>
     </ClCompile>
     <ClCompile Include="NaoEntity.cpp">
       <Filter>Source Files\Entities</Filter>
@@ -117,8 +123,23 @@
     <ClCompile Include="PartialFileDevice.cpp">
       <Filter>Source Files\Devices</Filter>
     </ClCompile>
-    <ClCompile Include="CPKArchiveEntity.cpp">
+    <ClCompile Include="NaoArchiveEntity.cpp">
       <Filter>Source Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="CPKArchiveEntity.cpp">
+      <Filter>Source Files\Entities\CPK</Filter>
+    </ClCompile>
+    <ClCompile Include="CPKDirectoryEntity.cpp">
+      <Filter>Source Files\Entities\CPK</Filter>
+    </ClCompile>
+    <ClCompile Include="CPKFileEntity.cpp">
+      <Filter>Source Files\Entities\CPK</Filter>
+    </ClCompile>
+    <ClCompile Include="DiskFileEntity.cpp">
+      <Filter>Source Files\Entities\Filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectoryEntity.cpp">
+      <Filter>Source Files\Entities\Filesystem</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -171,9 +192,6 @@
     <ClInclude Include="DATReader.h">
       <Filter>Header Files\Decoders</Filter>
     </ClInclude>
-    <ClInclude Include="DirectoryEntity.h">
-      <Filter>Header Files\Entities</Filter>
-    </ClInclude>
     <ClInclude Include="NaoFileDevice.h">
       <Filter>Header Files\Devices</Filter>
     </ClInclude>
@@ -183,14 +201,26 @@
     <ClInclude Include="DiskFileDevice.h">
       <Filter>Header Files\Devices</Filter>
     </ClInclude>
-    <ClInclude Include="DiskFileEntity.h">
-      <Filter>Header Files\Entities</Filter>
-    </ClInclude>
     <ClInclude Include="PartialFileDevice.h">
       <Filter>Header Files\Devices</Filter>
     </ClInclude>
-    <ClInclude Include="CPKArchiveEntity.h">
+    <ClInclude Include="NaoArchiveEntity.h">
       <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="CPKArchiveEntity.h">
+      <Filter>Header Files\Entities\CPK</Filter>
+    </ClInclude>
+    <ClInclude Include="CPKDirectoryEntity.h">
+      <Filter>Header Files\Entities\CPK</Filter>
+    </ClInclude>
+    <ClInclude Include="CPKFileEntity.h">
+      <Filter>Header Files\Entities\CPK</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectoryEntity.h">
+      <Filter>Header Files\Entities\Filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="DiskFileEntity.h">
+      <Filter>Header Files\Entities\Filesystem</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

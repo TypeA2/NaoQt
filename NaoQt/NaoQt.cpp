@@ -17,7 +17,9 @@
 #include "Utils.h"
 
 #include "NaoEntity.h"
+#include "NaoArchiveEntity.h"
 #include "NaoFileDevice.h"
+#include "DirectoryEntity.h"
 
 NaoQt::NaoQt() {
 
@@ -129,9 +131,9 @@ void NaoQt::setupMenuBar() {
 }
 
 void NaoQt::_pathChangeCleanup() {
-    //if (m_fsmodel->rowCount() > 0) {
-       // m_fsmodel->removeRows(0, m_fsmodel->rowCount());
-    //}
+    /*while (m_view->topLevelItemCount() > 1) {
+        delete m_view->takeTopLevelItem(m_view->topLevelItemCount() - 1);
+    }*/
     m_view->clear();
 }
 
@@ -427,26 +429,28 @@ void NaoQt::fspPathChanged() {
     QVector<NaoEntity*> entities = m_fsp->entities();
 
     for (NaoEntity* entity : entities) {
+        /*if (entity->name() == ".." && m_view->topLevelItem(0) && m_view->topLevelItem(0)->text(0) == "..") {
+            m_view->top
+        }*/
+
         QTreeWidgetItem* row = new QTreeWidgetItem(m_view);
+
+        bool isFolder = entity->hasChildren() && !dynamic_cast<NaoArchiveEntity*>(entity);
 
         row->setText(0, entity->name());
         row->setData(0, EntityRole, QVariant::fromValue(entity));
-        row->setData(0, IsFolderRole, entity->hasChildren());
+        row->setData(0, IsFolderRole, isFolder);
 
-        if (row->data(0, IsFolderRole).toBool()) {
+        if (isFolder) {
+            row->setIcon(0, ficonprovider.icon(QFileIconProvider::Folder));
             row->setText(2, "Directory");
         } else {
+            row->setIcon(0, ficonprovider.icon(QFileInfo(entity->name())));
             row->setText(1, Utils::getShortSize(entity->device()->size()));
             row->setData(1, ItemSizeRole, entity->device()->size());
             row->setText(2, NaoFSP::getFileDescription(entity->fullpath()));
             row->setText(3, entity->lastModified().toString("yyyy-MM-dd hh:mm"));
             row->setData(3, LastModifiedRole, entity->lastModified());
-        }
-
-        if (row->data(0, IsFolderRole).toBool()) {
-            row->setIcon(0, ficonprovider.icon(QFileIconProvider::Folder));
-        } else {
-            row->setIcon(0, ficonprovider.icon(QFileInfo(entity->name())));
         }
 
         m_view->addTopLevelItem(row);

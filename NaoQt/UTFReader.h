@@ -4,6 +4,7 @@
 
 class QBuffer;
 class QIODevice;
+class NaoFileDevice;
 
 class UTFException : public std::logic_error {
     public:
@@ -15,6 +16,7 @@ class UTFReader : public QObject {
 
     public:
     static QByteArray readUTF(QIODevice* in);
+    static QByteArray readUTF(NaoFileDevice* in);
 
     UTFReader(QByteArray utf);
     ~UTFReader();

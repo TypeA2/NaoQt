@@ -1,6 +1,7 @@
 #include "DirectoryEntity.h"
 
 #include "DiskFileEntity.h"
+#include "CPKArchiveEntity.h"
 
 DirectoryEntity::DirectoryEntity(const QString& path)
     : m_thisDir(path) {
@@ -35,7 +36,6 @@ NaoFileDevice* DirectoryEntity::device() {
     return nullptr;
 }
 
-
 /* --===-- Static Members --===-- */
 
 QVector<NaoEntity*> DirectoryEntity::getContents(const QDir& dir) {
@@ -44,7 +44,9 @@ QVector<NaoEntity*> DirectoryEntity::getContents(const QDir& dir) {
     QVector<NaoEntity*> contents;
 
     for (const QFileInfo& entry : entries) {
-        if (entry.isFile()) {
+        if (entry.completeSuffix() == "cpk") {
+            contents.append(new CPKArchiveEntity(entry.absoluteFilePath()));
+        } else if (entry.isFile()) {
             contents.append(new DiskFileEntity(entry.absoluteFilePath()));
         } else if (entry.isDir()) {
             contents.append(new DirectoryEntity(entry.filePath()));
