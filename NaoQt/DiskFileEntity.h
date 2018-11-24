@@ -9,10 +9,10 @@ class DiskFileDevice;
 class DiskFileEntity : public NaoEntity {
     public:
     DiskFileEntity(const QString& path);
-    ~DiskFileEntity() override;
+    virtual ~DiskFileEntity();
 
     bool hasChildren() override;
-    QVector<NaoEntity*> children() override;
+    QVector<Entity> children() override;
 
     NaoFileDevice* device() override;
 

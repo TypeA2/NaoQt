@@ -23,8 +23,8 @@ bool DiskFileEntity::hasChildren() {
     return false;
 }
 
-QVector<NaoEntity*> DiskFileEntity::children() {
-    return QVector<NaoEntity*>();
+QVector<NaoEntity::Entity> DiskFileEntity::children() {
+    return QVector<Entity>();
 }
 
 NaoFileDevice* DiskFileEntity::device() {

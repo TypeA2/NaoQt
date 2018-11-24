@@ -20,8 +20,9 @@ bool CPKDirectoryEntity::hasChildren() {
     return true;
 }
 
-QVector<NaoEntity*> CPKDirectoryEntity::children() {
-    return m_archive->children(_m_fullPath);
+QVector<NaoEntity::Entity> CPKDirectoryEntity::children() {
+    //return m_archive->children(_m_fullPath);
+    return QVector<Entity>();
 }
 
 NaoFileDevice* CPKDirectoryEntity::device() {

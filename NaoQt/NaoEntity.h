@@ -9,12 +9,22 @@ class NaoFileDevice;
 class NaoEntity {
     public:
 
+    struct Entity {
+        QString name;
+        QString path;
+        bool isFolder;
+        bool isNavigatable;
+        qint64 size;
+        qint64 virtualSize;
+        QDateTime lastModified;
+    };
+
     NaoEntity() = default;
 
     virtual ~NaoEntity() = 0;
 
     virtual bool hasChildren() = 0;
-    virtual QVector<NaoEntity*> children() = 0;
+    virtual QVector<Entity> children() = 0;
 
     virtual NaoFileDevice* device() = 0;
 

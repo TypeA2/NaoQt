@@ -23,9 +23,12 @@ NaoFSP::NaoFSP(const QString& path, QObject* parent) : QObject(parent) {
 }
 
 NaoFSP::~NaoFSP() {
-    for (NaoEntity* entity : m_entities) {
+    /*for (NaoEntity* entity : m_entities) {
         delete entity;
-    }
+    }*/
+
+    delete m_currentEntity;
+    delete m_currentArchive;
 }
 
 /* --===-- Public Members --===-- */
@@ -35,12 +38,7 @@ void NaoFSP::changePath() {
 }
 
 void NaoFSP::changePath(QString to) {
-    _pathChangeCleanup();
-
-    to = Utils::cleanGenericPath(to);
-
-    QString targetDir = getHighestDirectory(to);
-
+    
     qDebug() << "Changing path to" << to;
 
     QFutureWatcher<void>* watcher = new QFutureWatcher<void>(this);
@@ -50,21 +48,28 @@ void NaoFSP::changePath(QString to) {
 
     QFuture<void> future;
 
-    if (to == targetDir) {
+    to = Utils::cleanGenericPath(to);
+
+    if (to == getHighestDirectory(to)) {
+        m_path = QFileInfo(to).absoluteFilePath();
+
         future = QtConcurrent::run(this, &NaoFSP::_changePathToDirectory, to);
     } else {
         future = QtConcurrent::run(this, &NaoFSP::_changePathToArchive, to);
     }
-    
+
     watcher->setFuture(future);
+}
+
+const QString& NaoFSP::currentPath() const {
+    return m_path;
 }
 
 const NaoEntity* NaoFSP::currentEntity() const {
     return const_cast<const NaoEntity*>(m_inArchive ? m_currentArchive : m_currentEntity);
 }
 
-
-const QVector<NaoEntity*>& NaoFSP::entities() const {
+const QVector<NaoEntity::Entity>& NaoFSP::entities() const {
     return m_entities;
 }
 
@@ -80,43 +85,62 @@ bool NaoFSP::prevInArchive() const {
 /* --===-- Private Members --===-- */
 
 void NaoFSP::_pathChangeCleanup() {
+    m_entities.clear();
+
     delete m_currentEntity;
     m_currentEntity = nullptr;
+
+    delete m_currentArchive;
+    m_currentArchive = nullptr;
 }
 
-
 void NaoFSP::_changePathToDirectory(const QString& target) {
-    m_prevInArchive = m_inArchive;
+    _pathChangeCleanup();
+
+    qDebug() << QFileInfo("D:\\Games\\Steam\\SteamApps\\common\\NieRAutomata\\data\\data000.cpk\\\\..").absoluteFilePath();
+
     m_inArchive = false;
 
-    DirectoryEntity* dirEnt = new DirectoryEntity(target);
+    m_currentEntity = new DirectoryEntity(target);
 
-    m_currentEntity = dirEnt;
+    m_entities.append(m_currentEntity->children());
 
-    m_entities = dirEnt->children();
 }
 
 void NaoFSP::_changePathToArchive(const QString& target) {
-    m_prevInArchive = m_inArchive;
+    _pathChangeCleanup();
+
     m_inArchive = true;
 
     QString archive = getHighestFile(target);
+    qDebug() << archive;
     
-    if (archive.endsWith(".cpk")) {
+    if (target == archive) {
+        m_path = archive + QDir::separator();
 
-        CPKArchiveEntity* archiveEnt = new CPKArchiveEntity(archive);
+        if (archive.endsWith(".cpk")) {
+            m_currentArchive = new CPKArchiveEntity(archive);
 
-        m_currentArchive = archiveEnt;
+            QFileInfo parent(m_path);
 
-        m_entities = archiveEnt->children("");
+            m_entities.append({
+                "..",
+                parent.absolutePath(),
+                true,
+                true,
+                parent.size(),
+                parent.size(),
+                parent.lastModified()
+            });
+            m_entities.append(m_currentArchive->directories(""));
+            m_entities.append(m_currentArchive->children(""));
+        }
     }
 }
 
-
-const QString& NaoFSP::currentPath() const {
-    return m_path;
+void NaoFSP::_changePathInArchive(const QString& target) {
+    //m_entities = m_currentArchive->children(target);
 }
-
 
 /* --===-- Private Slots --===-- */
 
@@ -126,27 +150,6 @@ void NaoFSP::_currentEntityChanged() {
 
 
 /* --===-- Static Members --===-- */
-
-NaoEntity* NaoFSP::getEntityForFSPath(const QString& path) {
-    QFileInfo info(path);
-
-    if (info.exists()) {
-        if (info.isFile()) {
-            if (path.endsWith(".cpk")) {
-                return new CPKArchiveEntity(path);
-            }
-            
-            return new DiskFileEntity(path);
-        }
-        
-        if (info.isDir() && info.exists()) {
-            return new DirectoryEntity(path);
-        }
-    }
-    
-    return nullptr;
-}
-
 
 QString NaoFSP::getFileDescription(const QString& path) {
     if (path.endsWith("cpk")) {
@@ -186,6 +189,15 @@ QString NaoFSP::getFileDescription(const QString& path) {
     }
 
     return "";
+}
+
+bool NaoFSP::getNavigatable(const QString& path) {
+    return path.endsWith("cpk") ||
+        path.endsWith("wem") ||
+        path.endsWith("wsp") ||
+        path.endsWith("dat") ||
+        path.endsWith("dtt") ||
+        path.endsWith("wtp");
 }
 
 QString NaoFSP::getHighestDirectory(QString path) {

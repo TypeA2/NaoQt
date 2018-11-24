@@ -7,18 +7,16 @@
 class DirectoryEntity : public NaoEntity {
     public:
     DirectoryEntity(const QString& path);
-    ~DirectoryEntity() override;
+    virtual ~DirectoryEntity();
 
     bool hasChildren() override;
-    QVector<NaoEntity*> children() override;
+    QVector<Entity> children() override;
 
     NaoFileDevice* device() override;
-
-    static QVector<NaoEntity*> getContents(const QDir& dir);
 
     private:
     QDir m_thisDir;
     QFileInfoList m_entries;
 
-    QVector<NaoEntity*> m_cachedContents;
+    QVector<Entity> m_cachedContents;
 };

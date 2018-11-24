@@ -2,6 +2,8 @@
 
 #include <QFile>
 
+#include "Error.h"
+
 DiskFileDevice::DiskFileDevice(const QString& path) {
     m_device.setFileName(path);
 }
@@ -15,6 +17,15 @@ DiskFileDevice::~DiskFileDevice() {
 /* --===-- Public Members --===-- */
 
 bool DiskFileDevice::open(OpenMode mode) {
+    NaoFileDevice::open(mode);
+
+    if (m_device.isOpen()) {
+        switch (mode) {
+            case Read:
+                return m_device.isReadable();
+        }
+    }
+
     switch (mode) {
         case Read:
             return m_device.open(QIODevice::ReadOnly);

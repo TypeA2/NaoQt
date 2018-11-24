@@ -7,10 +7,10 @@
 class CPKFileEntity : public NaoEntity {
     public:
     CPKFileEntity(NaoFileDevice* device, const QString& path);
-    ~CPKFileEntity();
+    virtual ~CPKFileEntity();
 
     bool hasChildren() override;
-    QVector<NaoEntity*> children() override;
+    QVector<Entity> children() override;
 
     NaoFileDevice* device() override;
 

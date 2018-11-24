@@ -24,7 +24,7 @@
 NaoQt::NaoQt() {
 
     // Create the temporary directory
-    m_tempdir = Utils::cleanDirPath(QCoreApplication::applicationDirPath() + "/Temp");
+    m_tempdir = Utils::cleanDirPath(QCoreApplication::applicationDirPath() + "\\Temp");
     (void) QDir().mkdir(m_tempdir);
 
     // Setup the window
@@ -35,7 +35,7 @@ NaoQt::NaoQt() {
     this->setupModel();
 
     QString root = Steam::getGamePath("NieRAutomata",
-        QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0)) + "/data";
+        QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0)) + "\\data";
 
     m_fsp = new NaoFSP(root, this);
 
@@ -45,6 +45,7 @@ NaoQt::NaoQt() {
 }
 
 NaoQt::~NaoQt() {
+    m_fsp->deleteLater();
     
     // Remove the temporary directory
     QDir(m_tempdir).removeRecursively();
@@ -70,7 +71,6 @@ void NaoQt::setupModel() {
     m_view->setUniformRowHeights(true);
     m_view->setAnimated(false);
     m_view->setItemsExpandable(false);
-    m_view->setHeaderLabels({ "Name", "Size", "Type", "Modified" });
 
     connect(m_view, &QTreeWidget::itemDoubleClicked, this, &NaoQt::viewInteraction);
     connect(m_view, &QTreeWidget::customContextMenuRequested, this, &NaoQt::viewContextMenu);
@@ -131,9 +131,6 @@ void NaoQt::setupMenuBar() {
 }
 
 void NaoQt::_pathChangeCleanup() {
-    /*while (m_view->topLevelItemCount() > 1) {
-        delete m_view->takeTopLevelItem(m_view->topLevelItemCount() - 1);
-    }*/
     m_view->clear();
 }
 
@@ -273,10 +270,10 @@ void NaoQt::refreshView() {
 void NaoQt::viewInteraction(QTreeWidgetItem* item, int column) {
     Q_UNUSED(column);
 
-    if (item->data(0, EntityRole).value<NaoEntity*>()->hasChildren()) {
-        changePath(item->data(0, EntityRole).value<NaoEntity*>()->fullpath());
+    if (item->data(0, IsNavigatableRole).toBool()) {
+        changePath(m_pathDisplay->text() + item->text(0));
     } else {
-        QDesktopServices::openUrl(QUrl::fromLocalFile(item->data(0, EntityRole).value<NaoEntity*>()->fullpath()));
+        QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text() + QDir::separator() + item->text(0)));
     }
 }
 
@@ -417,52 +414,65 @@ void NaoQt::viewContextMenu(const QPoint& pos) {
 
 void NaoQt::changePath(const QString& path) {
 
-    m_fsp->changePath(path);
+    m_fsp->changePath(QFileInfo(path).absoluteFilePath());
 
 }
 
 void NaoQt::fspPathChanged() {
     _pathChangeCleanup();
 
+    if (m_fsp->inArchive()) {
+        m_view->setHeaderLabels({ "Name", "Size", "Type", "Compressed" });
+    } else {
+        m_view->setHeaderLabels({ "Name", "Size", "Type", "Modified" });
+    }
+
     QFileIconProvider ficonprovider;
 
-    QVector<NaoEntity*> entities = m_fsp->entities();
+    const QVector<NaoEntity::Entity>& entities = m_fsp->entities();
 
-    for (NaoEntity* entity : entities) {
-        /*if (entity->name() == ".." && m_view->topLevelItem(0) && m_view->topLevelItem(0)->text(0) == "..") {
-            m_view->top
-        }*/
-
+    for (const NaoEntity::Entity& entity : entities) {
         QTreeWidgetItem* row = new QTreeWidgetItem(m_view);
 
-        bool isFolder = entity->hasChildren() && !dynamic_cast<NaoArchiveEntity*>(entity);
+        //bool isFolder = entity->hasChildren() && !dynamic_cast<NaoArchiveEntity*>(entity);
 
-        row->setText(0, entity->name());
-        row->setData(0, EntityRole, QVariant::fromValue(entity));
-        row->setData(0, IsFolderRole, isFolder);
+        row->setText(0, entity.name);
+        //row->setData(0, EntityRole, QVariant::fromValue(entity));
+        row->setData(0, IsFolderRole, entity.isFolder);
+        row->setData(0, IsNavigatableRole, entity.isNavigatable);
 
-        if (isFolder) {
+        if (entity.isFolder) {
             row->setIcon(0, ficonprovider.icon(QFileIconProvider::Folder));
             row->setText(2, "Directory");
         } else {
-            row->setIcon(0, ficonprovider.icon(QFileInfo(entity->name())));
-            row->setText(1, Utils::getShortSize(entity->device()->size()));
-            row->setData(1, ItemSizeRole, entity->device()->size());
-            row->setText(2, NaoFSP::getFileDescription(entity->fullpath()));
-            row->setText(3, entity->lastModified().toString("yyyy-MM-dd hh:mm"));
-            row->setData(3, LastModifiedRole, entity->lastModified());
+            row->setIcon(0, ficonprovider.icon(QFileInfo(entity.name)));
+            row->setText(1, Utils::getShortSize(entity.size));
+            row->setData(1, ItemSizeRole, entity.size);
+            row->setText(2, NaoFSP::getFileDescription(entity.path));
+
+            if (m_fsp->inArchive()) {
+                row->setText(3, (entity.size == entity.virtualSize ? "No" :
+                    QString("Yes (%0%)").arg(qRound(100. * static_cast<double>(entity.size) / entity.virtualSize))));
+            } else {
+                row->setText(3, entity.lastModified.toString("yyyy-MM-dd hh:mm"));
+                row->setData(3, LastModifiedRole, entity.lastModified);
+            }
         }
 
         m_view->addTopLevelItem(row);
 
     }
 
+
+
     m_view->resizeColumnToContents(0);
     m_view->resizeColumnToContents(1);
     m_view->resizeColumnToContents(2);
     m_view->resizeColumnToContents(3);
 
-    m_pathDisplay->setText(m_fsp->currentEntity()->fullpath());
+    sortColumn(0, Qt::DescendingOrder);
+
+    m_pathDisplay->setText(Utils::cleanDirPath(m_fsp->currentPath()));
 
     m_view->setFocus();
 }

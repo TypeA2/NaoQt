@@ -1,6 +1,7 @@
 #include "PartialFileDevice.h"
 
 PartialFileDevice::PartialFileDevice(Chunk chunk, NaoFileDevice* device) {
+    m_device = device;
     m_chunks.append(chunk);
 
     m_currentChunkIndex = 0;
@@ -8,7 +9,6 @@ PartialFileDevice::PartialFileDevice(Chunk chunk, NaoFileDevice* device) {
     m_pos = 0;
     m_totalSize = m_chunks.at(0).size;
 }
-
 
 PartialFileDevice::PartialFileDevice(const QVector<Chunk>& chunks, NaoFileDevice* device) 
     : m_chunks(chunks) {
@@ -25,7 +25,7 @@ PartialFileDevice::PartialFileDevice(const QVector<Chunk>& chunks, NaoFileDevice
 }
 
 PartialFileDevice::~PartialFileDevice() {
-    delete m_device;
+    // delete m_device;
 }
 
 /* --===-- Public Members --===-- */
@@ -35,9 +35,11 @@ bool PartialFileDevice::Chunk::operator==(const Chunk& other) const {
 }
 
 bool PartialFileDevice::open(OpenMode mode) {
+    NaoFileDevice::open(mode);
+
     switch (mode) {
         case Read:
-            return m_device->open(Read);
+            return m_device->openMode() == Read;
     }
 
     return false;

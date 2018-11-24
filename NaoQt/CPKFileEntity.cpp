@@ -2,8 +2,11 @@
 
 #include "NaoFileDevice.h"
 
+#include "Error.h"
+
 CPKFileEntity::CPKFileEntity(NaoFileDevice* device, const QString& path)
     : m_thisFile(path) {
+
     _m_fullPath = m_thisFile.filePath();
     _m_name = m_thisFile.fileName();
 
@@ -20,8 +23,8 @@ bool CPKFileEntity::hasChildren() {
     return false;
 }
 
-QVector<NaoEntity*> CPKFileEntity::children() {
-    return QVector<NaoEntity*>();
+QVector<NaoEntity::Entity> CPKFileEntity::children() {
+    return QVector<Entity>();
 }
 
 NaoFileDevice* CPKFileEntity::device() {

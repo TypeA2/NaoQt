@@ -115,6 +115,7 @@ class NaoQt : public QMainWindow {
         MimeTypeRole,
         LastModifiedRole,
 
-        EntityRole
+        EntityRole,
+        IsNavigatableRole
     };
 };

@@ -8,10 +8,10 @@ class NaoArchiveEntity : public NaoEntity {
     virtual ~NaoArchiveEntity() = 0;
 
     virtual bool hasChildren();
-    virtual QVector<NaoEntity*> children() = 0;
-    virtual QVector<NaoEntity*> children(const QString& of) = 0;
-    virtual QVector<NaoEntity*> directories() = 0;
-    virtual QVector<NaoEntity*> directories(const QString& of) = 0;
+    virtual QVector<Entity> children() = 0;
+    virtual QVector<Entity> children(const QString& of) = 0;
+    virtual QVector<Entity> directories() = 0;
+    virtual QVector<Entity> directories(const QString& of) = 0;
 
     //virtual NaoFileDevice* device() = 0;
 };

@@ -1,91 +1,62 @@
 #include "CPKArchiveEntity.h"
 
+#include "NaoFSP.h"
+
 #include "DiskFileDevice.h"
-#include "PartialFileDevice.h"
-
-#include "CPKFileEntity.h"
-#include "CPKDirectoryEntity.h"
-
-#include "DirectoryEntity.h"
+//#include "PartialFileDevice.h"
 
 #include "UTFReader.h"
 
+#include "Error.h"
+
 CPKArchiveEntity::CPKArchiveEntity(const QString& path) 
     : m_thisFile(path) {
-    
+
     _m_fullPath = m_thisFile.absoluteFilePath();
     _m_name = m_thisFile.fileName();
 
     m_device = new DiskFileDevice(m_thisFile.absoluteFilePath());
+
+    this->_readContents();
 }
 
 CPKArchiveEntity::~CPKArchiveEntity() {
-    for (NaoEntity* entity : m_files) {
-        delete entity;
-    }
-
-    for (NaoEntity* entity : m_dirs) {
-        delete entity;
-    }
-
     delete m_device;
 }
 
 /* --===-- Public Members --===-- */
 
-QVector<NaoEntity*> CPKArchiveEntity::children() {
-    if (m_files.isEmpty()) {
-        if (!_readContents()) {
-            return QVector<NaoEntity*>();
-        }
-    }
-
+QVector<NaoEntity::Entity> CPKArchiveEntity::children() {
     return m_files.values().toVector();
 }
 
-QVector<NaoEntity*> CPKArchiveEntity::children(const QString& of) {
-    if (m_files.isEmpty()) {
-        if (!_readContents()) {
-            return QVector<NaoEntity*>();
-        }
-    }
+QVector<NaoEntity::Entity> CPKArchiveEntity::children(const QString& of) {
+    QVector<Entity> files = m_files.values().toVector();
 
-    QVector<NaoEntity*> files;
+    QVector<Entity> ret;
+
+    std::copy_if(files.begin(), files.end(), std::back_inserter(ret), [&of](const Entity& entity) -> bool {
+        return entity.path == (!of.isEmpty() ? of + "/" : "") + entity.name;
+    });
+
+    return ret;
+}
+
+QVector<NaoEntity::Entity> CPKArchiveEntity::directories() {
+    return m_dirs.values().toVector();
+}
+
+QVector<NaoEntity::Entity> CPKArchiveEntity::directories(const QString& of) {
+    QVector<Entity> dirs = m_dirs.values().toVector();
+
     const int depth = of.count('/');
+    QVector<Entity> ret;
 
-    for (const std::map<QString, NaoEntity*>::value_type& e : m_dirs.toStdMap()) {
-        if (e.first != of && e.first.count('/') == depth) {
-            files.append(e.second);
-        }
-    }
+    std::copy_if(dirs.begin(), dirs.end(), std::back_inserter(ret), [&depth, &of](const Entity& entity) -> bool {
+        return entity.path.count('/') == depth && entity.path.startsWith(of);
+    });
 
-    for (const std::map<QString, NaoEntity*>::value_type& e : m_files.toStdMap()) {
-        if (m_fileInfo.value(e.first).dir == of) {
-            files.append(e.second);
-        }
-    }
-
-    return files;
-}
-
-QVector<NaoEntity*> CPKArchiveEntity::directories() {
-    if (m_dirs.isEmpty()) {
-        if (!_readContents()) {
-            return QVector<NaoEntity*>();
-        }
-    }
-
-    return m_dirs.values().toVector();
-}
-
-QVector<NaoEntity*> CPKArchiveEntity::directories(const QString& of) {
-    if (m_dirs.isEmpty()) {
-        if (!_readContents()) {
-            return QVector<NaoEntity*>();
-        }
-    }
-
-    return m_dirs.values().toVector();
+    return ret;
 }
 
 NaoFileDevice* CPKArchiveEntity::device() {
@@ -143,30 +114,56 @@ bool CPKArchiveEntity::_readContents() {
 
             m_fileInfo.insert((!entry.dir.isEmpty() ? entry.dir + "/" : "") + entry.name, entry);
 
-            PartialFileDevice* embeddedFile = new PartialFileDevice({
+            /*PartialFileDevice* embeddedFile = new PartialFileDevice({
                 static_cast<qint64>(entry.offset + entry.extraOffset),
                 static_cast<qint64>(entry.size),
                 0
-                }, m_device);
+                }, m_device);*/
 
-            //embeddedFile->open(NaoFileDevice::Read);
+            m_files.insert((!entry.dir.isEmpty() ? entry.dir + "/" : "") + entry.name, {
+                entry.name,
+                (!entry.dir.isEmpty() ? entry.dir + "/" : "") + entry.name,
+                false,
+                NaoFSP::getNavigatable(entry.name),
+                static_cast<qint64>(entry.size),
+                static_cast<qint64>(entry.extractedSize),
+                QDateTime()
+            });
 
-            m_files.insert((!entry.dir.isEmpty() ? entry.dir + "/" : "") + entry.name,
-                new CPKFileEntity(embeddedFile, (!entry.dir.isEmpty() ? entry.dir + "/" : "") + entry.name));
             //m_dirs.insert(entry.dir, new CPKDirectoryEntity(this, entry.dir));
             if (!m_dirs.keys().contains(entry.dir)) {
-                m_dirs.insert(entry.dir, new CPKDirectoryEntity(this, entry.dir));
+                m_dirs.insert(entry.dir, {
+                    entry.dir.split('/').last(),
+                    entry.dir,
+                    true,
+                    true,
+                    0,
+                    0,
+                    QDateTime()
+                });
 
                 if (entry.dir.isEmpty()) {
-                    m_dirs.insert("..", new DirectoryEntity(m_thisFile.absoluteFilePath() + QDir::separator() + ".."));
+                    m_dirs.insert("..", {
+                        "..",
+                        m_thisFile.absolutePath(),
+                        true,
+                        true,
+                        0,
+                        0,
+                        QFileInfo(m_thisFile.absolutePath()).lastModified()
+                     });
                 } else {
-                    m_dirs.insert(entry.dir + "/..", new CPKArchiveEntity(entry.dir.mid(0, entry.dir.lastIndexOf("/") - 1)));
+                    m_dirs.insert(entry.dir + "/..", {
+                        "..",
+                        entry.dir + "/..",
+                        true,
+                        true,
+                        0,
+                        0,
+                        QDateTime()
+                    });
                 }
             }
-
-            //if (entry.dir.isEmpty()) {
-            //    m_cachedContents.append(entity);
-            //}
         }
 
         files->deleteLater();

@@ -23,12 +23,12 @@ class CPKArchiveEntity : public NaoArchiveEntity {
     };
 
     CPKArchiveEntity(const QString& path);
-    ~CPKArchiveEntity() override;
+    virtual ~CPKArchiveEntity();
 
-    QVector<NaoEntity*> children() override;
-    QVector<NaoEntity*> children(const QString& of) override;
-    QVector<NaoEntity*> directories() override;
-    QVector<NaoEntity*> directories(const QString& of) ;
+    QVector<Entity> children() override;
+    QVector<Entity> children(const QString& of) override;
+    QVector<Entity> directories() override;
+    QVector<Entity> directories(const QString& of) override;
 
     NaoFileDevice* device() override;
 
@@ -39,10 +39,8 @@ class CPKArchiveEntity : public NaoArchiveEntity {
     QFileInfo m_thisFile;
     DiskFileDevice* m_device;
 
-    //QVector<NaoEntity*> m_cachedContents;
-
     QMap<QString, FileInfo> m_fileInfo;
-    QMap<QString, NaoEntity*> m_files;
-    QMap<QString, NaoEntity*> m_dirs;
+    QMap<QString, Entity> m_files;
+    QMap<QString, Entity> m_dirs;
 };
 
