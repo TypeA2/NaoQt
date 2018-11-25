@@ -97,8 +97,6 @@ void NaoFSP::_pathChangeCleanup() {
 void NaoFSP::_changePathToDirectory(const QString& target) {
     _pathChangeCleanup();
 
-    qDebug() << QFileInfo("D:\\Games\\Steam\\SteamApps\\common\\NieRAutomata\\data\\data000.cpk\\\\..").absoluteFilePath();
-
     m_inArchive = false;
 
     m_currentEntity = new DirectoryEntity(target);

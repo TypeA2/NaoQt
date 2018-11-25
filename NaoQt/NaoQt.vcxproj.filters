@@ -141,6 +141,9 @@
     <ClCompile Include="DirectoryEntity.cpp">
       <Filter>Source Files\Entities\Filesystem</Filter>
     </ClCompile>
+    <ClCompile Include="DATArchiveEntity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="NaoQt.h">
@@ -221,6 +224,9 @@
     </ClInclude>
     <ClInclude Include="DiskFileEntity.h">
       <Filter>Header Files\Entities\Filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="DATArchiveEntity.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

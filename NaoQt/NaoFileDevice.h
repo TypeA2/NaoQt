@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QByteArray>
+#include <QString>
 
 class NaoFileDevice {
     public:
@@ -20,6 +21,7 @@ class NaoFileDevice {
 
     virtual bool open(OpenMode mode);
     virtual OpenMode openMode();
+    virtual const QString& filePath();
     virtual QByteArray read(qint64 size) = 0;
     virtual bool seek(qint64 pos, SeekPos start = Beg) = 0;
     virtual qint64 pos() const = 0;
@@ -27,4 +29,5 @@ class NaoFileDevice {
 
     protected:
     OpenMode _m_openmode;
+    QString _m_filepath;
 };

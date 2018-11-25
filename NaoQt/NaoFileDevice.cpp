@@ -17,3 +17,8 @@ NaoFileDevice::OpenMode NaoFileDevice::openMode() {
     return _m_openmode;
 }
 
+
+const QString& NaoFileDevice::filePath() {
+    return _m_filepath;
+}
+

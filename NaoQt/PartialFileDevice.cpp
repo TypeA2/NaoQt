@@ -1,6 +1,8 @@
 #include "PartialFileDevice.h"
 
-PartialFileDevice::PartialFileDevice(Chunk chunk, NaoFileDevice* device) {
+#include <QDir>
+
+PartialFileDevice::PartialFileDevice(Chunk chunk, NaoFileDevice* device, const QString& fname) {
     m_device = device;
     m_chunks.append(chunk);
 
@@ -8,9 +10,11 @@ PartialFileDevice::PartialFileDevice(Chunk chunk, NaoFileDevice* device) {
     m_bytesLeftThisChunk = m_chunks.at(0).size;
     m_pos = 0;
     m_totalSize = m_chunks.at(0).size;
+
+    _m_filepath = device->filePath() + QDir::separator() + fname;
 }
 
-PartialFileDevice::PartialFileDevice(const QVector<Chunk>& chunks, NaoFileDevice* device) 
+PartialFileDevice::PartialFileDevice(const QVector<Chunk>& chunks, NaoFileDevice* device, const QString& fname)
     : m_chunks(chunks) {
     m_device = device;
 
@@ -22,6 +26,8 @@ PartialFileDevice::PartialFileDevice(const QVector<Chunk>& chunks, NaoFileDevice
     for (const Chunk& chunk : m_chunks) {
         m_totalSize += chunk.size;
     }
+
+    _m_filepath = device->filePath() + QDir::separator() + fname;
 }
 
 PartialFileDevice::~PartialFileDevice() {

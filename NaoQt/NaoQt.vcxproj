@@ -126,6 +126,7 @@
     <ClCompile Include="CPKDirectoryEntity.cpp" />
     <ClCompile Include="CPKFileEntity.cpp" />
     <ClCompile Include="CPKReader.cpp" />
+    <ClCompile Include="DATArchiveEntity.cpp" />
     <ClCompile Include="DATReader.cpp" />
     <ClCompile Include="DirectoryEntity.cpp" />
     <ClCompile Include="DiskFileDevice.cpp" />
@@ -183,6 +184,7 @@
     <ClInclude Include="CPKDirectoryEntity.h" />
     <ClInclude Include="CPKFileEntity.h" />
     <ClInclude Include="CPKReader.h" />
+    <ClInclude Include="DATArchiveEntity.h" />
     <ClInclude Include="DATReader.h" />
     <ClInclude Include="DirectoryEntity.h" />
     <ClInclude Include="DiskFileDevice.h" />

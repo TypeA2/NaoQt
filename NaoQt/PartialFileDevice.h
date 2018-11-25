@@ -14,8 +14,8 @@ class PartialFileDevice : public NaoFileDevice {
         bool operator==(const Chunk& other) const;
     };
 
-    PartialFileDevice(Chunk chunk, NaoFileDevice* device);
-    PartialFileDevice(const QVector<Chunk>& chunks, NaoFileDevice* device);
+    PartialFileDevice(Chunk chunk, NaoFileDevice* device, const QString& fname);
+    PartialFileDevice(const QVector<Chunk>& chunks, NaoFileDevice* device, const QString& fname);
     ~PartialFileDevice() override;
 
     bool open(OpenMode mode) override;
