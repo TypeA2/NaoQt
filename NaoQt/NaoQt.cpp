@@ -155,7 +155,6 @@ void NaoQt::sortColumn(int index, Qt::SortOrder order) {
     QVector<QTreeWidgetItem*> files;
 
     // Leave the first row alone if it's the ".." folder
-    //int start = (m_fsmodel->data(m_fsmodel->index(0, 0), Qt::DisplayRole).toString() == "..") ? 1 : 0;
     int start = (m_view->itemAt(0, 0)->text(0) == "..") ? 1 : 0;
 
     while (m_view->topLevelItemCount() > start) {
@@ -181,7 +180,6 @@ void NaoQt::sortColumn(int index, Qt::SortOrder order) {
             }
         }
 
-        //return a.at(0)->text().compare(b.at(0)->text(), Qt::CaseInsensitive) < 0;
         return a->text(0).compare(b->text(0), Qt::CaseInsensitive) < 0;
     });
 
@@ -434,10 +432,7 @@ void NaoQt::fspPathChanged() {
     for (const NaoEntity::Entity& entity : entities) {
         QTreeWidgetItem* row = new QTreeWidgetItem(m_view);
 
-        //bool isFolder = entity->hasChildren() && !dynamic_cast<NaoArchiveEntity*>(entity);
-
         row->setText(0, entity.name);
-        //row->setData(0, EntityRole, QVariant::fromValue(entity));
         row->setData(0, IsFolderRole, entity.isFolder);
         row->setData(0, IsNavigatableRole, entity.isNavigatable);
 
@@ -462,8 +457,6 @@ void NaoQt::fspPathChanged() {
         m_view->addTopLevelItem(row);
 
     }
-
-
 
     m_view->resizeColumnToContents(0);
     m_view->resizeColumnToContents(1);

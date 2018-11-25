@@ -113,13 +113,13 @@ void NaoFSP::_changePathToArchive(const QString& target) {
     m_inArchive = true;
 
     QString archive = getHighestFile(target);
-    qDebug() << archive;
-    
-    if (target == archive) {
-        m_path = archive + QDir::separator();
+    qDebug() << "Archive:" << archive;
 
-        if (archive.endsWith(".cpk")) {
-            m_currentArchive = new CPKArchiveEntity(archive);
+    if (archive.endsWith(".cpk")) {
+        m_currentArchive = new CPKArchiveEntity(archive);
+
+        if (target == archive) {
+            m_path = archive + QDir::separator();
 
             QFileInfo parent(m_path);
 
@@ -131,9 +131,19 @@ void NaoFSP::_changePathToArchive(const QString& target) {
                 parent.size(),
                 parent.size(),
                 parent.lastModified()
-            });
+                });
             m_entities.append(m_currentArchive->directories(""));
             m_entities.append(m_currentArchive->children(""));
+        } else if (target.startsWith(archive)) {
+            m_path = Utils::cleanDirPath(target + QDir::separator());
+
+            QStringList subpathParts = m_path.mid(archive.length() + 1).split(QDir::separator());
+            QString subpath = subpathParts.mid(0, subpathParts.length() - 1).join('/');
+
+            QFileInfo parent(m_path);
+
+            m_entities.append(m_currentArchive->directories(subpath));
+            m_entities.append(m_currentArchive->children(subpath));
         }
     }
 }

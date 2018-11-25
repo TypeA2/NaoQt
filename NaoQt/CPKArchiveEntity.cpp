@@ -53,7 +53,12 @@ QVector<NaoEntity::Entity> CPKArchiveEntity::directories(const QString& of) {
     QVector<Entity> ret;
 
     std::copy_if(dirs.begin(), dirs.end(), std::back_inserter(ret), [&depth, &of](const Entity& entity) -> bool {
-        return entity.path.count('/') == depth && entity.path.startsWith(of);
+        QString path = entity.path;
+        return !(path.isEmpty() || path == of ||
+            (of.isEmpty() && path.contains('/')) ||
+            (!path.startsWith(of) && path != "..") ||
+            (!of.isEmpty() && path.startsWith(of) &&
+                path.remove(0, of.length() + 1).contains('/')));
     });
 
     return ret;
