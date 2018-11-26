@@ -146,6 +146,8 @@ void NaoFSP::_changePathToArchive(const QString& target) {
     } else if (archive.endsWith(".dat") || archive.endsWith(".dtt")) {
         m_currentArchive = new DATArchiveEntity(archive);
 
+        m_path = archive + QDir::separator();
+
         QFileInfo parent(m_path);
 
         m_entities.append({
