@@ -12,7 +12,5 @@ class NaoArchiveEntity : public NaoEntity {
     virtual QVector<Entity> children(const QString& of) = 0;
     virtual QVector<Entity> directories() = 0;
     virtual QVector<Entity> directories(const QString& of) = 0;
-
-    //virtual NaoFileDevice* device() = 0;
 };
 

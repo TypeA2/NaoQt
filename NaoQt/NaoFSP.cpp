@@ -2,6 +2,7 @@
 
 #include <QtConcurrent>
 
+#include "Utils.h"
 #include "Error.h"
 
 #include "NaoFSP.h"
@@ -10,8 +11,7 @@
 #include "DirectoryEntity.h"
 #include "DiskFileEntity.h"
 #include "CPKArchiveEntity.h"
-
-#include "Utils.h"
+#include "DATArchiveEntity.h"
 
 NaoFSP::NaoFSP(const QString& path, QObject* parent) : QObject(parent) {
     m_path = path;
@@ -143,6 +143,21 @@ void NaoFSP::_changePathToArchive(const QString& target) {
             m_entities.append(m_currentArchive->directories(subpath));
             m_entities.append(m_currentArchive->children(subpath));
         }
+    } else if (archive.endsWith(".dat") || archive.endsWith(".dtt")) {
+        m_currentArchive = new DATArchiveEntity(archive);
+
+        QFileInfo parent(m_path);
+
+        m_entities.append({
+            "..",
+            parent.absolutePath(),
+            true,
+            true,
+            parent.size(),
+            parent.size(),
+            parent.lastModified()
+            });
+        m_entities.append(m_currentArchive->children());
     }
 }
 
