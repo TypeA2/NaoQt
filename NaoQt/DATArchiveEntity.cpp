@@ -1,10 +1,11 @@
 #include "DATArchiveEntity.h"
 
+#include "NaoFSP.h"
 #include "NaoFileDevice.h"
 #include "DiskFileDevice.h"
 
 #include <QtEndian>
-
+/*
 DATArchiveEntity::DATArchiveEntity(NaoFileDevice* device) {
     m_device = device;
 
@@ -29,7 +30,7 @@ DATArchiveEntity::~DATArchiveEntity() {
     }
 }
 
-/* --===-- Public Members --===-- */
+/* --===-- Public Members --===-- 
 
 QVector<NaoEntity::Entity> DATArchiveEntity::children() {
     return m_files;
@@ -52,7 +53,7 @@ NaoFileDevice* DATArchiveEntity::device() {
 }
 
 
-/* --===-- Private Members --===-- */
+/* --===-- Private Members --===-- 
 
 void DATArchiveEntity::_readContents() {
     m_device->seek(4);
@@ -97,7 +98,8 @@ void DATArchiveEntity::_readContents() {
             m_fileNames.at(i),
             m_fileNames.at(i),
             false,
-            false,
+            NaoFSP::getNavigatable(m_fileNames.at(i)),
+            true,
             m_fileSizes.at(i),
             m_fileSizes.at(i),
             QDateTime()
@@ -105,3 +107,4 @@ void DATArchiveEntity::_readContents() {
     }
 }
 
+*/

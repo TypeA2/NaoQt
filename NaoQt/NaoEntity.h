@@ -1,40 +1,51 @@
 #pragma once
 
 #include <QVector>
-#include <QDateTime>
-#include <QVariant>
 
-class NaoFileDevice;
+class QIODevice;
 
 class NaoEntity {
     public:
 
-    struct Entity {
+    // -- Structs --
+    struct FileInfo {
         QString name;
-        QString path;
-        bool isFolder;
-        bool isNavigatable;
-        qint64 size;
+        qint64 diskSize;
         qint64 virtualSize;
-        QDateTime lastModified;
+        qint64 offset;
+        QIODevice* device;
     };
 
-    NaoEntity() = default;
+    struct DirInfo {
+        QString name;
+    };
 
-    virtual ~NaoEntity() = 0;
+    // -- Constructors --
+    NaoEntity(FileInfo file);
+    NaoEntity(DirInfo directory);
 
-    virtual bool hasChildren() = 0;
-    virtual QVector<Entity> children() = 0;
+    // -- Static constructors --
+    static NaoEntity* getEntity(QIODevice* input);
 
-    virtual NaoFileDevice* device() = 0;
+    // -- Destructor --
+    ~NaoEntity();
 
-    virtual QDateTime lastModified() const { return QDateTime(); }
-    virtual QString fullpath() const { return _m_fullPath; };
-    virtual QString name() const { return _m_name; };
+    // -- Setters --
+    void addChildren(NaoEntity* child);
+    void addChildren(const QVector<NaoEntity*>& children);
+
+    // -- Getters --
+    bool hasChildren() const;
+    bool isDir() const;
+    QVector<NaoEntity*> children() const;
+    FileInfo finfo() const;
+    DirInfo dinfo() const;
 
     protected:
-    QString _m_fullPath;
-    QString _m_name;
-};
+    bool m_dir;
+    QVector<NaoEntity*> m_children;
 
-Q_DECLARE_METATYPE(NaoEntity*)
+    FileInfo m_fileInfo;
+
+    DirInfo m_dirInfo;
+};

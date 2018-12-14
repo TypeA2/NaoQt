@@ -18,10 +18,7 @@ class NaoFSP : public QObject {
     void changePath();
 
     const QString& currentPath() const;
-    const NaoEntity* currentEntity() const;
-    const QVector<NaoEntity::Entity>& entities() const;
-    bool inArchive() const;
-    bool prevInArchive() const;
+    NaoEntity* entity() const;
 
     static QString getFileDescription(const QString& path);
     static bool getNavigatable(const QString& path);
@@ -32,25 +29,18 @@ class NaoFSP : public QObject {
     void pathChanged();
 
     private slots:
-    void _currentEntityChanged();
+    void _pathChanged();
 
     private:
 
-    void _pathChangeCleanup();
-
     void _changePathToDirectory(const QString& target);
     void _changePathToArchive(const QString& target);
-    void _changePathInArchive(const QString& target);
 
     QString m_path;
 
+    NaoEntity* m_entity;
+
     bool m_inArchive;
-    bool m_prevInArchive;
-    
-    NaoArchiveEntity* m_currentArchive;
-
-
-    NaoEntity* m_currentEntity;
-    QVector<NaoEntity::Entity> m_entities;
+    QIODevice* m_device;
 };
 

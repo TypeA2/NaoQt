@@ -1,7 +1,7 @@
 #pragma once
 
 #include "NaoArchiveEntity.h"
-
+/*
 class NaoFileDevice;
 
 class DATArchiveEntity : public NaoArchiveEntity {
@@ -35,5 +35,5 @@ class DATArchiveEntity : public NaoArchiveEntity {
     QVector<quint32> m_fileSizes;
 
     QVector<Entity> m_files;
-};
+};*/
 

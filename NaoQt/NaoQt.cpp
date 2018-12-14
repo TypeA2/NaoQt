@@ -17,9 +17,6 @@
 #include "Utils.h"
 
 #include "NaoEntity.h"
-#include "NaoArchiveEntity.h"
-#include "NaoFileDevice.h"
-#include "DirectoryEntity.h"
 
 NaoQt::NaoQt() {
 
@@ -64,13 +61,14 @@ void NaoQt::setupModel() {
     m_browsePath = new QPushButton(" Browse", m_centralWidget);
 
     m_view = new QTreeWidget(m_centralWidget);
-    m_view->setColumnCount(4);
+    m_view->setColumnCount(3);
     m_view->setEditTriggers(QTreeView::NoEditTriggers); // Non-editable
     m_view->setRootIsDecorated(false); // Remove the caret
     m_view->setContextMenuPolicy(Qt::CustomContextMenu);
     m_view->setUniformRowHeights(true);
     m_view->setAnimated(false);
     m_view->setItemsExpandable(false);
+    m_view->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
 
     connect(m_view, &QTreeWidget::itemDoubleClicked, this, &NaoQt::viewInteraction);
     connect(m_view, &QTreeWidget::customContextMenuRequested, this, &NaoQt::viewContextMenu);
@@ -170,7 +168,7 @@ void NaoQt::sortColumn(int index, Qt::SortOrder order) {
 
     std::sort(dirs.begin(), dirs.end(), [&index](QTreeWidgetItem* a, QTreeWidgetItem* b) -> bool {
 
-        if (index == 3) { // Folders do support last modified date sorting
+        /*if (index == 3) { // Folders do support last modified date sorting
             QDateTime dateA = a->data(3, LastModifiedRole).toDateTime();
             QDateTime dateB = b->data(3, LastModifiedRole).toDateTime();
 
@@ -178,7 +176,7 @@ void NaoQt::sortColumn(int index, Qt::SortOrder order) {
             if (dateA != dateB) {
                 return dateA > dateB;
             }
-        }
+        }*/
 
         return a->text(0).compare(b->text(0), Qt::CaseInsensitive) < 0;
     });
@@ -201,7 +199,7 @@ void NaoQt::sortColumn(int index, Qt::SortOrder order) {
             if (typeA != typeB) {
                 return typeA.compare(typeB, Qt::CaseInsensitive) < 0;
             }
-        } else if (index == 3) { // Sort by last modified date
+        }/* else if (index == 3) { // Sort by last modified date
             QDateTime dateA = a->data(3, LastModifiedRole).toDateTime();
             QDateTime dateB = b->data(3, LastModifiedRole).toDateTime();
 
@@ -209,7 +207,7 @@ void NaoQt::sortColumn(int index, Qt::SortOrder order) {
             if (dateA != dateB) {
                 return dateA > dateB;
             }
-        }
+        }*/
 
         // Fallback alphabetical sort
         return a->text(0).compare(b->text(0), Qt::CaseInsensitive) < 0;
@@ -276,6 +274,29 @@ void NaoQt::viewInteraction(QTreeWidgetItem* item, int column) {
 }
 
 void NaoQt::viewContextMenu(const QPoint& pos) {
+    /*QTreeWidgetItem* row = m_view->itemAt(pos);
+
+    QMenu* ctx = new QMenu(m_view);
+
+    if (row->data(0, IsNavigatableRole).toBool()) {
+        QAction* open = new QAction("Open", ctx);
+        connect(open, &QAction::triggered, this, [this, row]() {
+            m_fsp->changePath(m_fsp->currentPath() + row->text(0));
+        });
+        connect(open, &QAction::triggered, ctx, &QMenu::deleteLater);
+        ctx->addAction(open);
+    }
+
+    if (!row->data(0, IsEmbeddedRole).toBool()) {
+        QAction* show = new QAction("Show in explorer", ctx);
+        connect(show, &QAction::triggered, this, [this]() {
+            QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text()));
+        });
+        connect(show, &QAction::triggered, ctx, &QMenu::deleteLater);
+        ctx->addAction(show);
+    }
+
+    ctx->popup(m_view->viewport()->mapToGlobal(pos));*/
 
     /*
     QModelIndex clickedIndex = m_view->indexAt(pos);
@@ -419,10 +440,55 @@ void NaoQt::changePath(const QString& path) {
 void NaoQt::fspPathChanged() {
     _pathChangeCleanup();
 
-    if (m_fsp->inArchive()) {
+    m_view->setHeaderLabels({ "Name", "Size", "Type" });
+
+    QFileIconProvider ficonprovider;
+
+    NaoEntity* entity = m_fsp->entity();
+
+    if (entity->hasChildren()) {
+        for (NaoEntity* entry : entity->children()) {
+
+            QTreeWidgetItem* row = new QTreeWidgetItem(m_view);
+
+            row->setData(0, IsFolderRole, entry->isDir());
+
+            if (entry->isDir()) {
+                NaoEntity::DirInfo dir = entry->dinfo();
+
+                row->setText(0, dir.name);
+                row->setData(0, IsNavigatableRole, true);
+                row->setIcon(0, ficonprovider.icon(QFileIconProvider::Folder));
+                row->setText(2, "Directory");
+            } else {
+                NaoEntity::FileInfo file = entry->finfo();
+
+                row->setText(0, file.name);
+                row->setIcon(0, ficonprovider.icon(QFileInfo(file.name)));
+                row->setData(0, IsNavigatableRole, NaoFSP::getNavigatable(file.name));
+                row->setText(1, Utils::getShortSize(file.virtualSize));
+                row->setData(1, ItemSizeRole, file.virtualSize);
+                row->setText(2, NaoFSP::getFileDescription(file.name));
+            }
+
+            m_view->addTopLevelItem(row);
+        }
+
+        m_view->resizeColumnToContents(0);
+        m_view->resizeColumnToContents(1);
+        m_view->resizeColumnToContents(2);
+
+        sortColumn(0, Qt::DescendingOrder);
+
+        m_pathDisplay->setText(Utils::cleanDirPath(m_fsp->currentPath()));
+
+        m_view->setFocus();
+    }
+
+    /*if (m_fsp->inArchive()) {
         m_view->setHeaderLabels({ "Name", "Size", "Type", "Compressed" });
     } else {
-        m_view->setHeaderLabels({ "Name", "Size", "Type", "Modified" });
+        
     }
 
     QFileIconProvider ficonprovider;
@@ -435,6 +501,7 @@ void NaoQt::fspPathChanged() {
         row->setText(0, entity.name);
         row->setData(0, IsFolderRole, entity.isFolder);
         row->setData(0, IsNavigatableRole, entity.isNavigatable);
+        row->setData(0, IsEmbeddedRole, entity.isEmbedded);
 
         if (entity.isFolder) {
             row->setIcon(0, ficonprovider.icon(QFileIconProvider::Folder));
@@ -467,7 +534,7 @@ void NaoQt::fspPathChanged() {
 
     m_pathDisplay->setText(Utils::cleanDirPath(m_fsp->currentPath()));
 
-    m_view->setFocus();
+    m_view->setFocus();*/
 }
 
 /*

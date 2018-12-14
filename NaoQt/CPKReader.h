@@ -1,21 +1,13 @@
 #pragma once
 
-#include <stdexcept>
-
-#include <QVector>
-#include <QSet>
 #include <QMap>
 
-class CPKException : public std::logic_error {
-    public:
-    CPKException(const char* what) : std::logic_error(what) {}
-};
+#include "NaoEntity.h"
 
-class ChunkBasedFile;
-class QIODevice;
 class CPKReader {
     public:
 
+    // -- Struct --
     struct FileInfo {
         QString origin;
         QString name;
@@ -28,27 +20,23 @@ class CPKReader {
         quint32 id;
     };
 
-    CPKReader(QIODevice* input);
+    // -- Static Constructor --
+    static CPKReader* create(QIODevice* input);
+
+    // -- Destructor--
     ~CPKReader();
-
-    quint16 fileCount() const;
-    FileInfo fileInfo(const QString& path) const;
-    QVector<FileInfo> fileInfo() const;
-    QSet<QString> dirs() const;
-    ChunkBasedFile* file(const QString& path) const;
-
-    static QByteArray decompressCRILAYLA(const QByteArray& file);
-    static quint16 getBits(const char* input, quint64* offset,
-        uchar* bitpool, quint8* remaining, quint64 count);
 
     private:
 
-    void init();
+    // -- Constructor --
+    CPKReader(QIODevice* in);
 
-    QIODevice* m_input;
+    // -- Parsing --
+    void _readContents();
 
-    QMap<QString, FileInfo> m_fileInfo;
-    QMap<QString, ChunkBasedFile*> m_files;
-    QSet<QString> m_dirs;
+
+    // -- Member variables --
+    QIODevice* m_device;
+
+    QMap<QString, FileInfo> m_files;
 };
-

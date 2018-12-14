@@ -116,6 +116,7 @@ class NaoQt : public QMainWindow {
         LastModifiedRole,
 
         EntityRole,
-        IsNavigatableRole
+        IsNavigatableRole,
+        IsEmbeddedRole
     };
 };

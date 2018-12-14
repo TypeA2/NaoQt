@@ -1,10 +1,6 @@
 #include "UTFReader.h"
 
-#include <QtEndian>
-
 #include "BinaryUtils.h"
-
-#include "NaoFileDevice.h"
 
 #include "Error.h"
 #define ASSERT(cond) \
@@ -31,26 +27,6 @@ QByteArray UTFReader::readUTF(QIODevice* in) {
 
     quint32 size = qFromBigEndian<quint32>(in->read(4)) + 8;
     ASSERT(in->seek(in->pos() - 8));
-
-    return in->read(size);
-}
-
-QByteArray UTFReader::readUTF(NaoFileDevice* in) {
-    in->open(NaoFileDevice::Read);
-
-    if (in->read(4) != QByteArray("@UTF", 4)) {
-        in->seek(8, NaoFileDevice::Cur);
-
-        if (in->read(4) != QByteArray("@UTF", 4)) {
-            return QByteArray();
-        }
-    }
-
-    quint32 size = qFromBigEndian<quint32>(in->read(4)) + 8;
-
-    if (!in->seek(-8, NaoFileDevice::Cur)) {
-        return QByteArray();
-    }
 
     return in->read(size);
 }
@@ -99,16 +75,16 @@ UTFReader::UTFReader(QByteArray utf) {
 
         if (field.flags & ConstVal) {
             switch (field.flags & 0x0F) {
-                case UChar:        field.constVal = QVariant::fromValue(*m_buffer->read(1)); break;
-                case SChar:        field.constVal = QVariant::fromValue(*reinterpret_cast<signed char*>(m_buffer->read(1).data())); break;
+                case UChar:     field.constVal = QVariant::fromValue(*m_buffer->read(1)); break;
+                case SChar:     field.constVal = QVariant::fromValue(*reinterpret_cast<signed char*>(m_buffer->read(1).data())); break;
                 case UShort:    field.constVal = QVariant::fromValue(qFromBigEndian<quint16>(m_buffer->read(2))); break;
                 case SShort:    field.constVal = QVariant::fromValue(qFromBigEndian<qint16>(m_buffer->read(2))); break;
-                case UInt:        field.constVal = QVariant::fromValue(qFromBigEndian<quint32>(m_buffer->read(4))); break;
-                case SInt:        field.constVal = QVariant::fromValue(qFromBigEndian<qint32>(m_buffer->read(4))); break;
-                case ULong:        field.constVal = QVariant::fromValue(qFromBigEndian<quint64>(m_buffer->read(8))); break;
-                case SLong:        field.constVal = QVariant::fromValue(qFromBigEndian<qint64>(m_buffer->read(8))); break;
+                case UInt:      field.constVal = QVariant::fromValue(qFromBigEndian<quint32>(m_buffer->read(4))); break;
+                case SInt:      field.constVal = QVariant::fromValue(qFromBigEndian<qint32>(m_buffer->read(4))); break;
+                case ULong:     field.constVal = QVariant::fromValue(qFromBigEndian<quint64>(m_buffer->read(8))); break;
+                case SLong:     field.constVal = QVariant::fromValue(qFromBigEndian<qint64>(m_buffer->read(8))); break;
                 case SFloat:    field.constVal = QVariant::fromValue(*reinterpret_cast<float*>(m_buffer->read(4).data())); break;
-                case SDouble:    field.constVal = QVariant::fromValue(*reinterpret_cast<double*>(m_buffer->read(8).data())); break;
+                case SDouble:   field.constVal = QVariant::fromValue(*reinterpret_cast<double*>(m_buffer->read(8).data())); break;
                 case String:
                 {
                     quint32 offset = qFromBigEndian<quint32>(m_buffer->read(4));
@@ -165,16 +141,16 @@ UTFReader::UTFReader(QByteArray utf) {
                 row.pos = m_buffer->pos();
 
                 switch (row.type) {
-                    case UChar:        row.val = QVariant::fromValue(*m_buffer->read(1)); break;
-                    case SChar:        row.val = QVariant::fromValue(*reinterpret_cast<signed char*>(m_buffer->read(1).data())); break;
+                    case UChar:     row.val = QVariant::fromValue(*m_buffer->read(1)); break;
+                    case SChar:     row.val = QVariant::fromValue(*reinterpret_cast<signed char*>(m_buffer->read(1).data())); break;
                     case UShort:    row.val = QVariant::fromValue(qFromBigEndian<quint16>(m_buffer->read(2))); break;
                     case SShort:    row.val = QVariant::fromValue(qFromBigEndian<qint16>(m_buffer->read(2))); break;
-                    case UInt:        row.val = QVariant::fromValue(qFromBigEndian<quint32>(m_buffer->read(4))); break;
-                    case SInt:        row.val = QVariant::fromValue(qFromBigEndian<qint32>(m_buffer->read(4))); break;
-                    case ULong:        row.val = QVariant::fromValue(qFromBigEndian<quint64>(m_buffer->read(8))); break;
-                    case SLong:        row.val = QVariant::fromValue(qFromBigEndian<qint64>(m_buffer->read(8))); break;
+                    case UInt:      row.val = QVariant::fromValue(qFromBigEndian<quint32>(m_buffer->read(4))); break;
+                    case SInt:      row.val = QVariant::fromValue(qFromBigEndian<qint32>(m_buffer->read(4))); break;
+                    case ULong:     row.val = QVariant::fromValue(qFromBigEndian<quint64>(m_buffer->read(8))); break;
+                    case SLong:     row.val = QVariant::fromValue(qFromBigEndian<qint64>(m_buffer->read(8))); break;
                     case SFloat:    row.val = QVariant::fromValue(*reinterpret_cast<float*>(m_buffer->read(4).data())); break;
-                    case SDouble:    row.val = QVariant::fromValue(*reinterpret_cast<double*>(m_buffer->read(8).data())); break;
+                    case SDouble:   row.val = QVariant::fromValue(*reinterpret_cast<double*>(m_buffer->read(8).data())); break;
                     case String:
                     {
                         quint32 offset = qFromBigEndian<quint32>(m_buffer->read(4));

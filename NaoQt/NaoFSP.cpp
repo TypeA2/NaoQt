@@ -3,32 +3,20 @@
 #include <QtConcurrent>
 
 #include "Utils.h"
-#include "Error.h"
 
 #include "NaoFSP.h"
-
 #include "NaoEntity.h"
-#include "DirectoryEntity.h"
-#include "DiskFileEntity.h"
-#include "CPKArchiveEntity.h"
-#include "DATArchiveEntity.h"
 
-NaoFSP::NaoFSP(const QString& path, QObject* parent) : QObject(parent) {
-    m_path = path;
-
-    m_currentEntity = nullptr;
-    m_currentArchive = nullptr;
-    m_inArchive = false;
-    m_prevInArchive = false;
+NaoFSP::NaoFSP(const QString& path, QObject* parent)
+    : QObject(parent)
+    , m_entity(nullptr)
+    , m_inArchive(false)
+    , m_device(nullptr) {
+    m_path = Utils::cleanDirPath(path);
 }
 
 NaoFSP::~NaoFSP() {
-    /*for (NaoEntity* entity : m_entities) {
-        delete entity;
-    }*/
-
-    delete m_currentEntity;
-    delete m_currentArchive;
+    delete m_entity;
 }
 
 /* --===-- Public Members --===-- */
@@ -43,7 +31,7 @@ void NaoFSP::changePath(QString to) {
 
     QFutureWatcher<void>* watcher = new QFutureWatcher<void>(this);
 
-    connect(watcher, &QFutureWatcher<void>::finished, this, &NaoFSP::_currentEntityChanged);
+    connect(watcher, &QFutureWatcher<void>::finished, this, &NaoFSP::_pathChanged);
     connect(watcher, &QFutureWatcher<void>::finished, watcher, &QFutureWatcher<void>::deleteLater);
 
     QFuture<void> future;
@@ -51,7 +39,7 @@ void NaoFSP::changePath(QString to) {
     to = Utils::cleanGenericPath(to);
 
     if (to == getHighestDirectory(to)) {
-        m_path = QFileInfo(to).absoluteFilePath();
+        m_path = Utils::cleanDirPath(QFileInfo(to).absoluteFilePath());
 
         future = QtConcurrent::run(this, &NaoFSP::_changePathToDirectory, to);
     } else {
@@ -65,14 +53,12 @@ const QString& NaoFSP::currentPath() const {
     return m_path;
 }
 
-const NaoEntity* NaoFSP::currentEntity() const {
-    return const_cast<const NaoEntity*>(m_inArchive ? m_currentArchive : m_currentEntity);
+NaoEntity* NaoFSP::entity() const {
+    return m_entity;
 }
 
-const QVector<NaoEntity::Entity>& NaoFSP::entities() const {
-    return m_entities;
-}
 
+/*
 bool NaoFSP::inArchive() const {
     return m_inArchive;
 }
@@ -80,33 +66,53 @@ bool NaoFSP::inArchive() const {
 bool NaoFSP::prevInArchive() const {
     return m_prevInArchive;
 }
-
+*/
 
 /* --===-- Private Members --===-- */
 
-void NaoFSP::_pathChangeCleanup() {
-    m_entities.clear();
-
-    delete m_currentEntity;
-    m_currentEntity = nullptr;
-
-    delete m_currentArchive;
-    m_currentArchive = nullptr;
-}
-
 void NaoFSP::_changePathToDirectory(const QString& target) {
-    _pathChangeCleanup();
+    delete m_entity;
 
-    m_inArchive = false;
+    QDir currentDir(target);
 
-    m_currentEntity = new DirectoryEntity(target);
+    m_entity = new NaoEntity(NaoEntity::DirInfo {
+        target
+    });
 
-    m_entities.append(m_currentEntity->children());
+    QFileInfoList entries = currentDir.entryInfoList(QDir::AllEntries | QDir::NoDot, QDir::IgnoreCase | QDir::DirsFirst);
+
+    for (const QFileInfo& entry : entries) {
+        NaoEntity* entity = nullptr;
+
+        if (entry.isDir()) {
+            entity = new NaoEntity(NaoEntity::DirInfo { entry.fileName() });
+        } else if (entry.isFile()) {
+            entity = new NaoEntity(NaoEntity::FileInfo {
+                entry.fileName(),
+                entry.size(),
+                entry.size(),
+                0,
+                nullptr
+            });
+        }
+
+        m_entity->addChildren(entity);
+    }
 
 }
 
 void NaoFSP::_changePathToArchive(const QString& target) {
-    _pathChangeCleanup();
+    
+    if (!m_inArchive) {
+        delete m_entity;
+
+        m_device = new QFile(target);
+        m_device->open(QIODevice::ReadOnly);
+
+        m_entity = NaoEntity::getEntity(m_device);
+    }
+
+    /*_pathChangeCleanup();
 
     m_inArchive = true;
 
@@ -126,6 +132,7 @@ void NaoFSP::_changePathToArchive(const QString& target) {
                 parent.absolutePath(),
                 true,
                 true,
+                false,
                 parent.size(),
                 parent.size(),
                 parent.lastModified()
@@ -155,24 +162,20 @@ void NaoFSP::_changePathToArchive(const QString& target) {
             parent.absolutePath(),
             true,
             true,
+            false,
             parent.size(),
             parent.size(),
             parent.lastModified()
             });
         m_entities.append(m_currentArchive->children());
-    }
-}
-
-void NaoFSP::_changePathInArchive(const QString& target) {
-    //m_entities = m_currentArchive->children(target);
+    }*/
 }
 
 /* --===-- Private Slots --===-- */
 
-void NaoFSP::_currentEntityChanged() {
+void NaoFSP::_pathChanged() {
     emit pathChanged();
 }
-
 
 /* --===-- Static Members --===-- */
 
