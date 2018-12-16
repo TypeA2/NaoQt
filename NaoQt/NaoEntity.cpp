@@ -1,5 +1,10 @@
 #include "NaoEntity.h"
 
+#include <QIODevice>
+
+#include "CPKReader.h"
+#include "ChunkBasedFile.h"
+
 // --===-- Constructors --===--
 
 NaoEntity::NaoEntity(FileInfo file)
@@ -19,9 +24,68 @@ NaoEntity::NaoEntity(DirInfo directory)
 
 // --===-- Static constructors --===--
 
-NaoEntity* NaoEntity::getEntity(QIODevice* input) {
-    
+NaoEntity* NaoEntity::getEntity(NaoEntity* parent) {
+    QIODevice* input = parent->finfo().device;
+
+    if (!input->isOpen() ||
+        !input->isReadable() ||
+        input->isSequential()) {
+        return parent;
+    }
+
+    QByteArray fcc = input->read(4);
+
+    if (!input->seek(0)) {
+        return parent;
+    }
+
+    if (fcc == QByteArray("CPK ")) {
+        return getCPK(parent);
+    }
+
+    return parent;
 }
+
+NaoEntity* NaoEntity::getCPK(NaoEntity* parent) {
+    FileInfo finfo = parent->finfo();
+
+    if (CPKReader* reader = CPKReader::create(finfo.device)) {
+        for (const QString& dir : reader->dirs()) {
+            parent->addChildren(new NaoEntity(DirInfo {
+                finfo.name + "/" + (!dir.isEmpty() ? dir : "..")
+            }));
+
+            if (!dir.isEmpty()) {
+                parent->addChildren(new NaoEntity(DirInfo{
+                    finfo.name + "/" + dir + "/.."
+                }));
+            }
+        }
+
+        for (const CPKReader::FileInfo& file : reader->files()) {
+            ChunkBasedFile* cbf = new ChunkBasedFile({
+                static_cast<qint64>(file.offset + file.extraOffset),
+                static_cast<qint64>(file.size),
+                0
+            }, finfo.device);
+
+            cbf->open(QIODevice::ReadOnly);
+
+            parent->addChildren(new NaoEntity(FileInfo {
+                finfo.name + "/" + (!file.dir.isEmpty() ? file.dir + "/" : "") + file.name,
+                static_cast<qint64>(file.size),
+                static_cast<qint64>(file.extractedSize),
+                static_cast<qint64>(file.offset + file.extraOffset),
+                cbf
+            }));
+        }
+
+        delete reader;
+    }
+
+    return parent;
+}
+
 
 // --===-- Destructor --===--
 

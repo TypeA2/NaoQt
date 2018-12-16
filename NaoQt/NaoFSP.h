@@ -11,15 +11,22 @@ class NaoFSP : public QObject {
 
     public:
 
+    // -- Constructor --
     NaoFSP(const QString& path, QObject* parent);
+
+    // -- Destructor --
     ~NaoFSP();
 
-    void changePath(QString to);
-    void changePath();
-
+    // -- Getters --
     const QString& currentPath() const;
+    bool inArchive() const;
     NaoEntity* entity() const;
 
+    // -- Member functions --
+    void changePath();
+    void changePath(QString to);
+
+    // -- Static getters --
     static QString getFileDescription(const QString& path);
     static bool getNavigatable(const QString& path);
     static QString getHighestDirectory(QString path);
@@ -33,6 +40,7 @@ class NaoFSP : public QObject {
 
     private:
 
+    // -- Private member functions --
     void _changePathToDirectory(const QString& target);
     void _changePathToArchive(const QString& target);
 
@@ -41,6 +49,6 @@ class NaoFSP : public QObject {
     NaoEntity* m_entity;
 
     bool m_inArchive;
-    QIODevice* m_device;
+    //QIODevice* m_device;
 };
 

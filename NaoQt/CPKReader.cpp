@@ -1,13 +1,11 @@
 #include "CPKReader.h"
 
-#include "NaoFSP.h"
 #include "UTFReader.h"
 
 // --===-- Constructor --===--
 
 CPKReader::CPKReader(QIODevice* in)
-    : m_device(in)
-    , m_files(0) {
+    : m_device(in) {
     
     _readContents();
 }
@@ -16,6 +14,16 @@ CPKReader::CPKReader(QIODevice* in)
 
 CPKReader::~CPKReader() {
     m_device->deleteLater();
+}
+
+// --===-- Getters --===--
+
+QVector<CPKReader::FileInfo> CPKReader::files() {
+    return m_files.values().toVector();
+}
+
+QVector<QString> CPKReader::dirs() {
+    return m_dirs.values().toVector();
 }
 
 // --===-- Static Constructor --===--
@@ -72,7 +80,13 @@ void CPKReader::_readContents() {
                 files->getData(i, "ID").toUInt()
             };
 
+            qDebug() << ((!entry.dir.isEmpty() ? entry.dir + "/" : "") + entry.name);
+
             m_files.insert((!entry.dir.isEmpty() ? entry.dir + "/" : "") + entry.name, entry);
+
+            if (!m_dirs.contains(entry.dir)) {
+                m_dirs.insert(entry.dir);
+            }
         }
 
         files->deleteLater();

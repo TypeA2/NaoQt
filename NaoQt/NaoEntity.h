@@ -15,7 +15,7 @@ class NaoEntity {
         qint64 offset;
         QIODevice* device;
     };
-
+    
     struct DirInfo {
         QString name;
     };
@@ -25,7 +25,8 @@ class NaoEntity {
     NaoEntity(DirInfo directory);
 
     // -- Static constructors --
-    static NaoEntity* getEntity(QIODevice* input);
+    static NaoEntity* getEntity(NaoEntity* parent);
+    static NaoEntity* getCPK(NaoEntity* parent);
 
     // -- Destructor --
     ~NaoEntity();

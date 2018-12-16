@@ -7,19 +7,37 @@
 #include "NaoFSP.h"
 #include "NaoEntity.h"
 
+
+// --===-- Constructor --===--
+
 NaoFSP::NaoFSP(const QString& path, QObject* parent)
     : QObject(parent)
     , m_entity(nullptr)
-    , m_inArchive(false)
-    , m_device(nullptr) {
+    , m_inArchive(false) {
     m_path = Utils::cleanDirPath(path);
 }
+
+// --===-- Destructor --===--
 
 NaoFSP::~NaoFSP() {
     delete m_entity;
 }
 
-/* --===-- Public Members --===-- */
+// --===-- Getters --===--
+
+const QString& NaoFSP::currentPath() const {
+    return m_path;
+}
+
+NaoEntity* NaoFSP::entity() const {
+    return m_entity;
+}
+
+bool NaoFSP::inArchive() const {
+    return m_inArchive;
+}
+
+// --===-- Member functions --===--
 
 void NaoFSP::changePath() {
     changePath(m_path);
@@ -38,9 +56,9 @@ void NaoFSP::changePath(QString to) {
 
     to = Utils::cleanGenericPath(to);
 
-    if (to == getHighestDirectory(to)) {
-        m_path = Utils::cleanDirPath(QFileInfo(to).absoluteFilePath());
+    m_path = Utils::cleanDirPath(QFileInfo(to).absoluteFilePath());
 
+    if (to == getHighestDirectory(to)) {
         future = QtConcurrent::run(this, &NaoFSP::_changePathToDirectory, to);
     } else {
         future = QtConcurrent::run(this, &NaoFSP::_changePathToArchive, to);
@@ -49,35 +67,17 @@ void NaoFSP::changePath(QString to) {
     watcher->setFuture(future);
 }
 
-const QString& NaoFSP::currentPath() const {
-    return m_path;
-}
-
-NaoEntity* NaoFSP::entity() const {
-    return m_entity;
-}
-
-
-/*
-bool NaoFSP::inArchive() const {
-    return m_inArchive;
-}
-
-bool NaoFSP::prevInArchive() const {
-    return m_prevInArchive;
-}
-*/
-
-/* --===-- Private Members --===-- */
+// --===-- Private member functions --===--
 
 void NaoFSP::_changePathToDirectory(const QString& target) {
+
+    m_inArchive = false;
+
     delete m_entity;
 
     QDir currentDir(target);
 
-    m_entity = new NaoEntity(NaoEntity::DirInfo {
-        target
-    });
+    m_entity = new NaoEntity(NaoEntity::DirInfo { target });
 
     QFileInfoList entries = currentDir.entryInfoList(QDir::AllEntries | QDir::NoDot, QDir::IgnoreCase | QDir::DirsFirst);
 
@@ -85,10 +85,12 @@ void NaoFSP::_changePathToDirectory(const QString& target) {
         NaoEntity* entity = nullptr;
 
         if (entry.isDir()) {
-            entity = new NaoEntity(NaoEntity::DirInfo { entry.fileName() });
+            entity = new NaoEntity(NaoEntity::DirInfo {
+                entry.fileName() == ".." ? ".." : entry.absoluteFilePath()
+            });
         } else if (entry.isFile()) {
             entity = new NaoEntity(NaoEntity::FileInfo {
-                entry.fileName(),
+                entry.absoluteFilePath(),
                 entry.size(),
                 entry.size(),
                 0,
@@ -96,20 +98,35 @@ void NaoFSP::_changePathToDirectory(const QString& target) {
             });
         }
 
-        m_entity->addChildren(entity);
+        if (entity) {
+            m_entity->addChildren(entity);
+        }
     }
-
 }
 
 void NaoFSP::_changePathToArchive(const QString& target) {
+    qDebug() << "Entering archive" << target;
     
     if (!m_inArchive) {
+        qDebug() << "First parse";
+        m_inArchive = true;
+
         delete m_entity;
 
-        m_device = new QFile(target);
-        m_device->open(QIODevice::ReadOnly);
+        QFile* device = new QFile(target);
+        device->open(QIODevice::ReadOnly);
 
-        m_entity = NaoEntity::getEntity(m_device);
+        QFileInfo targetf(target);
+
+        m_entity = new NaoEntity(NaoEntity::FileInfo {
+            targetf.absoluteFilePath(),
+            targetf.size(),
+            targetf.size(),
+            0,
+            device
+        });
+        
+        m_entity = NaoEntity::getEntity(m_entity);
     }
 
     /*_pathChangeCleanup();
@@ -171,13 +188,13 @@ void NaoFSP::_changePathToArchive(const QString& target) {
     }*/
 }
 
-/* --===-- Private Slots --===-- */
+// --===-- Private Slots --===--
 
 void NaoFSP::_pathChanged() {
     emit pathChanged();
 }
 
-/* --===-- Static Members --===-- */
+// --===-- Static getters --===--
 
 QString NaoFSP::getFileDescription(const QString& path) {
     if (path.endsWith("cpk")) {

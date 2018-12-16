@@ -447,7 +447,24 @@ void NaoQt::fspPathChanged() {
     NaoEntity* entity = m_fsp->entity();
 
     if (entity->hasChildren()) {
+        QString parent = m_fsp->currentPath();
+        QString root = entity->finfo().name;
+        QString subdir = parent.mid(root.length());
+
+        bool inArchive = m_fsp->inArchive();
+
         for (NaoEntity* entry : entity->children()) {
+
+            if (inArchive) {
+                QString subpath = (entry->isDir() ? entry->dinfo().name : entry->finfo().name).mid(root.length() + 1);
+                QFileInfo finfo(subpath);
+
+                qDebug() << subpath << subpath.mid(subdir.length() - 1) << finfo.fileName();
+
+                if (subpath.mid(subdir.length() - 1) != finfo.fileName()) {
+                    continue;
+                }
+            }
 
             QTreeWidgetItem* row = new QTreeWidgetItem(m_view);
 
@@ -456,14 +473,14 @@ void NaoQt::fspPathChanged() {
             if (entry->isDir()) {
                 NaoEntity::DirInfo dir = entry->dinfo();
 
-                row->setText(0, dir.name);
+                row->setText(0, dir.name == ".." ? ".." : dir.name.mid(parent.length()));
                 row->setData(0, IsNavigatableRole, true);
                 row->setIcon(0, ficonprovider.icon(QFileIconProvider::Folder));
                 row->setText(2, "Directory");
             } else {
                 NaoEntity::FileInfo file = entry->finfo();
 
-                row->setText(0, file.name);
+                row->setText(0, file.name.mid(parent.length()));
                 row->setIcon(0, ficonprovider.icon(QFileInfo(file.name)));
                 row->setData(0, IsNavigatableRole, NaoFSP::getNavigatable(file.name));
                 row->setText(1, Utils::getShortSize(file.virtualSize));
@@ -483,6 +500,8 @@ void NaoQt::fspPathChanged() {
         m_pathDisplay->setText(Utils::cleanDirPath(m_fsp->currentPath()));
 
         m_view->setFocus();
+
+        m_pathDisplay->setText(Utils::cleanDirPath(m_fsp->currentPath()));
     }
 
     /*if (m_fsp->inArchive()) {

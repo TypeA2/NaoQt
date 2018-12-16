@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QMap>
+#include <QSet>
 
 #include "NaoEntity.h"
 
@@ -26,6 +27,10 @@ class CPKReader {
     // -- Destructor--
     ~CPKReader();
 
+    // -- Getters --
+    QVector<FileInfo> files();
+    QVector<QString> dirs();
+
     private:
 
     // -- Constructor --
@@ -34,9 +39,9 @@ class CPKReader {
     // -- Parsing --
     void _readContents();
 
-
     // -- Member variables --
     QIODevice* m_device;
 
     QMap<QString, FileInfo> m_files;
+    QSet<QString> m_dirs;
 };
