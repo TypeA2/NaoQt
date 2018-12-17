@@ -80,8 +80,6 @@ void CPKReader::_readContents() {
                 files->getData(i, "ID").toUInt()
             };
 
-            qDebug() << ((!entry.dir.isEmpty() ? entry.dir + "/" : "") + entry.name);
-
             m_files.insert((!entry.dir.isEmpty() ? entry.dir + "/" : "") + entry.name, entry);
 
             if (!m_dirs.contains(entry.dir)) {

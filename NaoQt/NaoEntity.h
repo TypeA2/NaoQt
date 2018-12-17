@@ -13,7 +13,7 @@ class NaoEntity {
         qint64 diskSize;
         qint64 virtualSize;
         qint64 offset;
-        QIODevice* device;
+        QIODevice* device = nullptr;
     };
     
     struct DirInfo {

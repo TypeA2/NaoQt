@@ -268,7 +268,7 @@ void NaoQt::viewInteraction(QTreeWidgetItem* item, int column) {
 
     if (item->data(0, IsNavigatableRole).toBool()) {
         changePath(m_pathDisplay->text() + item->text(0));
-    } else {
+    } else if (!m_fsp->inArchive()) {
         QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text() + QDir::separator() + item->text(0)));
     }
 }
@@ -447,21 +447,21 @@ void NaoQt::fspPathChanged() {
     NaoEntity* entity = m_fsp->entity();
 
     if (entity->hasChildren()) {
-        QString parent = m_fsp->currentPath();
-        QString root = entity->finfo().name;
-        QString subdir = parent.mid(root.length());
 
         bool inArchive = m_fsp->inArchive();
+
+        QString parent = m_fsp->currentPath();
+        QString root = entity->finfo().name;
 
         for (NaoEntity* entry : entity->children()) {
 
             if (inArchive) {
-                QString subpath = (entry->isDir() ? entry->dinfo().name : entry->finfo().name).mid(root.length() + 1);
-                QFileInfo finfo(subpath);
+                QString subpath = (entry->isDir() ? entry->dinfo().name : entry->finfo().name)
+                    .remove(root).mid(1);
+                QString relpath = (entry->isDir() ? entry->dinfo().name : entry->finfo().name)
+                    .remove(parent);
 
-                qDebug() << subpath << subpath.mid(subdir.length() - 1) << finfo.fileName();
-
-                if (subpath.mid(subdir.length() - 1) != finfo.fileName()) {
+                if (relpath != QFileInfo(subpath).fileName()) {
                     continue;
                 }
             }
@@ -472,8 +472,7 @@ void NaoQt::fspPathChanged() {
 
             if (entry->isDir()) {
                 NaoEntity::DirInfo dir = entry->dinfo();
-
-                row->setText(0, dir.name == ".." ? ".." : dir.name.mid(parent.length()));
+                row->setText(0, dir.name.mid(0).remove(parent));
                 row->setData(0, IsNavigatableRole, true);
                 row->setIcon(0, ficonprovider.icon(QFileIconProvider::Folder));
                 row->setText(2, "Directory");

@@ -108,7 +108,6 @@ void NaoFSP::_changePathToArchive(const QString& target) {
     qDebug() << "Entering archive" << target;
     
     if (!m_inArchive) {
-        qDebug() << "First parse";
         m_inArchive = true;
 
         delete m_entity;
@@ -233,6 +232,14 @@ QString NaoFSP::getFileDescription(const QString& path) {
         return "Model data";
     }
 
+    if (path.endsWith("eff")) {
+        return "Effects archive";
+    }
+
+    if (path.endsWith("evn")) {
+        return "Events archive";
+    }
+
     return "";
 }
 
@@ -242,7 +249,9 @@ bool NaoFSP::getNavigatable(const QString& path) {
         path.endsWith("wsp") ||
         path.endsWith("dat") ||
         path.endsWith("dtt") ||
-        path.endsWith("wtp");
+        path.endsWith("wtp") ||
+        path.endsWith("eff") ||
+        path.endsWith("evn");
 }
 
 QString NaoFSP::getHighestDirectory(QString path) {

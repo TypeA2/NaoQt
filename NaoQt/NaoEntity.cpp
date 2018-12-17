@@ -4,6 +4,9 @@
 
 #include "CPKReader.h"
 #include "ChunkBasedFile.h"
+#include "Utils.h"
+
+#include "Error.h"
 
 // --===-- Constructors --===--
 
@@ -12,6 +15,7 @@ NaoEntity::NaoEntity(FileInfo file)
     , m_children(0)
     , m_fileInfo(file) {
 
+    m_fileInfo.name = Utils::cleanFilePath(m_fileInfo.name);
 }
 
 NaoEntity::NaoEntity(DirInfo directory)
@@ -19,6 +23,7 @@ NaoEntity::NaoEntity(DirInfo directory)
     , m_children(0)
     , m_dirInfo(directory) {
 
+    m_dirInfo.name = Utils::cleanGenericPath(m_dirInfo.name);
     m_fileInfo = FileInfo();
 }
 
@@ -50,13 +55,20 @@ NaoEntity* NaoEntity::getCPK(NaoEntity* parent) {
     FileInfo finfo = parent->finfo();
 
     if (CPKReader* reader = CPKReader::create(finfo.device)) {
+        
+        if (!reader->dirs().contains("")) {
+            parent->addChildren(new NaoEntity(DirInfo{
+                finfo.name + "/.."
+            }));
+        }
+
         for (const QString& dir : reader->dirs()) {
             parent->addChildren(new NaoEntity(DirInfo {
                 finfo.name + "/" + (!dir.isEmpty() ? dir : "..")
             }));
 
             if (!dir.isEmpty()) {
-                parent->addChildren(new NaoEntity(DirInfo{
+                parent->addChildren(new NaoEntity(DirInfo {
                     finfo.name + "/" + dir + "/.."
                 }));
             }
