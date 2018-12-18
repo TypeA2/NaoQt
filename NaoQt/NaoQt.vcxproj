@@ -123,8 +123,8 @@
     <ClCompile Include="ChunkBasedFile.cpp" />
     <ClCompile Include="BinaryUtils.cpp" />
     <ClCompile Include="CPKReader.cpp" />
-    <ClCompile Include="DATArchiveEntity.cpp" />
     <ClCompile Include="DATReader.cpp" />
+    <ClCompile Include="Decompression.cpp" />
     <ClCompile Include="DiskFileDevice.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NaoEntity.cpp" />
@@ -175,8 +175,8 @@
     </QtMoc>
     <ClInclude Include="BinaryUtils.h" />
     <ClInclude Include="CPKReader.h" />
-    <ClInclude Include="DATArchiveEntity.h" />
     <ClInclude Include="DATReader.h" />
+    <ClInclude Include="Decompression.h" />
     <ClInclude Include="DiskFileDevice.h" />
     <ClInclude Include="Error.h" />
     <ClInclude Include="NaoEntity.h" />

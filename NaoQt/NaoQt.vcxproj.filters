@@ -28,17 +28,11 @@
       <Extensions>moc;h;cpp</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
-    <Filter Include="Header Files\Decoders">
-      <UniqueIdentifier>{30077c28-10eb-409e-b918-da05d4a536af}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Utils">
       <UniqueIdentifier>{acf6fa63-3251-4e8d-99ce-a19d5cf13800}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Wrappers">
       <UniqueIdentifier>{77526ee4-cf13-484e-94f3-ec808ae9a8bd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Decoders">
-      <UniqueIdentifier>{935bd8d1-7674-4eab-8eea-5f189aa2d2e4}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Utils">
       <UniqueIdentifier>{a51d2c7e-6945-4ca7-9648-467838a166e1}</UniqueIdentifier>
@@ -52,17 +46,35 @@
     <Filter Include="Source Files\Entities">
       <UniqueIdentifier>{cf0ef44c-4aae-4406-aef5-6055ffc7c754}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Devices">
-      <UniqueIdentifier>{310ae94b-847f-413a-a185-342dd79d9da6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Devices">
-      <UniqueIdentifier>{1b82ca91-0b43-43d5-8132-2344a7e3d567}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Entities\Archives">
       <UniqueIdentifier>{eaecc6ed-5747-4b78-8bc1-57f472674f74}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Entities\Archives">
       <UniqueIdentifier>{4a4a3fa9-edb2-4e8c-ab7a-adf4817748c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Old">
+      <UniqueIdentifier>{870a72a2-5e1b-4923-8b15-b6d58cadbde2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Old\Decoders">
+      <UniqueIdentifier>{30077c28-10eb-409e-b918-da05d4a536af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Old\Devices">
+      <UniqueIdentifier>{310ae94b-847f-413a-a185-342dd79d9da6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Old">
+      <UniqueIdentifier>{47656159-6c98-419e-8b54-143a19b4c446}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Old\Decoders">
+      <UniqueIdentifier>{935bd8d1-7674-4eab-8eea-5f189aa2d2e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Old\Devices">
+      <UniqueIdentifier>{1b82ca91-0b43-43d5-8132-2344a7e3d567}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Decoding">
+      <UniqueIdentifier>{c018ff01-89e1-4a7a-a95a-1b2897949bad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Decoding">
+      <UniqueIdentifier>{4398dff9-1057-44fd-b55e-e02c5860efec}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -73,7 +85,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="UTFReader.cpp">
-      <Filter>Source Files\Decoders</Filter>
+      <Filter>Source Files\Old\Decoders</Filter>
     </ClCompile>
     <ClCompile Include="Utils.cpp">
       <Filter>Source Files\Utils</Filter>
@@ -88,36 +100,36 @@
       <Filter>Source Files\Wrappers</Filter>
     </ClCompile>
     <ClCompile Include="USMDemuxer.cpp">
-      <Filter>Source Files\Decoders</Filter>
+      <Filter>Source Files\Old\Decoders</Filter>
     </ClCompile>
     <ClCompile Include="ADXDecoder.cpp">
-      <Filter>Source Files\Decoders</Filter>
+      <Filter>Source Files\Old\Decoders</Filter>
     </ClCompile>
     <ClCompile Include="AVOptionsDialog.cpp">
       <Filter>Source Files\Wrappers</Filter>
-    </ClCompile>
-    <ClCompile Include="DATReader.cpp">
-      <Filter>Source Files\Decoders</Filter>
     </ClCompile>
     <ClCompile Include="NaoFSP.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DiskFileDevice.cpp">
-      <Filter>Source Files\Devices</Filter>
+      <Filter>Source Files\Old\Devices</Filter>
     </ClCompile>
     <ClCompile Include="NaoEntity.cpp">
       <Filter>Source Files\Entities</Filter>
     </ClCompile>
     <ClCompile Include="NaoFileDevice.cpp">
-      <Filter>Source Files\Devices</Filter>
+      <Filter>Source Files\Old\Devices</Filter>
     </ClCompile>
     <ClCompile Include="PartialFileDevice.cpp">
-      <Filter>Source Files\Devices</Filter>
-    </ClCompile>
-    <ClCompile Include="DATArchiveEntity.cpp">
-      <Filter>Source Files\Entities\Archives</Filter>
+      <Filter>Source Files\Old\Devices</Filter>
     </ClCompile>
     <ClCompile Include="CPKReader.cpp">
+      <Filter>Source Files\Entities\Archives</Filter>
+    </ClCompile>
+    <ClCompile Include="Decompression.cpp">
+      <Filter>Source Files\Decoding</Filter>
+    </ClCompile>
+    <ClCompile Include="DATReader.cpp">
       <Filter>Source Files\Entities\Archives</Filter>
     </ClCompile>
   </ItemGroup>
@@ -126,7 +138,7 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="UTFReader.h">
-      <Filter>Header Files\Decoders</Filter>
+      <Filter>Header Files\Old\Decoders</Filter>
     </QtMoc>
     <QtMoc Include="ChunkBasedFile.h">
       <Filter>Header Files\Wrappers</Filter>
@@ -135,10 +147,10 @@
       <Filter>Header Files\Wrappers</Filter>
     </QtMoc>
     <QtMoc Include="USMDemuxer.h">
-      <Filter>Header Files\Decoders</Filter>
+      <Filter>Header Files\Old\Decoders</Filter>
     </QtMoc>
     <QtMoc Include="ADXDecoder.h">
-      <Filter>Header Files\Decoders</Filter>
+      <Filter>Header Files\Old\Decoders</Filter>
     </QtMoc>
     <QtMoc Include="AVOptionsDialog.h">
       <Filter>Header Files\Wrappers</Filter>
@@ -160,30 +172,30 @@
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="vdf_parser.hpp">
-      <Filter>Header Files\Decoders</Filter>
+      <Filter>Header Files\Old\Decoders</Filter>
     </ClInclude>
     <ClInclude Include="Error.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="DATReader.h">
-      <Filter>Header Files\Decoders</Filter>
-    </ClInclude>
     <ClInclude Include="NaoFileDevice.h">
-      <Filter>Header Files\Devices</Filter>
+      <Filter>Header Files\Old\Devices</Filter>
     </ClInclude>
     <ClInclude Include="NaoEntity.h">
       <Filter>Header Files\Entities</Filter>
     </ClInclude>
     <ClInclude Include="DiskFileDevice.h">
-      <Filter>Header Files\Devices</Filter>
+      <Filter>Header Files\Old\Devices</Filter>
     </ClInclude>
     <ClInclude Include="PartialFileDevice.h">
-      <Filter>Header Files\Devices</Filter>
-    </ClInclude>
-    <ClInclude Include="DATArchiveEntity.h">
-      <Filter>Header Files\Entities\Archives</Filter>
+      <Filter>Header Files\Old\Devices</Filter>
     </ClInclude>
     <ClInclude Include="CPKReader.h">
+      <Filter>Header Files\Entities\Archives</Filter>
+    </ClInclude>
+    <ClInclude Include="Decompression.h">
+      <Filter>Header Files\Decoding</Filter>
+    </ClInclude>
+    <ClInclude Include="DATReader.h">
       <Filter>Header Files\Entities\Archives</Filter>
     </ClInclude>
   </ItemGroup>

@@ -27,6 +27,7 @@ class NaoEntity {
     // -- Static constructors --
     static NaoEntity* getEntity(NaoEntity* parent);
     static NaoEntity* getCPK(NaoEntity* parent);
+    static NaoEntity* getDAT(NaoEntity* parent);
 
     // -- Destructor --
     ~NaoEntity();
@@ -41,6 +42,9 @@ class NaoEntity {
     QVector<NaoEntity*> children() const;
     FileInfo finfo() const;
     DirInfo dinfo() const;
+
+    FileInfo& finfoRef();
+    DirInfo& dinfoRef();
 
     protected:
     bool m_dir;

@@ -10,19 +10,13 @@ CPKReader::CPKReader(QIODevice* in)
     _readContents();
 }
 
-// --===-- Destructor --===--
-
-CPKReader::~CPKReader() {
-    m_device->deleteLater();
-}
-
 // --===-- Getters --===--
 
-QVector<CPKReader::FileInfo> CPKReader::files() {
+QVector<CPKReader::FileInfo> CPKReader::files() const {
     return m_files.values().toVector();
 }
 
-QVector<QString> CPKReader::dirs() {
+QVector<QString> CPKReader::dirs() const {
     return m_dirs.values().toVector();
 }
 

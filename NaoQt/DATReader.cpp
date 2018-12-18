@@ -1,29 +1,70 @@
 #include "DATReader.h"
 
+#include <QtEndian>
 #include <QIODevice>
 
-#include "Error.h"
-#include <QtEndian>
-#define ASSERT(cond) \
-if (!(cond)) { \
-    throw DATException(QString("DAT Exception.\n\nAdditional info:\nStatement: %1.\nFunction: %2\nLine: %3\nFile: %4") \
-        .arg(#cond).arg(__FUNCTION__).arg(__LINE__).arg(__FNAME__).toStdString().c_str()); \
+// --===-- Constructor --===--
+
+DATReader::DATReader(QIODevice* in)
+    : m_device(in) {
+
+    _readContents();
 }
 
-DATReader::DATReader(QIODevice* input) {
-    
-    m_input = input;
+// --===-- Getters --===--
 
-    init();
+QVector<DATReader::FileEntry> DATReader::files() const {
+    return m_files;
 }
 
-DATReader::~DATReader() {
-    
+// --===-- Static Constructor --===--
+
+DATReader* DATReader::create(QIODevice* input) {
+    if (!input->isOpen() ||
+        !input->isReadable() ||
+        input->isSequential() ||
+        input->read(4) != QByteArray("DAT\0", 4) ||
+        !input->seek(0)) {
+        return nullptr;
+    }
+
+    return new DATReader(input);
 }
 
-void DATReader::init() {
-    ASSERT(m_input->seek(0));
-    ASSERT(m_input->read(4) == QByteArray("DAT\0", 4));
-    ASSERT(m_input->read(reinterpret_cast<char*>(&m_fileInfo), sizeof(FileInfo)) == sizeof(FileInfo));
-    qDebug() << qFromLittleEndian<quint32>(m_input->read(4)) << qFromLittleEndian<quint32>(m_input->read(4));
+// --===-- Parsing --===--
+
+void DATReader::_readContents() {
+#define UREAD qFromLittleEndian<qint32>(m_device->read(4))
+
+    m_device->seek(4);
+
+    m_files.resize(UREAD);
+
+    quint32 fileTableOffset = UREAD;
+
+    m_device->seek(m_device->pos() + 4);
+
+    quint32 nameTableOffset = UREAD;
+    quint32 sizeTableOffset = UREAD;
+
+    m_device->seek(fileTableOffset);
+
+    for (qint32 i = 0; i < m_files.size(); ++i) {
+        m_files[i].offset = UREAD;
+    }
+
+    m_device->seek(nameTableOffset);
+    quint32 alignment = UREAD;
+
+    for (qint32 i = 0; i < m_files.size(); ++i) {
+        m_files[i].name = QString(m_device->read(alignment));
+    }
+
+    m_device->seek(sizeTableOffset);
+
+    for (qint32 i = 0; i < m_files.size(); ++i) {
+        m_files[i].size = UREAD;
+    }
+
+#undef UREAD
 }

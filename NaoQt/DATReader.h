@@ -1,36 +1,36 @@
 #pragma once
 
-#include <stdexcept>
+#include "NaoEntity.h"
 
-#include <QtGlobal>
-
-class DATException : public std::logic_error {
-    public:
-    DATException(const char* what) : std::logic_error(what) {}
-};
-
-class QIODevice;
 class DATReader {
-
     public:
 
-    struct FileInfo {
-        quint32 fileCount;
-        quint32 fileTableOffset;
-        quint32 extensionTableOffset;
-        quint32 nameTableOffset;
-        quint32 sizeTableOffset;
+    // -- Struct --
+    struct FileEntry {
+        QString name;
+        quint32 size;
+        quint32 offset;
     };
 
-    DATReader(QIODevice* input);
-    ~DATReader();
+    // -- Static Constructor --
+    static DATReader* create(QIODevice* input);
+
+    // -- Destructor--
+    ~DATReader() = default;
+
+    // -- Getters --
+    QVector<FileEntry> files() const;
 
     private:
 
-    void init();
+    // -- Constructor --
+    DATReader(QIODevice* in);
 
-    QIODevice* m_input;
+    // -- Parsing --
+    void _readContents();
 
-    FileInfo m_fileInfo;
+    // -- Member variables --
+    QIODevice* m_device;
+
+    QVector<FileEntry> m_files;
 };
-

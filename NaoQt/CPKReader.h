@@ -25,11 +25,11 @@ class CPKReader {
     static CPKReader* create(QIODevice* input);
 
     // -- Destructor--
-    ~CPKReader();
+    ~CPKReader() = default;
 
     // -- Getters --
-    QVector<FileInfo> files();
-    QVector<QString> dirs();
+    QVector<FileInfo> files() const;
+    QVector<QString> dirs() const;
 
     private:
 
