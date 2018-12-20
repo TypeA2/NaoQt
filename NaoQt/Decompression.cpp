@@ -1,5 +1,7 @@
 #include "Decompression.h"
 
+#include "Error.h"
+
 #include <QtEndian>
 
 #include <functional>
@@ -20,7 +22,7 @@ namespace Decompression {
         out = QByteArray(uncompressedSize + 256, '\0');
         out.replace(0, 256, in.mid(uncompressedHeaderOffset + 16, 256));
 
-        quint64 inputEnd = in.size() - 256;
+        quint64 inputEnd = in.size() - 257;
         quint64 inputOffset = inputEnd;
         quint64 outputEnd = uncompressedSize + 255;
         quint8 bitpool = 0;
@@ -34,6 +36,7 @@ namespace Decompression {
             quint8 bitsnow = 0;
 
             while (outbits < count) {
+                //qDebug() << outbits << count << bitsleft;
                 if (bitsleft == 0) {
                     bitpool = in.at(inputOffset);
                     bitsleft = 8;
@@ -51,6 +54,9 @@ namespace Decompression {
 
                 output |= static_cast<quint16>(static_cast<quint16>(
                         bitpool >> (bitsleft - bitsnow)) & ((1 << bitsnow) - 1));
+
+                bitsleft -= bitsnow;
+                outbits += bitsnow;
             }
 
             return output;
@@ -76,6 +82,7 @@ namespace Decompression {
 
                     do {
                         thisLevel = getBits(8);
+                        backreferenceLength += thisLevel;
                     } while (thisLevel == 255);
                 }
 

@@ -33,8 +33,10 @@ class NaoEntity {
     ~NaoEntity();
 
     // -- Setters --
-    void addChildren(NaoEntity* child);
+    void addChildren(NaoEntity* child, bool isCPS = false);
     void addChildren(const QVector<NaoEntity*>& children);
+    void removeChildren(NaoEntity* child);
+    void removeChildren(const QVector<NaoEntity*>& children);
 
     // -- Getters --
     bool hasChildren() const;

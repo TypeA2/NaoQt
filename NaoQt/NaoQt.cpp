@@ -149,6 +149,10 @@ void NaoQt::openFolder() {
 
 void NaoQt::sortColumn(int index, Qt::SortOrder order) {
 
+    if (!m_view->topLevelItemCount()) {
+        return;
+    }
+
     QVector<QTreeWidgetItem*> dirs;
     QVector<QTreeWidgetItem*> files;
 
@@ -156,7 +160,6 @@ void NaoQt::sortColumn(int index, Qt::SortOrder order) {
     int start = (m_view->itemAt(0, 0)->text(0) == "..") ? 1 : 0;
 
     while (m_view->topLevelItemCount() > start) {
-        //QList<QStandardItem* > row = m_fsmodel->takeRow(start);
         QTreeWidgetItem* row = m_view->takeTopLevelItem(start);
 
         if (row->data(0, IsFolderRole).toBool()) {
@@ -183,7 +186,7 @@ void NaoQt::sortColumn(int index, Qt::SortOrder order) {
 
     std::sort(files.begin(), files.end(), [&index](QTreeWidgetItem* a, QTreeWidgetItem*  b) -> bool {
 
-        if (index == 1) { // Sort by size
+        if (index == 1 || index == 3) { // Sort by size
             qint64 sizeA = a->data(1, ItemSizeRole).toLongLong();
             qint64 sizeB = b->data(1, ItemSizeRole).toLongLong();
 
@@ -199,7 +202,7 @@ void NaoQt::sortColumn(int index, Qt::SortOrder order) {
             if (typeA != typeB) {
                 return typeA.compare(typeB, Qt::CaseInsensitive) < 0;
             }
-        }/* else if (index == 3) { // Sort by last modified date
+        } /*else if (index == 3) { // Sort by last modified date
             QDateTime dateA = a->data(3, LastModifiedRole).toDateTime();
             QDateTime dateB = b->data(3, LastModifiedRole).toDateTime();
 
@@ -440,8 +443,6 @@ void NaoQt::changePath(const QString& path) {
 void NaoQt::fspPathChanged() {
     _pathChangeCleanup();
 
-    m_view->setHeaderLabels({ "Name", "Size", "Type" });
-
     QFileIconProvider ficonprovider;
 
     NaoEntity* entity = m_fsp->entity();
@@ -450,10 +451,22 @@ void NaoQt::fspPathChanged() {
 
         bool inArchive = m_fsp->inArchive();
 
+        if (inArchive) {
+            m_view->setColumnCount(4);
+            m_view->setHeaderLabels({ "Name", "Size", "Type", "Compressed" });
+        } else {
+            m_view->setColumnCount(3);
+            m_view->setHeaderLabels({ "Name", "Size", "Type" });
+        }
+
         QString parent = m_fsp->currentPath();
         QString root = entity->finfo().name;
 
         for (NaoEntity* entry : entity->children()) {
+
+            if (!entry) {
+                continue;
+            }
 
             if (inArchive) {
                 QString subpath = (entry->isDir() ? entry->dinfo().name : entry->finfo().name)
@@ -485,6 +498,11 @@ void NaoQt::fspPathChanged() {
                 row->setText(1, Utils::getShortSize(file.virtualSize));
                 row->setData(1, ItemSizeRole, file.virtualSize);
                 row->setText(2, NaoFSP::getFileDescription(file.name));
+
+                if (inArchive) {
+                    row->setText(3, QString("%0%")
+                        .arg(qRound(100. * static_cast<double>(file.diskSize) / file.virtualSize)));
+                }
             }
 
             m_view->addTopLevelItem(row);

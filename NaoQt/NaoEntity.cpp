@@ -1,5 +1,7 @@
 #include "NaoEntity.h"
 
+#include "NaoFSP.h"
+
 #include "CPKReader.h"
 #include "DATReader.h"
 
@@ -36,10 +38,13 @@ NaoEntity::NaoEntity(DirInfo directory)
 NaoEntity* NaoEntity::getEntity(NaoEntity* parent) {
     FileInfo& finfo = parent->finfoRef();
     
-    if (finfo.diskSize != finfo.virtualSize) {
+    if (finfo.diskSize != finfo.virtualSize &&
+        NaoFSP::getNavigatable(finfo.name)) {
+        //qDebug() << "Decompressing" << finfo.name;
         QByteArray decompressed;
 
-        if (!Decompression::decompress_CRILAYLA(finfo.device->readAll(), decompressed)) {
+        if (!finfo.device->seek(0) ||
+            !Decompression::decompress_CRILAYLA(finfo.device->readAll(), decompressed)) {
             return nullptr;
         }
 
@@ -108,13 +113,13 @@ NaoEntity* NaoEntity::getCPK(NaoEntity* parent) {
 
             cbf->open(QIODevice::ReadOnly);
 
-            parent->addChildren(new NaoEntity(FileInfo {
+            parent->addChildren(getEntity(new NaoEntity(FileInfo {
                 finfo.name + "/" + (!file.dir.isEmpty() ? file.dir + "/" : "") + file.name,
                 static_cast<qint64>(file.size),
                 static_cast<qint64>(file.extractedSize),
                 static_cast<qint64>(file.offset + file.extraOffset),
                 cbf
-            }));
+                })), true);
         }
 
         delete reader;
@@ -127,13 +132,11 @@ NaoEntity* NaoEntity::getDAT(NaoEntity* parent) {
     FileInfo finfo = parent->finfo();
 
     if (DATReader* reader = DATReader::create(finfo.device)) {
-
-        parent->addChildren(new NaoEntity(DirInfo{
+        parent->addChildren(new NaoEntity(DirInfo {
             finfo.name + "/.."
         }));
 
         for (const DATReader::FileEntry& entry : reader->files()) {
-            qDebug() << entry.name << entry.size;
             ChunkBasedFile* cbf = new ChunkBasedFile({
                 entry.offset,
                 entry.size,
@@ -142,14 +145,16 @@ NaoEntity* NaoEntity::getDAT(NaoEntity* parent) {
 
             cbf->open(QIODevice::ReadOnly);
 
-            parent->addChildren(new NaoEntity(FileInfo{
+            parent->addChildren(getEntity(new NaoEntity(FileInfo {
                 finfo.name + "/" + entry.name,
                 entry.size,
                 entry.size,
                 entry.offset,
                 cbf
-            }));
+            })), true);
         }
+
+        delete reader;
     }
 
     return parent;
@@ -168,17 +173,32 @@ NaoEntity::~NaoEntity() {
     }
 }
 
-
 // --===-- Setters --===--
 
-void NaoEntity::addChildren(NaoEntity* child) {
+void NaoEntity::addChildren(NaoEntity* child, bool isCPS) {
     m_children.append(child);
+
+    if (isCPS && child->hasChildren()) {
+        const QVector<NaoEntity*>& children = child->children();
+
+        child->removeChildren(children);
+        m_children.append(children);
+    }
 }
 
 void NaoEntity::addChildren(const QVector<NaoEntity*>& children) {
     m_children.append(children);
 }
 
+void NaoEntity::removeChildren(NaoEntity* child) {
+    m_children.removeAll(child);
+}
+
+void NaoEntity::removeChildren(const QVector<NaoEntity*>& children) {
+    for (NaoEntity* child : children) {
+        m_children.removeAll(child);
+    }
+}
 
 // --===-- Getters --===--
 
