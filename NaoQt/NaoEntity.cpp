@@ -169,7 +169,6 @@ NaoEntity* NaoEntity::getDAT(NaoEntity* parent) {
     return parent;
 }
 
-
 // --===-- Destructor --===--
 
 NaoEntity::~NaoEntity() {

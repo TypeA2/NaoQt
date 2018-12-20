@@ -18,6 +18,7 @@ NaoFSP::NaoFSP(const QString& path, QWidget* parent)
     m_path = Utils::cleanDirPath(path);
 
     m_loadingProgress = new QProgressDialog(parent);
+    m_loadingProgress->reset(); // https://bugreports.qt.io/browse/QTBUG-47042
     m_loadingProgress->setRange(0, 0);
     m_loadingProgress->setModal(true);
     m_loadingProgress->setCancelButton(nullptr);
