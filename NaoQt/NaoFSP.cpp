@@ -1,20 +1,26 @@
-#include <QDir>
+#include "NaoFSP.h"
 
 #include <QtConcurrent>
+#include <QProgressDialog>
 
 #include "Utils.h"
-
-#include "NaoFSP.h"
 #include "NaoEntity.h"
+
 
 
 // --===-- Constructor --===--
 
-NaoFSP::NaoFSP(const QString& path, QObject* parent)
+NaoFSP::NaoFSP(const QString& path, QWidget* parent)
     : QObject(parent)
     , m_entity(nullptr)
     , m_inArchive(false) {
+
     m_path = Utils::cleanDirPath(path);
+
+    m_loadingProgress = new QProgressDialog(parent);
+    m_loadingProgress->setRange(0, 0);
+    m_loadingProgress->setModal(true);
+    m_loadingProgress->setCancelButton(nullptr);
 }
 
 // --===-- Destructor --===--
@@ -61,6 +67,10 @@ void NaoFSP::changePath(QString to) {
     if (to == getHighestDirectory(to)) {
         future = QtConcurrent::run(this, &NaoFSP::_changePathToDirectory, to);
     } else {
+
+        m_loadingProgress->setLabelText(QString("Loading %0").arg(to));
+        m_loadingProgress->show();
+
         future = QtConcurrent::run(this, &NaoFSP::_changePathToArchive, to);
     }
 
@@ -117,80 +127,24 @@ void NaoFSP::_changePathToArchive(const QString& target) {
 
         QFileInfo targetf(target);
 
-        m_entity = new NaoEntity(NaoEntity::FileInfo {
+        m_entity = NaoEntity::getEntity(new NaoEntity(NaoEntity::FileInfo {
             targetf.absoluteFilePath(),
             targetf.size(),
             targetf.size(),
             0,
             device
-        });
-        
-        m_entity = NaoEntity::getEntity(m_entity);
+        }));
     }
-
-    /*_pathChangeCleanup();
-
-    m_inArchive = true;
-
-    QString archive = getHighestFile(target);
-    qDebug() << "Archive:" << archive;
-
-    if (archive.endsWith(".cpk")) {
-        m_currentArchive = new CPKArchiveEntity(archive);
-
-        if (target == archive) {
-            m_path = archive + QDir::separator();
-
-            QFileInfo parent(m_path);
-
-            m_entities.append({
-                "..",
-                parent.absolutePath(),
-                true,
-                true,
-                false,
-                parent.size(),
-                parent.size(),
-                parent.lastModified()
-                });
-            m_entities.append(m_currentArchive->directories(""));
-            m_entities.append(m_currentArchive->children(""));
-        } else if (target.startsWith(archive)) {
-            m_path = Utils::cleanDirPath(target + QDir::separator());
-
-            QStringList subpathParts = m_path.mid(archive.length() + 1).split(QDir::separator());
-            QString subpath = subpathParts.mid(0, subpathParts.length() - 1).join('/');
-
-            QFileInfo parent(m_path);
-
-            m_entities.append(m_currentArchive->directories(subpath));
-            m_entities.append(m_currentArchive->children(subpath));
-        }
-    } else if (archive.endsWith(".dat") || archive.endsWith(".dtt")) {
-        m_currentArchive = new DATArchiveEntity(archive);
-
-        m_path = archive + QDir::separator();
-
-        QFileInfo parent(m_path);
-
-        m_entities.append({
-            "..",
-            parent.absolutePath(),
-            true,
-            true,
-            false,
-            parent.size(),
-            parent.size(),
-            parent.lastModified()
-            });
-        m_entities.append(m_currentArchive->children());
-    }*/
 }
 
 // --===-- Private Slots --===--
 
 void NaoFSP::_pathChanged() {
     emit pathChanged();
+
+    if (m_inArchive) {
+        m_loadingProgress->close();
+    }
 }
 
 // --===-- Static getters --===--

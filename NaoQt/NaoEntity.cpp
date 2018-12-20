@@ -60,7 +60,8 @@ NaoEntity* NaoEntity::getEntity(NaoEntity* parent) {
 
     if (!input->isOpen() ||
         !input->isReadable() ||
-        input->isSequential()) {
+        input->isSequential() ||
+        !input->seek(0)) {
         return parent;
     }
 
@@ -76,6 +77,10 @@ NaoEntity* NaoEntity::getEntity(NaoEntity* parent) {
 
     if (fcc == QByteArray("DAT\0", 4)) {
         return getDAT(parent);
+    }
+
+    if (fcc == QByteArray("DDS ", 4)) {
+        
     }
 
     return parent;
@@ -123,6 +128,10 @@ NaoEntity* NaoEntity::getCPK(NaoEntity* parent) {
         }
 
         delete reader;
+    } else {
+        parent->addChildren(new NaoEntity(DirInfo {
+            finfo.name + "/.."
+        }));
     }
 
     return parent;
@@ -131,11 +140,11 @@ NaoEntity* NaoEntity::getCPK(NaoEntity* parent) {
 NaoEntity* NaoEntity::getDAT(NaoEntity* parent) {
     FileInfo finfo = parent->finfo();
 
-    if (DATReader* reader = DATReader::create(finfo.device)) {
-        parent->addChildren(new NaoEntity(DirInfo {
-            finfo.name + "/.."
-        }));
+    parent->addChildren(new NaoEntity(DirInfo {
+        finfo.name + "/.."
+    }));
 
+    if (DATReader* reader = DATReader::create(finfo.device)) {
         for (const DATReader::FileEntry& entry : reader->files()) {
             ChunkBasedFile* cbf = new ChunkBasedFile({
                 entry.offset,

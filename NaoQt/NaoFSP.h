@@ -4,6 +4,7 @@
 
 #include <QObject>
 
+class QProgressDialog;
 class NaoArchiveEntity;
 
 class NaoFSP : public QObject {
@@ -12,7 +13,7 @@ class NaoFSP : public QObject {
     public:
 
     // -- Constructor --
-    NaoFSP(const QString& path, QObject* parent);
+    NaoFSP(const QString& path, QWidget* parent);
 
     // -- Destructor --
     ~NaoFSP();
@@ -49,6 +50,7 @@ class NaoFSP : public QObject {
     NaoEntity* m_entity;
 
     bool m_inArchive;
-    //QIODevice* m_device;
+
+    QProgressDialog* m_loadingProgress;
 };
 
