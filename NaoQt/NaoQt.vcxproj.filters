@@ -96,17 +96,11 @@
     <ClCompile Include="ChunkBasedFile.cpp">
       <Filter>Source Files\Wrappers</Filter>
     </ClCompile>
-    <ClCompile Include="AVConverter.cpp">
-      <Filter>Source Files\Wrappers</Filter>
-    </ClCompile>
     <ClCompile Include="USMDemuxer.cpp">
       <Filter>Source Files\Old\Decoders</Filter>
     </ClCompile>
     <ClCompile Include="ADXDecoder.cpp">
       <Filter>Source Files\Old\Decoders</Filter>
-    </ClCompile>
-    <ClCompile Include="AVOptionsDialog.cpp">
-      <Filter>Source Files\Wrappers</Filter>
     </ClCompile>
     <ClCompile Include="NaoFSP.cpp">
       <Filter>Source Files</Filter>
@@ -132,6 +126,15 @@
     <ClCompile Include="DATReader.cpp">
       <Filter>Source Files\Entities\Archives</Filter>
     </ClCompile>
+    <ClCompile Include="SequencedFileReader.cpp">
+      <Filter>Source Files\Entities\Archives</Filter>
+    </ClCompile>
+    <ClCompile Include="AVOptionsDialog.cpp">
+      <Filter>Source Files\Old</Filter>
+    </ClCompile>
+    <ClCompile Include="AVConverter.cpp">
+      <Filter>Source Files\Old</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="NaoQt.h">
@@ -143,20 +146,20 @@
     <QtMoc Include="ChunkBasedFile.h">
       <Filter>Header Files\Wrappers</Filter>
     </QtMoc>
-    <QtMoc Include="AVConverter.h">
-      <Filter>Header Files\Wrappers</Filter>
-    </QtMoc>
     <QtMoc Include="USMDemuxer.h">
       <Filter>Header Files\Old\Decoders</Filter>
     </QtMoc>
     <QtMoc Include="ADXDecoder.h">
       <Filter>Header Files\Old\Decoders</Filter>
     </QtMoc>
-    <QtMoc Include="AVOptionsDialog.h">
-      <Filter>Header Files\Wrappers</Filter>
-    </QtMoc>
     <QtMoc Include="NaoFSP.h">
       <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="AVConverter.h">
+      <Filter>Header Files\Old</Filter>
+    </QtMoc>
+    <QtMoc Include="AVOptionsDialog.h">
+      <Filter>Header Files\Old</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
@@ -196,6 +199,9 @@
       <Filter>Header Files\Decoding</Filter>
     </ClInclude>
     <ClInclude Include="DATReader.h">
+      <Filter>Header Files\Entities\Archives</Filter>
+    </ClInclude>
+    <ClInclude Include="SequencedFileReader.h">
       <Filter>Header Files\Entities\Archives</Filter>
     </ClInclude>
   </ItemGroup>

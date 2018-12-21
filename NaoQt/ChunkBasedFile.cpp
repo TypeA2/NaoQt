@@ -41,7 +41,6 @@ ChunkBasedFile::ChunkBasedFile(const Chunk& chunk, QIODevice* input, QObject* pa
 
 bool ChunkBasedFile::open(OpenMode mode) {
     ASSERT(mode == ReadOnly);
-    //ASSERT(m_input->seek(m_chunks.first().start));
 
     setOpenMode(mode | Unbuffered);
     return true;

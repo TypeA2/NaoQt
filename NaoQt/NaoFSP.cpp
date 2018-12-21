@@ -195,6 +195,14 @@ QString NaoFSP::getFileDescription(const QString& path) {
         return "Events archive";
     }
 
+    if (path.endsWith("dds")) {
+        return "DDS texture";
+    }
+
+    if (path.endsWith("ogg")) {
+        return "OGG audio file";
+    }
+
     return "";
 }
 

@@ -11,12 +11,6 @@ DATReader::DATReader(QIODevice* in)
     _readContents();
 }
 
-// --===-- Getters --===--
-
-QVector<DATReader::FileEntry> DATReader::files() const {
-    return m_files;
-}
-
 // --===-- Static Constructor --===--
 
 DATReader* DATReader::create(QIODevice* input) {
@@ -29,6 +23,12 @@ DATReader* DATReader::create(QIODevice* input) {
     }
 
     return new DATReader(input);
+}
+
+// --===-- Getters --===--
+
+QVector<DATReader::FileEntry> DATReader::files() const {
+    return m_files;
 }
 
 // --===-- Parsing --===--

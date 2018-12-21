@@ -132,6 +132,7 @@
     <ClCompile Include="NaoFSP.cpp" />
     <ClCompile Include="NaoQt.cpp" />
     <ClCompile Include="PartialFileDevice.cpp" />
+    <ClCompile Include="SequencedFileReader.cpp" />
     <ClCompile Include="UTFReader.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="USMDemuxer.cpp" />
@@ -188,6 +189,7 @@
       <Define Condition="'$(Configuration)|$(Platform)'=='Release|x64'">UNICODE;_UNICODE;WIN32;WIN64;QT_DLL;QT_NO_DEBUG;NDEBUG;QT_3DCORE_LIB;QT_3DANIMATION_LIB;QT_3DEXTRAS_LIB;QT_3DINPUT_LIB;QT_3DLOGIC_LIB;QT_3DRENDER_LIB;QT_CONCURRENT_LIB;QT_CORE_LIB;QT_GUI_LIB;QT_OPENGL_LIB;QT_OPENGLEXTENSIONS_LIB;QT_SQL_LIB;QT_SVG_LIB;QT_WEBENGINE_LIB;QT_WEBENGINECORE_LIB;QT_WEBENGINEWIDGETS_LIB;QT_WIDGETS_LIB;QT_WINEXTRAS_LIB</Define>
     </QtMoc>
     <ClInclude Include="PartialFileDevice.h" />
+    <ClInclude Include="SequencedFileReader.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="vdf_parser.hpp" />
     <QtMoc Include="USMDemuxer.h">

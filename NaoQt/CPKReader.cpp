@@ -10,16 +10,6 @@ CPKReader::CPKReader(QIODevice* in)
     _readContents();
 }
 
-// --===-- Getters --===--
-
-QVector<CPKReader::FileInfo> CPKReader::files() const {
-    return m_files.values().toVector();
-}
-
-QVector<QString> CPKReader::dirs() const {
-    return m_dirs.values().toVector();
-}
-
 // --===-- Static Constructor --===--
 
 CPKReader* CPKReader::create(QIODevice* input) {
@@ -32,6 +22,16 @@ CPKReader* CPKReader::create(QIODevice* input) {
     }
 
     return new CPKReader(input);
+}
+
+// --===-- Getters --===--
+
+QVector<CPKReader::FileInfo> CPKReader::files() const {
+    return m_files.values().toVector();
+}
+
+QVector<QString> CPKReader::dirs() const {
+    return m_dirs.values().toVector();
 }
 
 // --===-- Parsing --===--

@@ -4,6 +4,7 @@
 
 #include "CPKReader.h"
 #include "DATReader.h"
+#include "SequencedFileReader.h"
 
 #include "ChunkBasedFile.h"
 
@@ -40,7 +41,7 @@ NaoEntity* NaoEntity::getEntity(NaoEntity* parent) {
     
     if (finfo.diskSize != finfo.virtualSize &&
         NaoFSP::getNavigatable(finfo.name)) {
-        //qDebug() << "Decompressing" << finfo.name;
+        
         QByteArray decompressed;
 
         if (!finfo.device->seek(0) ||
@@ -79,8 +80,13 @@ NaoEntity* NaoEntity::getEntity(NaoEntity* parent) {
         return getDAT(parent);
     }
 
-    if (fcc == QByteArray("DDS ", 4)) {
-        
+    if (fcc == QByteArray("DDS ", 4) && finfo.name.endsWith(".wtp")) {
+        return getWTP(parent);
+    }
+
+    if (fcc == QByteArray("RIFF") &&
+        (finfo.name.endsWith(".wem") || finfo.name.endsWith(".wsp"))) {
+        return getWSP(parent);
     }
 
     return parent;
@@ -161,6 +167,80 @@ NaoEntity* NaoEntity::getDAT(NaoEntity* parent) {
                 entry.offset,
                 cbf
             })), true);
+        }
+
+        delete reader;
+    }
+
+    return parent;
+}
+
+NaoEntity* NaoEntity::getWTP(NaoEntity* parent) {
+    FileInfo finfo = parent->finfo();
+
+    parent->addChildren(new NaoEntity(DirInfo {
+        finfo.name + "/.."
+    }));
+
+    if (SequencedFileReader* reader =
+        SequencedFileReader::create(finfo.device, QByteArray("DDS ", 4))) {
+        
+        QVector<SequencedFileReader::FileEntry> files = reader->files();
+        const int fnameSize = std::log10(static_cast<double>(files.size())) + 1;
+        quint64 i = 0;
+        for (const SequencedFileReader::FileEntry& entry : files) {
+            ChunkBasedFile* cbf = new ChunkBasedFile({
+                entry.offset,
+                entry.size,
+                0
+            }, finfo.device);
+
+            cbf->open(QIODevice::ReadOnly);
+
+            parent->addChildren(new NaoEntity(FileInfo {
+                finfo.name + "/" + QString("%0.dds").arg(i++, fnameSize, 10, QLatin1Char('0')),
+                entry.size,
+                entry.size,
+                entry.offset,
+                cbf
+            }), true);
+        }
+
+        delete reader;
+    }
+
+    return parent;
+}
+
+NaoEntity* NaoEntity::getWSP(NaoEntity* parent) {
+    FileInfo finfo = parent->finfo();
+
+    parent->addChildren(new NaoEntity(DirInfo {
+        finfo.name + "/.."
+    }));
+
+    if (SequencedFileReader* reader =
+        SequencedFileReader::create(finfo.device, QByteArray("RIFF", 4))) {
+
+        QVector<SequencedFileReader::FileEntry> files = reader->files();
+        const int fnameSize = std::log10(static_cast<double>(files.size())) + 1;
+        quint64 i = 0;
+        for (const SequencedFileReader::FileEntry& entry : files) {
+            ChunkBasedFile* cbf = new ChunkBasedFile({
+                entry.offset,
+                entry.size,
+                0
+            }, finfo.device);
+
+            cbf->open(QIODevice::ReadOnly);
+
+            parent->addChildren(new NaoEntity(FileInfo {
+                finfo.name + "/" + QString("%0.ogg").arg(i++, fnameSize, 10, QLatin1Char('0')),
+                entry.size,
+                entry.size,
+                entry.offset,
+                cbf
+            }), true);
         }
 
         delete reader;

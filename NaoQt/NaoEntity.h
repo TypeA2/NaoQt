@@ -28,6 +28,8 @@ class NaoEntity {
     static NaoEntity* getEntity(NaoEntity* parent);
     static NaoEntity* getCPK(NaoEntity* parent);
     static NaoEntity* getDAT(NaoEntity* parent);
+    static NaoEntity* getWTP(NaoEntity* parent);
+    static NaoEntity* getWSP(NaoEntity* parent);
 
     // -- Destructor --
     ~NaoEntity();
