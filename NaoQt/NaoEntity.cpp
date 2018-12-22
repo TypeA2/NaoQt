@@ -116,6 +116,10 @@ bool NaoEntity::decodeEntity(NaoEntity* entity, QIODevice* to) {
 
     QByteArray fcc = input->read(4);
 
+    if (!input->seek(0)) {
+        return false;
+    }
+
     if (fcc == QByteArray("DDS ", 4) && finfo.name.endsWith(".dds")) {
         return _decodeDDS(entity, to);
     }
@@ -128,7 +132,7 @@ bool NaoEntity::decodeEntity(NaoEntity* entity, QIODevice* to) {
 QString NaoEntity::getDecodedName(NaoEntity* entity) {
 
     if (entity->isDir()) {
-        return "";
+        return QString();
     }
 
     QFileInfo finfo(entity->finfoRef().name);
@@ -139,7 +143,7 @@ QString NaoEntity::getDecodedName(NaoEntity* entity) {
         return base + ".png";
     }
 
-    return fname;
+    return QString();
 }
 
 // --===-- Destructor --===--

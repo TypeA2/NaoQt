@@ -86,14 +86,29 @@ void NaoFSP::open(const QString& source, const QString& outdir) const {
         return !entity->isDir() && entity->finfo().name == source;
     });
 
-    QFile output(outdir + "/" + NaoEntity::getDecodedName(sourceEntity));
+    const QString fname = NaoEntity::getDecodedName(sourceEntity);
+
+    if (fname.isNull() || fname.isEmpty()) {
+        qDebug() << 1;
+        return;
+    }
+
+    const QString outfile = QString("%0/%1_%2").arg(
+        outdir,
+        QFileInfo(sourceEntity->finfo().name).absoluteDir().dirName().replace('.', '_'),
+        fname
+    );
+
+    QFile output(outfile);
     output.open(QIODevice::WriteOnly);
 
-    NaoEntity::decodeEntity(sourceEntity, &output);
+    const bool success = NaoEntity::decodeEntity(sourceEntity, &output);
 
     output.close();
 
-    QDesktopServices::openUrl(QUrl::fromLocalFile(output.fileName()));
+    if (success) {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(output.fileName()));
+    }
 }
 
 // --===-- Private member functions --===--

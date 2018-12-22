@@ -10,5 +10,6 @@ int main(int argc, char* argv[]) {
     
     NaoQt w;
     w.show();
+
     return a.exec();
 }

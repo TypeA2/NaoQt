@@ -17,14 +17,16 @@ namespace Images {
         ASSERT(ddsDemuxer.load());
 
         QtAV::VideoDecoder* ddsDecoder = QtAV::VideoDecoder::create("FFmpeg");
+        ddsDecoder->setCodecContext(ddsDemuxer.videoCodecContext());
         ASSERT(ddsDecoder->open());
 
         QtAV::AVMuxer pngMuxer;
         ASSERT(pngMuxer.setMedia(output));
-        pngMuxer.setFormat("png");
+        pngMuxer.setFormat("image2pipe");
 
         QtAV::VideoEncoder* pngEncoder = QtAV::VideoEncoder::create("FFmpeg");
         pngEncoder->setPixelFormat(QtAV::VideoFormat::Format_RGBA32);
+        pngEncoder->setCodecName("png");
 
         while (!ddsDemuxer.atEnd()) {
             if (ddsDemuxer.readFrame()) {
@@ -65,6 +67,9 @@ namespace Images {
         ASSERT(ddsDemuxer.unload());
         ASSERT(pngEncoder->close());
         ASSERT(pngMuxer.close());
+
+        ddsDecoder->deleteLater();
+        pngEncoder->deleteLater();
 
         return true;
     }
