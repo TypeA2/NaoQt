@@ -132,7 +132,6 @@ void NaoQt::_pathChangeCleanup() {
     m_view->clear();
 }
 
-
 /* --===-- Private Slots --===-- */
 
 void NaoQt::openFolder() {
@@ -273,6 +272,8 @@ void NaoQt::viewInteraction(QTreeWidgetItem* item, int column) {
         changePath(m_pathDisplay->text() + item->text(0));
     } else if (!m_fsp->inArchive()) {
         QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text() + QDir::separator() + item->text(0)));
+    } else {
+        m_fsp->open(m_pathDisplay->text() + item->text(0), m_tempdir);
     }
 }
 

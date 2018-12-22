@@ -24,12 +24,14 @@ class NaoEntity {
     NaoEntity(FileInfo file);
     NaoEntity(DirInfo directory);
 
-    // -- Static constructors --
+    // -- Static constructor --
     static NaoEntity* getEntity(NaoEntity* parent);
-    static NaoEntity* getCPK(NaoEntity* parent);
-    static NaoEntity* getDAT(NaoEntity* parent);
-    static NaoEntity* getWTP(NaoEntity* parent);
-    static NaoEntity* getWSP(NaoEntity* parent);
+    
+    // -- Static decoder --
+    static bool decodeEntity(NaoEntity* entity, QIODevice* to);
+
+    // -- Static getters --
+    static QString getDecodedName(NaoEntity* entity);
 
     // -- Destructor --
     ~NaoEntity();
@@ -57,4 +59,15 @@ class NaoEntity {
     FileInfo m_fileInfo;
 
     DirInfo m_dirInfo;
+
+    private:
+
+    // -- Private static constructors --
+    static NaoEntity* _getCPK(NaoEntity* parent);
+    static NaoEntity* _getDAT(NaoEntity* parent);
+    static NaoEntity* _getWTP(NaoEntity* parent);
+    static NaoEntity* _getWSP(NaoEntity* parent);
+
+    // -- Private static decoders --
+    static bool _decodeDDS(NaoEntity* in, QIODevice* out);
 };

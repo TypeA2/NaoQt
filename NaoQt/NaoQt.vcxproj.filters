@@ -135,6 +135,9 @@
     <ClCompile Include="AVConverter.cpp">
       <Filter>Source Files\Old</Filter>
     </ClCompile>
+    <ClCompile Include="Images.cpp">
+      <Filter>Source Files\Decoding</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="NaoQt.h">
@@ -203,6 +206,9 @@
     </ClInclude>
     <ClInclude Include="SequencedFileReader.h">
       <Filter>Header Files\Entities\Archives</Filter>
+    </ClInclude>
+    <ClInclude Include="Images.h">
+      <Filter>Header Files\Decoding</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

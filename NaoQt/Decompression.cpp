@@ -36,7 +36,6 @@ namespace Decompression {
             quint8 bitsnow = 0;
 
             while (outbits < count) {
-                //qDebug() << outbits << count << bitsleft;
                 if (bitsleft == 0) {
                     bitpool = in.at(inputOffset);
                     bitsleft = 8;

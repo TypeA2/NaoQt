@@ -126,6 +126,7 @@
     <ClCompile Include="DATReader.cpp" />
     <ClCompile Include="Decompression.cpp" />
     <ClCompile Include="DiskFileDevice.cpp" />
+    <ClCompile Include="Images.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NaoEntity.cpp" />
     <ClCompile Include="NaoFileDevice.cpp" />
@@ -180,6 +181,7 @@
     <ClInclude Include="Decompression.h" />
     <ClInclude Include="DiskFileDevice.h" />
     <ClInclude Include="Error.h" />
+    <ClInclude Include="Images.h" />
     <ClInclude Include="NaoEntity.h" />
     <ClInclude Include="NaoFileDevice.h" />
     <QtMoc Include="NaoFSP.h">

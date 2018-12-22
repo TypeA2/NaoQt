@@ -26,12 +26,13 @@ class NaoFSP : public QObject {
     // -- Member functions --
     void changePath();
     void changePath(QString to);
+    void open(const QString& source, const QString& outdir) const;
 
     // -- Static getters --
     static QString getFileDescription(const QString& path);
     static bool getNavigatable(const QString& path);
     static QString getHighestDirectory(QString path);
-    static QString getHighestFile(QString path);
+    static QString getHighestFile(QString path); 
 
     signals:
     void pathChanged();

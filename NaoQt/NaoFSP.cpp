@@ -2,10 +2,10 @@
 
 #include <QtConcurrent>
 #include <QProgressDialog>
+#include <QDesktopServices>
 
 #include "Utils.h"
 #include "NaoEntity.h"
-
 
 
 // --===-- Constructor --===--
@@ -76,6 +76,24 @@ void NaoFSP::changePath(QString to) {
     }
 
     watcher->setFuture(future);
+}
+
+void NaoFSP::open(const QString& source, const QString& outdir) const {
+    QVector<NaoEntity*> children = m_entity->children();
+
+    NaoEntity* sourceEntity = *std::find_if(std::begin(children), std::end(children),
+        [source](NaoEntity* entity) -> bool {
+        return !entity->isDir() && entity->finfo().name == source;
+    });
+
+    QFile output(outdir + "/" + NaoEntity::getDecodedName(sourceEntity));
+    output.open(QIODevice::WriteOnly);
+
+    NaoEntity::decodeEntity(sourceEntity, &output);
+
+    output.close();
+
+    QDesktopServices::openUrl(QUrl::fromLocalFile(output.fileName()));
 }
 
 // --===-- Private member functions --===--
@@ -151,55 +169,55 @@ void NaoFSP::_pathChanged() {
 // --===-- Static getters --===--
 
 QString NaoFSP::getFileDescription(const QString& path) {
-    if (path.endsWith("cpk")) {
+    if (path.endsWith(".cpk")) {
         return "CPK archive";
     }
 
-    if (path.endsWith("usm")) {
+    if (path.endsWith(".usm")) {
         return "USM video";
     }
 
-    if (path.endsWith("enlMeta")) {
+    if (path.endsWith(".enlMeta")) {
         return "Enlighten data";
     }
 
-    if (path.endsWith("bnk")) {
+    if (path.endsWith(".bnk")) {
         return "Wwise SoundBank";
     }
 
-    if (path.endsWith("wem") || path.endsWith("wsp")) {
+    if (path.endsWith(".wem") || path.endsWith(".wsp")) {
         return "Wwise audio";
     }
 
-    if (path.endsWith("dat")) {
+    if (path.endsWith(".dat")) {
         return "DAT archive";
     }
 
-    if (path.endsWith("dtt")) {
+    if (path.endsWith(".dtt")) {
         return "DAT texture archive";
     }
 
-    if (path.endsWith("wtp")) {
+    if (path.endsWith(".wtp")) {
         return "DDS texture archive";
     }
 
-    if (path.endsWith("wtb")) {
+    if (path.endsWith(".wtb")) {
         return "Model data";
     }
 
-    if (path.endsWith("eff")) {
+    if (path.endsWith(".eff")) {
         return "Effects archive";
     }
 
-    if (path.endsWith("evn")) {
+    if (path.endsWith(".evn")) {
         return "Events archive";
     }
 
-    if (path.endsWith("dds")) {
+    if (path.endsWith(".dds")) {
         return "DDS texture";
     }
 
-    if (path.endsWith("ogg")) {
+    if (path.endsWith(".ogg")) {
         return "OGG audio file";
     }
 
@@ -207,14 +225,14 @@ QString NaoFSP::getFileDescription(const QString& path) {
 }
 
 bool NaoFSP::getNavigatable(const QString& path) {
-    return path.endsWith("cpk") ||
-        path.endsWith("wem") ||
-        path.endsWith("wsp") ||
-        path.endsWith("dat") ||
-        path.endsWith("dtt") ||
-        path.endsWith("wtp") ||
-        path.endsWith("eff") ||
-        path.endsWith("evn");
+    return path.endsWith(".cpk") ||
+        path.endsWith(".wem") ||
+        path.endsWith(".wsp") ||
+        path.endsWith(".dat") ||
+        path.endsWith(".dtt") ||
+        path.endsWith(".wtp") ||
+        path.endsWith(".eff") ||
+        path.endsWith(".evn");
 }
 
 QString NaoFSP::getHighestDirectory(QString path) {
