@@ -26,7 +26,7 @@ class NaoFSP : public QObject {
     // -- Member functions --
     void changePath();
     void changePath(QString to);
-    void open(const QString& source, const QString& outdir);
+    void open(const QString& source, const QString& outdir) const;
 
     // -- Static getters --
     static QString getFileDescription(const QString& path);

@@ -3,12 +3,9 @@
 #include <QtConcurrent>
 #include <QProgressDialog>
 #include <QDesktopServices>
-#include <QMessageBox>
 
 #include "Utils.h"
 #include "NaoEntity.h"
-
-#include "AV.h"
 
 
 // --===-- Constructor --===--
@@ -71,10 +68,9 @@ void NaoFSP::changePath(QString to) {
     if (to == getHighestDirectory(to)) {
         future = QtConcurrent::run(this, &NaoFSP::_changePathToDirectory, to);
     } else {
-        if (!m_inArchive) {
-            m_loadingProgress->setLabelText(QString("Loading %0").arg(to));
-            m_loadingProgress->show();
-        }
+
+        m_loadingProgress->setLabelText(QString("Loading %0").arg(to));
+        m_loadingProgress->show();
 
         future = QtConcurrent::run(this, &NaoFSP::_changePathToArchive, to);
     }
@@ -82,7 +78,7 @@ void NaoFSP::changePath(QString to) {
     watcher->setFuture(future);
 }
 
-void NaoFSP::open(const QString& source, const QString& outdir) {
+void NaoFSP::open(const QString& source, const QString& outdir) const {
     QVector<NaoEntity*> children = m_entity->children();
 
     NaoEntity* sourceEntity = *std::find_if(std::begin(children), std::end(children),
@@ -93,6 +89,7 @@ void NaoFSP::open(const QString& source, const QString& outdir) {
     const QString fname = NaoEntity::getDecodedName(sourceEntity);
 
     if (fname.isNull() || fname.isEmpty()) {
+        qDebug() << 1;
         return;
     }
 
@@ -102,32 +99,16 @@ void NaoFSP::open(const QString& source, const QString& outdir) {
         fname
     );
 
-    m_loadingProgress->setLabelText(QString("Decoding %0").arg(sourceEntity->finfo().name));
-    m_loadingProgress->show();
+    QFile output(outfile);
+    output.open(QIODevice::WriteOnly);
 
-    QFile* output = new QFile(outfile);
-    output->open(QIODevice::WriteOnly);
+    const bool success = NaoEntity::decodeEntity(sourceEntity, &output);
 
-    QFutureWatcher<bool>* watcher = new QFutureWatcher<bool>(this);
+    output.close();
 
-    connect(watcher, &QFutureWatcher<bool>::finished, [this, output, watcher, sourceEntity]() {
-        output->close();
-        output->deleteLater();
-
-        m_loadingProgress->close();
-
-        if (watcher->result()) {
-            QDesktopServices::openUrl(QUrl::fromLocalFile(output->fileName()));
-        } else {
-            QMessageBox::critical(reinterpret_cast<QWidget*>(this->parent()), "Error",
-                QString("Failed extracting %0.<br>Error at statement:<pre>%1</pre>")
-                    .arg(QFileInfo(sourceEntity->finfo().name).fileName(), AV::wwriff_error()));
-        }
-    });
-
-    connect(watcher, &QFutureWatcher<bool>::finished, &QFutureWatcher<bool>::deleteLater);
-
-    watcher->setFuture(QtConcurrent::run(&NaoEntity::decodeEntity, sourceEntity, output));
+    if (success) {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(output.fileName()));
+    }
 }
 
 // --===-- Private member functions --===--
@@ -168,9 +149,9 @@ void NaoFSP::_changePathToDirectory(const QString& target) {
 }
 
 void NaoFSP::_changePathToArchive(const QString& target) {
+    qDebug() << "Entering archive" << target;
+    
     if (!m_inArchive) {
-        qDebug() << "Entering archive" << target;
-
         m_inArchive = true;
 
         delete m_entity;
