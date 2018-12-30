@@ -513,7 +513,7 @@ void NaoQt::fspPathChanged() {
         m_view->resizeColumnToContents(1);
         m_view->resizeColumnToContents(2);
 
-        sortColumn(0, Qt::DescendingOrder);
+        sortColumn(m_view->header()->sortIndicatorSection(), m_view->header()->sortIndicatorOrder());
 
         m_pathDisplay->setText(Utils::cleanDirPath(m_fsp->currentPath()));
 
@@ -522,56 +522,6 @@ void NaoQt::fspPathChanged() {
         m_pathDisplay->setText(Utils::cleanDirPath(m_fsp->currentPath()));
     }
 
-    /*if (m_fsp->inArchive()) {
-        m_view->setHeaderLabels({ "Name", "Size", "Type", "Compressed" });
-    } else {
-        
-    }
-
-    QFileIconProvider ficonprovider;
-
-    const QVector<NaoEntity::Entity>& entities = m_fsp->entities();
-
-    for (const NaoEntity::Entity& entity : entities) {
-        QTreeWidgetItem* row = new QTreeWidgetItem(m_view);
-
-        row->setText(0, entity.name);
-        row->setData(0, IsFolderRole, entity.isFolder);
-        row->setData(0, IsNavigatableRole, entity.isNavigatable);
-        row->setData(0, IsEmbeddedRole, entity.isEmbedded);
-
-        if (entity.isFolder) {
-            row->setIcon(0, ficonprovider.icon(QFileIconProvider::Folder));
-            row->setText(2, "Directory");
-        } else {
-            row->setIcon(0, ficonprovider.icon(QFileInfo(entity.name)));
-            row->setText(1, Utils::getShortSize(entity.size));
-            row->setData(1, ItemSizeRole, entity.size);
-            row->setText(2, NaoFSP::getFileDescription(entity.path));
-
-            if (m_fsp->inArchive()) {
-                row->setText(3, (entity.size == entity.virtualSize ? "No" :
-                    QString("Yes (%0%)").arg(qRound(100. * static_cast<double>(entity.size) / entity.virtualSize))));
-            } else {
-                row->setText(3, entity.lastModified.toString("yyyy-MM-dd hh:mm"));
-                row->setData(3, LastModifiedRole, entity.lastModified);
-            }
-        }
-
-        m_view->addTopLevelItem(row);
-
-    }
-
-    m_view->resizeColumnToContents(0);
-    m_view->resizeColumnToContents(1);
-    m_view->resizeColumnToContents(2);
-    m_view->resizeColumnToContents(3);
-
-    sortColumn(0, Qt::DescendingOrder);
-
-    m_pathDisplay->setText(Utils::cleanDirPath(m_fsp->currentPath()));
-
-    m_view->setFocus();*/
 }
 
 /*

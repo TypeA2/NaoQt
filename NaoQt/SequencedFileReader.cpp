@@ -55,7 +55,7 @@ QVector<SequencedFileReader::FileEntry> SequencedFileReader::files() const {
 
 void SequencedFileReader::_readContents() {
     const int fourccSize = m_fourcc.length();
-    while (!m_device->atEnd() && m_device->pos() + fourccSize <= m_device->size()) {
+    while (!m_device->atEnd() && m_device->bytesAvailable() >= fourccSize) {
         if (m_device->read(fourccSize) == m_fourcc) {
 
             if (!m_files.empty()) {
@@ -68,6 +68,10 @@ void SequencedFileReader::_readContents() {
             });
         }
 
+        if (m_device->bytesAvailable() < (m_alignment - fourccSize)) {
+            break;
+        }
+        
         m_device->seek(m_device->pos() + (m_alignment - fourccSize));
     }
 
