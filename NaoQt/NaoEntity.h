@@ -70,4 +70,5 @@ class NaoEntity {
 
     // -- Private static decoders --
     static bool _decodeDDS(NaoEntity* in, QIODevice* out);
+    static bool _decodeWWRiff(NaoEntity* in, QIODevice* out);
 };

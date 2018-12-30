@@ -10,6 +10,8 @@
 
 #include "Decompression.h"
 #include "Images.h"
+#include "AV.h"
+
 #include "Utils.h"
 
 #include "Error.h"
@@ -124,6 +126,10 @@ bool NaoEntity::decodeEntity(NaoEntity* entity, QIODevice* to) {
         return _decodeDDS(entity, to);
     }
 
+    if (fcc == QByteArray("RIFF", 4) && finfo.name.endsWith(".ogg")) {
+        return _decodeWWRiff(entity, to);
+    }
+
     return false;
 }
 
@@ -141,6 +147,10 @@ QString NaoEntity::getDecodedName(NaoEntity* entity) {
 
     if (fname.endsWith(".dds")) {
         return base + ".png";
+    }
+
+    if (fname.endsWith(".ogg")) {
+        return base + ".ogg";
     }
 
     return QString();
@@ -380,3 +390,6 @@ bool NaoEntity::_decodeDDS(NaoEntity* in, QIODevice* out) {
     return Images::dds_to_png(in->finfo().device, out);
 }
 
+bool NaoEntity::_decodeWWRiff(NaoEntity* in, QIODevice* out) {
+    return AV::decode_wwriff(in->finfo().device, out);
+}
