@@ -6,8 +6,6 @@
 #include <QtAV/AudioDecoder.h>
 #include <QtAV/AVDemuxer.h>
 
-#include <QVector>
-
 #include <libavcodec/avcodec.h>
 
 #define _USE_MATH_DEFINES

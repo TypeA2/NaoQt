@@ -2,7 +2,4 @@
     <qresource prefix="/icon">
         <file>refresh.png</file>
     </qresource>
-    <qresource prefix="/decoding">
-        <file>packed_codebooks_aoTuV_603.bin</file>
-    </qresource>
 </RCC>

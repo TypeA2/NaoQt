@@ -138,9 +138,6 @@
     <ClCompile Include="Images.cpp">
       <Filter>Source Files\Decoding</Filter>
     </ClCompile>
-    <ClCompile Include="AV.cpp">
-      <Filter>Source Files\Decoding</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="NaoQt.h">
@@ -211,9 +208,6 @@
       <Filter>Header Files\Entities\Archives</Filter>
     </ClInclude>
     <ClInclude Include="Images.h">
-      <Filter>Header Files\Decoding</Filter>
-    </ClInclude>
-    <ClInclude Include="AV.h">
       <Filter>Header Files\Decoding</Filter>
     </ClInclude>
   </ItemGroup>
