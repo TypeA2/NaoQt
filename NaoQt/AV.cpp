@@ -602,7 +602,7 @@ namespace AV {
 
                     ASSERT(info.loop.start < info.samplecount &&
                         info.loop.end <= info.samplecount &&
-                        info.loop.start > info.loop.end);
+                        info.loop.start <= info.loop.end);
                 }
 
                 return true;
