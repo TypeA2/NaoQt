@@ -5,6 +5,8 @@ ffmpeg/lib/
 QtAV-master/
 QtAV-build/
 Test/
+libogg/bin/
+libvorbis/bin/
 
 
 ## Ignore Visual Studio temporary files, build results, and
