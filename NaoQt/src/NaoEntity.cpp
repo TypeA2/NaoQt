@@ -9,7 +9,6 @@
 #include "ChunkBasedFile.h"
 
 #include "Decompression.h"
-#include "Images.h"
 #include "AV.h"
 
 #include "Utils.h"
@@ -387,7 +386,7 @@ NaoEntity* NaoEntity::_getWSP(NaoEntity* parent) {
 // --===-- Private static decoders --===--
 
 bool NaoEntity::_decodeDDS(NaoEntity* in, QIODevice* out) {
-    return Images::dds_to_png(in->finfo().device, out);
+    return AV::dds_to_png(in->finfo().device, out);
 }
 
 bool NaoEntity::_decodeWWRiff(NaoEntity* in, QIODevice* out) {

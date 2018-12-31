@@ -14,6 +14,8 @@ namespace AV {
 
     bool decode_wwriff(QIODevice* input, QIODevice* output);
 
+    bool dds_to_png(QIODevice* input, QIODevice* output);
+
     // Privatify members
     namespace {
         namespace WWRIFF {

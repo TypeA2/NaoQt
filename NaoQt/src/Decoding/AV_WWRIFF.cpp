@@ -2,19 +2,16 @@
 
 #include "BinaryUtils.h"
 
+#include <QtEndian>
+
 #include <QFile>
 #include <QtCore/QBuffer>
 
-#include <QtEndian>
-
-#include <QDebug>
-
 #define ASSERT_HELPER(cond) if (!(cond)) { throw std::exception(QString("%0: %1").arg(__LINE__).arg(#cond).toLocal8Bit()); }
-#define ASSERT(cond) ASSERT_HELPER(cond)
+#define ASSERT(cond) ASSERT_HELPER(!!(cond))
 #define NASSERT(cond) ASSERT_HELPER(!(cond))
 
 namespace AV {
-    
     QString& wwriff_error() {
         static QString err;
         return err;
@@ -50,12 +47,12 @@ namespace AV {
             ASSERT(WWRIFF::_revorb(oggMem, output));
 
             oggMem->deleteLater();
-        } catch(std::exception& e) {
+        } catch (std::exception& e) {
             wwriff_error() = e.what();
 
             return false;
         }
-        
+
 
         return true;
     }
@@ -73,7 +70,7 @@ namespace AV {
             VarInt::VarInt(quint64 value, quint8 size)
                 : m_value(value)
                 , m_size(size) {
-                
+
             }
 
             // --===-- Getters --===--
@@ -102,7 +99,7 @@ namespace AV {
 
             Packet::Packet(QIODevice* input, qint64 offset)
                 : m_offset(offset) {
-                
+
                 input->seek(offset);
 
                 m_size = qFromLittleEndian<quint16>(input->read(2));
@@ -225,7 +222,7 @@ namespace AV {
                 BitStream* codebook = BitStream::create(buffer);
                 ASSERT(codebook)
 
-                ASSERT(_rebuild_impl(codebook, output, size));
+                    ASSERT(_rebuild_impl(codebook, output, size));
 
                 return true;
             }
@@ -322,12 +319,12 @@ namespace AV {
 
             // --===-- Private constructor --===--
 
-            BitStream::BitStream(QIODevice* input) 
+            BitStream::BitStream(QIODevice* input)
                 : m_input(input)
                 , m_bitBuffer(0)
                 , m_bitsLeft(0)
                 , m_bitsRead(0) {
-                
+
             }
 
             // --===-- Getters --===--
@@ -373,7 +370,7 @@ namespace AV {
 
                 return new OggStream(stream);
             }
-            
+
             // --===-- Destructor --===--
 
             OggStream::~OggStream() {
@@ -401,7 +398,7 @@ namespace AV {
                 for (quint8 i = 0; i < size; ++i) {
                     ASSERT(_put_bit((value & (1U << i)) != 0));
                 }
-                
+
                 return true;
             }
 
@@ -451,7 +448,7 @@ namespace AV {
                     for (quint32 i = 0; i < (HEADER_BYTES + segments + m_outputBytes); ++i) {
                         ASSERT(m_stream->putChar(m_pageBuffer[i]));
                     }
-                     
+
                     ++m_seqno;
                     m_first = false;
                     m_continued = nextContinued;
@@ -545,7 +542,7 @@ namespace AV {
             }
 
             bool _validateWWRIFF(QIODevice* input, RIFF_File& riff, AudioInfo& info) {
-                
+
                 ASSERT(riff.fmt.offset > 0 && riff.data.size > 0);
                 NASSERT(riff.vorb.offset == -1 && riff.fmt.size != 66);
                 NASSERT(riff.vorb.offset != -1 && riff.fmt.size != 40 &&
@@ -611,7 +608,7 @@ namespace AV {
             // --===-- Reading WWRIFF chunks --===--
 
             bool _read_cue(QIODevice* input, RIFF_File& riff, AudioInfo& info) {
-                
+
                 if (riff.cue.offset > 0) {
                     ASSERT(input->seek(riff.cue.offset));
 
@@ -667,7 +664,7 @@ namespace AV {
                     riff.vorb.size == 42 ||
                     riff.vorb.size == 50 ||
                     riff.vorb.size == 52) {
-                    
+
                     info.vorb.blocksize0 = qFromLittleEndian<quint8>(input->read(1));
                     info.vorb.blocksize1 = qFromLittleEndian<quint8>(input->read(1));
                 }
@@ -846,7 +843,7 @@ namespace AV {
                     delete[] partitionList;
                     delete[] dimensionList;
                 }
-                
+
                 // Residue
 
                 VarInt residueCountLess1 = bstream->read(6);
@@ -859,7 +856,7 @@ namespace AV {
                     VarInt residueType = bstream->read(2);
 
                     ASSERT(stream->write(residueType, 16));
-                    
+
                     ASSERT(residueType <= 2);
 
                     VarInt residueBegin = bstream->read(24);
@@ -889,7 +886,7 @@ namespace AV {
 
                         VarInt flag = bstream->read(1);
                         ASSERT(stream->write(flag));
-                        
+
                         if (flag > 0) {
                             high = bstream->read(5);
 
@@ -900,7 +897,7 @@ namespace AV {
                     }
 
                     for (qint64 j = 0; j < residueClassifications; ++j) {
-                        for(quint8 k = 0; k < 8; ++k) {
+                        for (quint8 k = 0; k < 8; ++k) {
                             if (residueCascade[j] & (1 << k)) {
                                 VarInt book = bstream->read(8);
                                 ASSERT(stream->write(book));
@@ -995,7 +992,7 @@ namespace AV {
 
                 modeBlockflag = new bool[modeCount];
                 modeBits = BinaryUtils::Integer::ilog(modeCount - 1);
-                
+
                 for (quint8 i = 0; i < modeCount; ++i) {
                     VarInt blockFlag = bstream->read(1);
                     ASSERT(stream->write(blockFlag));
@@ -1109,7 +1106,7 @@ namespace AV {
             // --===-- Revorb --===--
 
             bool _revorb(QIODevice* input, QIODevice* output) {
-                
+
                 ogg_sync_state sync_in;
                 ogg_sync_state sync_out;
 

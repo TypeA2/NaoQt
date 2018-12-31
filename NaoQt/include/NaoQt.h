@@ -5,8 +5,6 @@
 #include <QTimer>
 #include <QMimeType>
 
-#include "AVConverter.h"
-
 class QVBoxLayout;
 class QPushButton;
 class QTreeWidget;

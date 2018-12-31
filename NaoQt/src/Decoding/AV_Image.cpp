@@ -1,13 +1,13 @@
-#include "Images.h"
+#include "AV.h"
 
 #include <QtAV/AVDemuxer.h>
 #include <QtAV/AVMuxer.h>
 #include <QtAV/VideoDecoder.h>
 #include <QtAV/VideoEncoder.h>
 
-#define ASSERT(cond) if (!(cond)) { return false; }
+#define ASSERT(cond) if (!(cond)) { return false; }    
 
-namespace Images {
+namespace AV {
     bool dds_to_png(QIODevice* input, QIODevice* output) {
         ASSERT(input->isOpen() && input->isReadable());
         ASSERT(output->isOpen() && output->isWritable());
