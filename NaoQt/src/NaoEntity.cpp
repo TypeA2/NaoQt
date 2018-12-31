@@ -15,6 +15,8 @@
 
 #include "Error.h"
 
+#include <QtEndian>
+
 #include <QtCore/QBuffer>
 #include <QFileInfo>
 
@@ -150,6 +152,10 @@ QString NaoEntity::getDecodedName(NaoEntity* entity) {
 
     if (fname.endsWith(".ogg")) {
         return base + ".ogg";
+    }
+
+    if (fname.endsWith(".wav")) {
+        return base + ".wav";
     }
 
     return QString();
@@ -322,6 +328,7 @@ NaoEntity* NaoEntity::_getWTP(NaoEntity* parent) {
         QVector<SequencedFileReader::FileEntry> files = reader->files();
         const int fnameSize = std::log10(static_cast<double>(files.size())) + 1;
         quint64 i = 0;
+
         for (const SequencedFileReader::FileEntry& entry : files) {
             ChunkBasedFile* cbf = new ChunkBasedFile({
                 entry.offset,
@@ -353,8 +360,13 @@ NaoEntity* NaoEntity::_getWSP(NaoEntity* parent) {
         finfo.name + "/.."
         }));
 
+    static std::function<qint64(QIODevice*)> WWRIFFSizeFunc = [](QIODevice* dev) -> qint64 {
+        return qFromLittleEndian<quint32>(dev->read(4)) + 8;
+    };
+
     if (SequencedFileReader* reader =
-        SequencedFileReader::create(finfo.device, QByteArray("RIFF", 4))) {
+        SequencedFileReader::create(finfo.device, QByteArray("RIFF", 4),
+            -1, WWRIFFSizeFunc)) {
 
         QVector<SequencedFileReader::FileEntry> files = reader->files();
         const int fnameSize = std::log10(static_cast<double>(files.size())) + 1;

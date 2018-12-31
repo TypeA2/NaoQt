@@ -2,6 +2,8 @@
 
 #include "NaoEntity.h"
 
+#include <functional>
+
 class SequencedFileReader {
     public:
 
@@ -13,7 +15,8 @@ class SequencedFileReader {
 
     // -- Static Constructor --
     static SequencedFileReader* create(QIODevice* input,
-        const QByteArray& fourcc, qint64 alignment = -1);
+        const QByteArray& fourcc, qint64 alignment = -1,
+        const std::function<qint64(QIODevice*)>& advSizeFunc = {});
 
     // -- Static Getters --
     static qint64 getAlignment(const QByteArray& fourcc);
@@ -28,7 +31,8 @@ class SequencedFileReader {
 
     // -- Constructor --
     SequencedFileReader(QIODevice* input,
-        const QByteArray& fourcc, qint64 alignment);
+        const QByteArray& fourcc, qint64 alignment,
+        const std::function<qint64(QIODevice*)>& advSizeFunc);
 
     // -- Parsing --
     void _readContents();
@@ -38,6 +42,8 @@ class SequencedFileReader {
     QIODevice* m_device;
     QByteArray m_fourcc;
     qint64 m_alignment;
+
+    std::function<qint64(QIODevice*)> m_sizeFunc;
 
     QVector<FileEntry> m_files;
     

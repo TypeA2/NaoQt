@@ -6,10 +6,12 @@
 // --===-- Constructor --===--
 
 SequencedFileReader::SequencedFileReader(QIODevice* input,
-    const QByteArray& fourcc, qint64 alignment)
+    const QByteArray& fourcc, qint64 alignment,
+    const std::function<qint64(QIODevice*)>& advSizeFunc)
     : m_device(input)
     , m_fourcc(fourcc)
-    , m_alignment(alignment) {
+    , m_alignment(alignment)
+    , m_sizeFunc(advSizeFunc) {
 
     _readContents();
 }
@@ -17,7 +19,8 @@ SequencedFileReader::SequencedFileReader(QIODevice* input,
 // --===-- Static Constructor --===--
 
 SequencedFileReader* SequencedFileReader::create(QIODevice* input,
-    const QByteArray& fourcc, qint64 alignment) {
+    const QByteArray& fourcc, qint64 alignment,
+    const std::function<qint64(QIODevice*)>& advSizeFunc) {
     if (!input->isOpen() ||
         !input->isReadable() ||
         input->isSequential() ||
@@ -27,7 +30,8 @@ SequencedFileReader* SequencedFileReader::create(QIODevice* input,
     }
 
     return new SequencedFileReader(input,
-        fourcc,(alignment > 0 ? alignment : getAlignment(fourcc)));
+        fourcc, (alignment > 0 ? alignment : getAlignment(fourcc)),
+        advSizeFunc);
 }
 
 // --===-- Static Getters --===--
@@ -56,26 +60,42 @@ QVector<SequencedFileReader::FileEntry> SequencedFileReader::files() const {
 void SequencedFileReader::_readContents() {
     const int fourccSize = m_fourcc.length();
     while (!m_device->atEnd() && m_device->bytesAvailable() >= fourccSize) {
+
+        const qint64 posBefore = m_device->pos();
+
         if (m_device->read(fourccSize) == m_fourcc) {
 
-            if (!m_files.empty()) {
-                m_files.last().size = (m_device->pos() - fourccSize) - m_files.last().offset;
+            FileEntry f;
+
+            f.offset = m_device->pos() - fourccSize;
+
+            if (m_sizeFunc) {
+                f.size = m_sizeFunc(m_device);
+            } else {
+                f.size = m_alignment;
+
+                if (!m_files.empty()) {
+                    m_files.last().size = (m_device->pos() - fourccSize) - m_files.last().offset;
+                }
             }
 
-            m_files.append({
-                m_device->pos() - fourccSize,
-                m_alignment
-            });
+            m_files.append(f);
         }
 
+        // Not enough space left for another file
         if (m_device->bytesAvailable() < (m_alignment - fourccSize)) {
             break;
         }
-        
-        m_device->seek(m_device->pos() + (m_alignment - fourccSize));
+
+        if (m_sizeFunc) {
+            m_device->seek(posBefore + m_files.last().size +
+                m_alignment - (m_files.last().size % m_alignment));
+        } else {
+            m_device->seek(posBefore + m_alignment);
+        }
     }
 
-    if (!m_files.empty()) {
+    if (!m_sizeFunc && !m_files.empty()) {
         m_files.last().size = m_device->size() - m_files.last().offset;
     }
 }
