@@ -202,7 +202,7 @@ void NaoFSP::_pathChanged() {
 
 // --===-- Static getters --===--
 
-QString NaoFSP::getFileDescription(const QString& path) {
+QString NaoFSP::getFileDescription(const QString& path, QIODevice* device) {
     if (path.endsWith(".cpk")) {
         return "CPK archive";
     }
@@ -252,7 +252,25 @@ QString NaoFSP::getFileDescription(const QString& path) {
     }
 
     if (path.endsWith(".ogg")) {
+        if (device &&
+            device->isReadable() &&
+            device->seek(20) &&
+            qFromLittleEndian<quint16>(device->read(2)) == 0xFFFF) {
+            return "WWise Vorbis";
+        }
+
         return "OGG audio file";
+    }
+
+    if (path.endsWith(".wav")) {
+        if (device &&
+            device->isReadable() &&
+            device->seek(20) &&
+            qFromLittleEndian<quint16>(device->read(2)) == 0xFFFE) {
+            return "WWise PCM";
+        }
+
+        return "WAV audio file";
     }
 
     return "";

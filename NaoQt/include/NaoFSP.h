@@ -29,7 +29,7 @@ class NaoFSP : public QObject {
     void open(const QString& source, const QString& outdir);
 
     // -- Static getters --
-    static QString getFileDescription(const QString& path);
+    static QString getFileDescription(const QString& path, QIODevice* device = nullptr);
     static bool getNavigatable(const QString& path);
     static QString getHighestDirectory(QString path);
     static QString getHighestFile(QString path); 

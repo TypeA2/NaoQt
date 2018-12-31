@@ -102,6 +102,9 @@
     <ClCompile Include="src\NaoEntity.cpp">
       <Filter>Source Files\Entities</Filter>
     </ClCompile>
+    <ClCompile Include="src\Decoding\AV_WWPCM.cpp">
+      <Filter>Source Files\Decoding</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="include\NaoFSP.h">
@@ -151,6 +154,9 @@
       <Filter>Header Files\Decoding</Filter>
     </ClInclude>
     <ClInclude Include="include\vdf_parser.hpp">
+      <Filter>Header Files\Decoding</Filter>
+    </ClInclude>
+    <ClInclude Include="include\AV_WWRIFF.h">
       <Filter>Header Files\Decoding</Filter>
     </ClInclude>
   </ItemGroup>

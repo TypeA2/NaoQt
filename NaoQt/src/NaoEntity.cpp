@@ -41,7 +41,7 @@ NaoEntity::NaoEntity(DirInfo directory)
 
 // --===-- Static constructor --===--
 
-NaoEntity* NaoEntity::getEntity(NaoEntity* parent) {
+NaoEntity* NaoEntity::getEntity(NaoEntity* parent, bool couldBeSequenced) {
     FileInfo& finfo = parent->finfoRef();
     
     if (finfo.diskSize != finfo.virtualSize &&
@@ -85,13 +85,15 @@ NaoEntity* NaoEntity::getEntity(NaoEntity* parent) {
         return _getDAT(parent);
     }
 
-    if (fcc == QByteArray("DDS ", 4) && finfo.name.endsWith(".wtp")) {
-        return _getWTP(parent);
-    }
+    if (couldBeSequenced) {
+        if (fcc == QByteArray("DDS ", 4) && finfo.name.endsWith(".wtp")) {
+            return _getWTP(parent);
+        }
 
-    if (fcc == QByteArray("RIFF") &&
-        (finfo.name.endsWith(".wem") || finfo.name.endsWith(".wsp"))) {
-        return _getWSP(parent);
+        if (fcc == QByteArray("RIFF") &&
+            (finfo.name.endsWith(".wem") || finfo.name.endsWith(".wsp"))) {
+            return _getWSP(parent);
+        }
     }
 
     return parent;
@@ -127,8 +129,17 @@ bool NaoEntity::decodeEntity(NaoEntity* entity, QIODevice* to) {
         return _decodeDDS(entity, to);
     }
 
-    if (fcc == QByteArray("RIFF", 4) && finfo.name.endsWith(".ogg")) {
-        return _decodeWWRiff(entity, to);
+    if (fcc == QByteArray("RIFF", 4) && input->seek(20)) {
+        quint16 fmt = qFromLittleEndian<quint16>(input->read(2));
+        if (fmt == 0xFFFF) {
+            return _decodeWWRIFF(entity, to);
+        }
+
+        if (fmt == 0xFFFE) {
+            return _decodeWWPCM(entity, to);
+        }
+
+        return false;
     }
 
     return false;
@@ -159,6 +170,36 @@ QString NaoEntity::getDecodedName(NaoEntity* entity) {
     }
 
     return QString();
+}
+
+QString NaoEntity::getEmbeddedFileExtension(QIODevice* device) {
+    device->seek(0);
+
+    QByteArray fourcc = device->read(4);
+
+    if (fourcc == QByteArray("DDS ", 4)) {
+        return ".dds";
+    }
+
+    if (fourcc == QByteArray("RIFF", 4)) {
+        device->seek(8);
+
+        if (device->read(8) == QByteArray("WAVEfmt ", 8)) {
+            device->seek(20);
+
+            quint16 fmt = qFromLittleEndian<quint16>(device->read(2));
+
+            if (fmt == 0xFFFF) {
+                return ".ogg";
+            }
+
+            if (fmt == 0xFFFE) {
+                return ".wav";
+            }
+        }
+    }
+
+    return "";
 }
 
 // --===-- Destructor --===--
@@ -381,7 +422,10 @@ NaoEntity* NaoEntity::_getWSP(NaoEntity* parent) {
             cbf->open(QIODevice::ReadOnly);
 
             parent->addChildren(new NaoEntity(FileInfo {
-                finfo.name + "/" + QString("%0.ogg").arg(i++, fnameSize, 10, QLatin1Char('0')),
+                QString("%0/%1%2")
+                    .arg(finfo.name)
+                    .arg(i++, fnameSize, 10, QLatin1Char('0'))
+                    .arg(getEmbeddedFileExtension(cbf)),
                 entry.size,
                 entry.size,
                 entry.offset,
@@ -401,6 +445,10 @@ bool NaoEntity::_decodeDDS(NaoEntity* in, QIODevice* out) {
     return AV::dds_to_png(in->finfo().device, out);
 }
 
-bool NaoEntity::_decodeWWRiff(NaoEntity* in, QIODevice* out) {
+bool NaoEntity::_decodeWWRIFF(NaoEntity* in, QIODevice* out) {
     return AV::decode_wwriff(in->finfo().device, out);
+}
+
+bool NaoEntity::_decodeWWPCM(NaoEntity* in, QIODevice* out) {
+    return AV::decode_wwpcm(in->finfo().device, out);
 }

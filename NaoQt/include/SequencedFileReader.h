@@ -3,6 +3,7 @@
 #include "NaoEntity.h"
 
 #include <functional>
+#include <QMetaType>
 
 class SequencedFileReader {
     public:
@@ -16,8 +17,8 @@ class SequencedFileReader {
     // -- Static Constructor --
     static SequencedFileReader* create(QIODevice* input,
         const QByteArray& fourcc, qint64 alignment = -1,
-        const std::function<qint64(QIODevice*)>& advSizeFunc = {});
-
+        const std::function<qint64(QIODevice*)>& advSizeFunc = nullptr);
+    
     // -- Static Getters --
     static qint64 getAlignment(const QByteArray& fourcc);
 

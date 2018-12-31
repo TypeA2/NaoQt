@@ -25,13 +25,14 @@ class NaoEntity {
     NaoEntity(DirInfo directory);
 
     // -- Static constructor --
-    static NaoEntity* getEntity(NaoEntity* parent);
+    static NaoEntity* getEntity(NaoEntity* parent, bool couldBeSequenced = true);
     
     // -- Static decoder --
     static bool decodeEntity(NaoEntity* entity, QIODevice* to);
 
     // -- Static getters --
     static QString getDecodedName(NaoEntity* entity);
+    static QString getEmbeddedFileExtension(QIODevice* device);
 
     // -- Destructor --
     ~NaoEntity();
@@ -70,5 +71,6 @@ class NaoEntity {
 
     // -- Private static decoders --
     static bool _decodeDDS(NaoEntity* in, QIODevice* out);
-    static bool _decodeWWRiff(NaoEntity* in, QIODevice* out);
+    static bool _decodeWWRIFF(NaoEntity* in, QIODevice* out);
+    static bool _decodeWWPCM(NaoEntity* in, QIODevice* out);
 };

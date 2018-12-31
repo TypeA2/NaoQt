@@ -122,6 +122,7 @@
     <ClCompile Include="src\Archives\SequencedFileReader.cpp" />
     <ClCompile Include="src\Archives\UTFReader.cpp" />
     <ClCompile Include="src\Decoding\AV_Image.cpp" />
+    <ClCompile Include="src\Decoding\AV_WWPCM.cpp" />
     <ClCompile Include="src\Decoding\AV_WWRIFF.cpp" />
     <ClCompile Include="src\Decoding\Decompression.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -136,6 +137,7 @@
     <ResourceCompile Include="NaoQt.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\AV_WWRIFF.h" />
     <ClInclude Include="include\vdf_parser.hpp" />
     <QtMoc Include="include\NaoFSP.h">
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName)\.;$(QTDIR)\include\Qt3DCore;$(QTDIR)\include\Qt3DAnimation;$(QTDIR)\include\Qt3DExtras;$(QTDIR)\include\Qt3DInput;$(QTDIR)\include\Qt3DLogic;$(QTDIR)\include\Qt3DRender;$(QTDIR)\include\QtConcurrent;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtOpenGL;$(QTDIR)\include\QtOpenGLExtensions;$(QTDIR)\include\QtSql;$(QTDIR)\include\QtSvg;$(QTDIR)\include\QtWebEngine;$(QTDIR)\include\QtWebEngineCore;$(QTDIR)\include\QtWebEngineWidgets;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWinExtras;$(SolutionDir)\Zydis\include;$(SolutionDir)\QtAV\include;$(SolutionDir)\ffmpeg\include;$(SolutionDir)\libogg\include;$(SolutionDir)\libvorbis\include;$(NOINHERIT)\.</IncludePath>

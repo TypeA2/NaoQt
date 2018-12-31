@@ -498,7 +498,7 @@ void NaoQt::fspPathChanged() {
                 row->setData(0, IsNavigatableRole, NaoFSP::getNavigatable(file.name));
                 row->setText(1, Utils::getShortSize(file.virtualSize));
                 row->setData(1, ItemSizeRole, file.virtualSize);
-                row->setText(2, NaoFSP::getFileDescription(file.name));
+                row->setText(2, NaoFSP::getFileDescription(file.name, file.device));
 
                 if (inArchive) {
                     row->setText(3, QString("%0%")
