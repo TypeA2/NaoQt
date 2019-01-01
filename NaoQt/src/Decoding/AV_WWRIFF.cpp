@@ -13,11 +13,6 @@
 #define NASSERT(cond) ASSERT_HELPER(!(cond))
 
 namespace AV {
-    QString& wwriff_error() {
-        static QString err;
-        return err;
-    }
-
     bool decode_wwriff(QIODevice* input, QIODevice* output) {
         try {
             ASSERT(input->isOpen() && input->isReadable() && input->seek(0));
@@ -49,7 +44,7 @@ namespace AV {
 
             oggMem->deleteLater();
         } catch (std::exception& e) {
-            wwriff_error() = e.what();
+            error() = e.what();
 
             return false;
         }

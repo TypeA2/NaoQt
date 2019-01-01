@@ -7,8 +7,10 @@ class QIODevice;
 namespace AV {
 
     // https://stackoverflow.com/a/8317191/8662472
-    QString& wwriff_error();
-    QString& wwpcm_error();
+    inline QString& error() {
+        static QString err;
+        return err;
+    }
 
     bool decode_wwriff(QIODevice* input, QIODevice* output);
 

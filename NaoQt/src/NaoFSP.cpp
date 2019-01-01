@@ -121,7 +121,7 @@ void NaoFSP::open(const QString& source, const QString& outdir) {
         } else {
             QMessageBox::critical(reinterpret_cast<QWidget*>(this->parent()), "Error",
                 QString("Failed extracting %0.<br>Error at statement:<pre>%1</pre>")
-                    .arg(QFileInfo(sourceEntity->finfo().name).fileName(), AV::wwriff_error()));
+                    .arg(QFileInfo(sourceEntity->finfo().name).fileName(), AV::error()));
         }
     });
 
