@@ -209,14 +209,18 @@ namespace AV {
 
             ASSERT(memcpy_s(codebookData.data(), size, &m_data[m_offsets[i]], size) == 0);
 
-            QBuffer* buffer = new QBuffer;
+            QBuffer* buffer = new QBuffer();
             buffer->setData(codebookData);
             ASSERT(buffer->open(QIODevice::ReadOnly));
 
             BitStream* codebook = BitStream::create(buffer);
             ASSERT(codebook)
 
-                ASSERT(_rebuild_impl(codebook, output, size));
+            ASSERT(_rebuild_impl(codebook, output, size));
+
+            delete codebook;
+
+            buffer->deleteLater();
 
             return true;
         }
@@ -672,7 +676,7 @@ namespace AV {
             OggStream* stream = OggStream::create(output);
             ASSERT(stream);
 
-            bool* modeBlockflag = nullptr;;
+            bool* modeBlockflag = nullptr;
             quint8 modeBits;
 
             ASSERT(_writeID(stream, info));
@@ -681,6 +685,7 @@ namespace AV {
             ASSERT(_writeAudio(stream, input, riff, info, modeBlockflag, modeBits));
 
             delete[] modeBlockflag;
+            delete stream;
 
             return true;
         }
@@ -1068,7 +1073,6 @@ namespace AV {
                             nextBlockflag = modeBlockflag[tmpstream->read(modeBits)];
 
                             delete tmpstream;
-                            tmpstream = nullptr;
                         }
                     }
 
