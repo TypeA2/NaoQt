@@ -52,8 +52,11 @@ namespace AV {
 
             ASSERT(input->seek(fmtOffset + fmtSize));
 
+            quint32 size = 0;
             while (input->read(4) != QByteArray("data", 4)) {
-                ASSERT(input->seek(input->pos() + 4 + qFromLittleEndian<quint32>(input->read(4))));
+                // Release builds fuck up the order of evaluation for this one so a tempvar it is
+                size = qFromLittleEndian<quint32>(input->read(4));
+                ASSERT(input->seek(input->pos() + size));
             }
 
             ASSERT(output->write(QByteArray("data", 4)) == 4);
