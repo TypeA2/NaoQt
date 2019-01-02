@@ -32,7 +32,7 @@ NaoQt::NaoQt() {
     this->setupModel();
 
     QString root = Steam::getGamePath("NieRAutomata",
-        QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0)) + "\\data";
+        QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0)) +"\\data";
 
     m_fsp = new NaoFSP(root, this);
 

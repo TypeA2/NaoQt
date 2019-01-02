@@ -12,7 +12,6 @@ class NaoEntity {
         QString name;
         qint64 diskSize;
         qint64 virtualSize;
-        qint64 offset;
         QIODevice* device = nullptr;
     };
     
@@ -68,6 +67,7 @@ class NaoEntity {
     static NaoEntity* _getDAT(NaoEntity* parent);
     static NaoEntity* _getWTP(NaoEntity* parent);
     static NaoEntity* _getWSP(NaoEntity* parent);
+    static NaoEntity* _getUSM(NaoEntity* parent);
 
     // -- Private static decoders --
     static bool _decodeDDS(NaoEntity* in, QIODevice* out);

@@ -2,6 +2,8 @@
 
 #include "UTFReader.h"
 
+#include <QIODevice>
+
 // --===-- Constructor --===--
 
 CPKReader::CPKReader(QIODevice* in)

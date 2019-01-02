@@ -5,6 +5,7 @@
 #include "CPKReader.h"
 #include "DATReader.h"
 #include "SequencedFileReader.h"
+#include "USMReader.h"
 
 #include "ChunkBasedFile.h"
 
@@ -13,12 +14,12 @@
 
 #include "Utils.h"
 
-#include "Error.h"
-
 #include <QtEndian>
 
 #include <QtCore/QBuffer>
 #include <QFileInfo>
+
+#include <QDebug>
 
 // --===-- Constructors --===--
 
@@ -79,6 +80,10 @@ NaoEntity* NaoEntity::getEntity(NaoEntity* parent, bool couldBeSequenced) {
 
     if (fcc == QByteArray("CPK ")) {
         return _getCPK(parent);
+    }
+
+    if (fcc == QByteArray("CRID")) {
+        return _getUSM(parent);
     }
 
     if (fcc == QByteArray("DAT\0", 4)) {
@@ -165,8 +170,13 @@ QString NaoEntity::getDecodedName(NaoEntity* entity) {
         return base + ".ogg";
     }
 
-    if (fname.endsWith(".wav")) {
+    if (fname.endsWith(".wav") ||
+        fname.endsWith(".adx")) {
         return base + ".wav";
+    }
+
+    if (fname.endsWith(".mpeg")) {
+        return base + ".mpeg";
     }
 
     return QString();
@@ -176,6 +186,8 @@ QString NaoEntity::getEmbeddedFileExtension(QIODevice* device) {
     device->seek(0);
 
     QByteArray fourcc = device->read(4);
+
+    device->seek(0);
 
     if (fourcc == QByteArray("DDS ", 4)) {
         return ".dds";
@@ -197,6 +209,14 @@ QString NaoEntity::getEmbeddedFileExtension(QIODevice* device) {
                 return ".wav";
             }
         }
+    }
+
+    if (qFromBigEndian<quint32>(fourcc) == 0x1B3) {
+        return ".mpeg";
+    }
+
+    if (qFromBigEndian<quint16>(fourcc.left(2)) == 0x8000) {
+        return ".adx";
     }
 
     return "";
@@ -309,7 +329,6 @@ NaoEntity* NaoEntity::_getCPK(NaoEntity* parent) {
                 finfo.name + "/" + (!file.dir.isEmpty() ? file.dir + "/" : "") + file.name,
                 static_cast<qint64>(file.size),
                 static_cast<qint64>(file.extractedSize),
-                static_cast<qint64>(file.offset + file.extraOffset),
                 cbf
                 })), true);
         }
@@ -345,7 +364,6 @@ NaoEntity* NaoEntity::_getDAT(NaoEntity* parent) {
                 finfo.name + "/" + entry.name,
                 entry.size,
                 entry.size,
-                entry.offset,
                 cbf
                 })), true);
         }
@@ -383,7 +401,6 @@ NaoEntity* NaoEntity::_getWTP(NaoEntity* parent) {
                 finfo.name + "/" + QString("%0.dds").arg(i++, fnameSize, 10, QLatin1Char('0')),
                 entry.size,
                 entry.size,
-                entry.offset,
                 cbf
                 }), true);
         }
@@ -416,8 +433,7 @@ NaoEntity* NaoEntity::_getWSP(NaoEntity* parent) {
             ChunkBasedFile* cbf = new ChunkBasedFile({
                 entry.offset,
                 entry.size,
-                0
-                }, finfo.device);
+                0 }, finfo.device);
 
             cbf->open(QIODevice::ReadOnly);
 
@@ -428,9 +444,61 @@ NaoEntity* NaoEntity::_getWSP(NaoEntity* parent) {
                     .arg(getEmbeddedFileExtension(cbf)),
                 entry.size,
                 entry.size,
-                entry.offset,
                 cbf
                 }), true);
+        }
+
+        delete reader;
+    }
+
+    return parent;
+}
+
+NaoEntity* NaoEntity::_getUSM(NaoEntity* parent) {
+    FileInfo finfo = parent->finfo();
+
+    parent->addChildren(new NaoEntity(DirInfo {
+        finfo.name + "/.."
+        }));
+
+    if (USMReader* reader = USMReader::create(finfo.device)) {
+
+        QVector<USMReader::Chunk> chunks = reader->chunks();
+
+        for (const USMReader::Stream& stream : reader->streams()) {
+            QVector<USMReader::Chunk> thisChunks;
+
+            std::copy_if(std::begin(chunks), std::end(chunks), std::back_inserter(thisChunks),
+                [&stream](const USMReader::Chunk& chunk) -> bool {
+                return chunk.stmid == stream.stmid && chunk.type == USMReader::Chunk::Data;
+            });
+
+            QVector<ChunkBasedFile::Chunk> cbfChunks;
+            cbfChunks.reserve(thisChunks.size());
+
+            qint64 pos = 0;
+            for (const USMReader::Chunk& chunk : thisChunks) {
+                cbfChunks.append({
+                    chunk.offset + 8 + chunk.headerSize,
+                    chunk.size - chunk.headerSize - chunk.footerSize,
+                    pos
+                    });
+
+                pos += cbfChunks.last().size;
+            }
+
+            ChunkBasedFile* cbf = new ChunkBasedFile(cbfChunks, finfo.device);
+            cbf->open(QIODevice::ReadOnly);
+
+            parent->addChildren(new NaoEntity(FileInfo {
+                QString("%0/%1%2")
+                    .arg(finfo.name)
+                    .arg(QFileInfo(stream.filename).completeBaseName())
+                    .arg(getEmbeddedFileExtension(cbf)),
+                static_cast<qint64>(stream.size),
+                static_cast<qint64>(stream.size),
+                cbf
+                }));
         }
 
         delete reader;

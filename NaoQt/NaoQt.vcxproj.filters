@@ -105,6 +105,9 @@
     <ClCompile Include="src\Decoding\AV_WWPCM.cpp">
       <Filter>Source Files\Decoding</Filter>
     </ClCompile>
+    <ClCompile Include="src\Archives\USMReader.cpp">
+      <Filter>Source Files\Entities\Archives</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="include\NaoFSP.h">
@@ -158,6 +161,9 @@
     </ClInclude>
     <ClInclude Include="include\AV_WWRIFF.h">
       <Filter>Header Files\Decoding</Filter>
+    </ClInclude>
+    <ClInclude Include="include\USMReader.h">
+      <Filter>Header Files\Entities\Archives</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

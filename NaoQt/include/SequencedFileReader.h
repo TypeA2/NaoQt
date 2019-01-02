@@ -3,7 +3,6 @@
 #include "NaoEntity.h"
 
 #include <functional>
-#include <QMetaType>
 
 class SequencedFileReader {
     public:

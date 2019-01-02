@@ -1,6 +1,7 @@
 #pragma once
 
-#include <QtCore>
+#include <QVariant>
+#include <QVector>
 
 class QBuffer;
 class QIODevice;
@@ -16,7 +17,6 @@ class UTFReader : public QObject {
 
     public:
     static QByteArray readUTF(QIODevice* in);
-    static QByteArray readUTF(NaoFileDevice* in);
 
     UTFReader(QByteArray utf);
     ~UTFReader();

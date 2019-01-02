@@ -2,6 +2,11 @@
 
 #include "BinaryUtils.h"
 
+#include <QtCore/QBuffer>
+#include <QTextCodec>
+
+#include <QtEndian>
+
 #include "Error.h"
 #define ASSERT(cond) \
 { \

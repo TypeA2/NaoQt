@@ -156,8 +156,9 @@ void NaoFSP::_changePathToDirectory(const QString& target) {
                 entry.absoluteFilePath(),
                 entry.size(),
                 entry.size(),
-                0,
-                nullptr
+
+                // QMimeDatabase is really fucky if we don't provide a QIODevice for some reason
+                new QFile(entry.absoluteFilePath())
             });
         }
 
@@ -184,7 +185,6 @@ void NaoFSP::_changePathToArchive(const QString& target) {
             targetf.absoluteFilePath(),
             targetf.size(),
             targetf.size(),
-            0,
             device
         }));
     }
@@ -247,8 +247,8 @@ QString NaoFSP::getFileDescription(const QString& path, QIODevice* device) {
         return "Events archive";
     }
 
-    if (path.endsWith(".dds")) {
-        return "DDS texture";
+    if (path.endsWith(".adx")) {
+        return "ADX audio";
     }
 
     if (path.endsWith(".ogg")) {
@@ -258,8 +258,6 @@ QString NaoFSP::getFileDescription(const QString& path, QIODevice* device) {
             qFromLittleEndian<quint16>(device->read(2)) == 0xFFFF) {
             return "WWise Vorbis";
         }
-
-        return "OGG audio file";
     }
 
     if (path.endsWith(".wav")) {
@@ -269,11 +267,11 @@ QString NaoFSP::getFileDescription(const QString& path, QIODevice* device) {
             qFromLittleEndian<quint16>(device->read(2)) == 0xFFFE) {
             return "WWise PCM";
         }
-
-        return "WAV audio file";
     }
 
-    return "";
+    static QMimeDatabase db;
+
+    return device ? db.mimeTypeForFileNameAndData(path, device).comment() : db.mimeTypeForName(path).comment();
 }
 
 bool NaoFSP::getNavigatable(const QString& path) {
@@ -284,7 +282,8 @@ bool NaoFSP::getNavigatable(const QString& path) {
         path.endsWith(".dtt") ||
         path.endsWith(".wtp") ||
         path.endsWith(".eff") ||
-        path.endsWith(".evn");
+        path.endsWith(".evn") ||
+        path.endsWith(".usm");
 }
 
 QString NaoFSP::getHighestDirectory(QString path) {
