@@ -6,6 +6,7 @@
 #include <vorbis/codec.h>
 
 class QIODevice;
+class NaoEntityWorker;
 
 namespace AV {
     namespace WWRIFF {
@@ -218,13 +219,14 @@ namespace AV {
         bool _read_vorb(QIODevice* input, RIFF_File& riff, AudioInfo& info);
 
         // -- Writing output ogg --
-        bool _writeOGG(QIODevice* input, QIODevice* output, const RIFF_File& riff, const AudioInfo& info);
+        bool _writeOGG(QIODevice* input, QIODevice* output, const RIFF_File& riff, const AudioInfo& info,
+            NaoEntityWorker* progress);
         bool _writeID(OggStream* stream, const AudioInfo& info);
         bool _writeComment(OggStream* stream, const AudioInfo& info);
         bool _writeSetup(OggStream* stream, QIODevice* input, const RIFF_File& riff, const AudioInfo& info,
             bool*& modeBlockflag, quint8& modeBits);
         bool _writeAudio(OggStream* stream, QIODevice* input, const RIFF_File& riff, const AudioInfo& info,
-            const bool* modeBlockflag, quint8& modeBits);
+            const bool* modeBlockflag, quint8& modeBits, NaoEntityWorker* progress);
 
         // -- Revorb --
         bool _revorb(QIODevice* input, QIODevice* output);

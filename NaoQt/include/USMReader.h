@@ -3,6 +3,7 @@
 #include <QVector>
 
 class QIODevice;
+class NaoEntityWorker;
 
 class USMReader {
     public:
@@ -52,7 +53,7 @@ class USMReader {
     };
 
     // -- Static constructor --
-    static USMReader* create(QIODevice* input);
+    static USMReader* create(QIODevice* input, NaoEntityWorker* progress);
 
     // -- Getters --
     bool errored() const;
@@ -64,7 +65,7 @@ class USMReader {
     private:
 
     // -- Private constructor --
-    USMReader(QIODevice* input);
+    USMReader(QIODevice* input, NaoEntityWorker* progress);
 
     // -- Parsing --
     void _readContents();
@@ -73,6 +74,8 @@ class USMReader {
     Chunk _readNextChunkHeader();
 
     // -- Member variables --
+
+    NaoEntityWorker* m_progress;
 
     bool m_errored;
     QString m_error;

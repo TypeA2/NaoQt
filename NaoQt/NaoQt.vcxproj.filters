@@ -108,6 +108,12 @@
     <ClCompile Include="src\Archives\USMReader.cpp">
       <Filter>Source Files\Entities\Archives</Filter>
     </ClCompile>
+    <ClCompile Include="src\NaoEntityWorker.cpp">
+      <Filter>Source Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Decoding\AV_ADX.cpp">
+      <Filter>Source Files\Decoding</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="include\NaoFSP.h">
@@ -121,6 +127,9 @@
     </QtMoc>
     <QtMoc Include="include\UTFReader.h">
       <Filter>Header Files\Entities\Archives</Filter>
+    </QtMoc>
+    <QtMoc Include="include\NaoEntityWorker.h">
+      <Filter>Header Files\Entities</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
@@ -147,9 +156,6 @@
     <ClInclude Include="include\SequencedFileReader.h">
       <Filter>Header Files\Entities\Archives</Filter>
     </ClInclude>
-    <ClInclude Include="include\NaoEntity.h">
-      <Filter>Header Files\Entities</Filter>
-    </ClInclude>
     <ClInclude Include="include\AV.h">
       <Filter>Header Files\Decoding</Filter>
     </ClInclude>
@@ -164,6 +170,12 @@
     </ClInclude>
     <ClInclude Include="include\USMReader.h">
       <Filter>Header Files\Entities\Archives</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NaoEntity.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\AV_ADX.h">
+      <Filter>Header Files\Decoding</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

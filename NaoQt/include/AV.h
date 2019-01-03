@@ -3,6 +3,7 @@
 #include <QString>
 
 class QIODevice;
+class NaoEntityWorker;
 
 namespace AV {
 
@@ -12,10 +13,13 @@ namespace AV {
         return err;
     }
 
-    bool decode_wwriff(QIODevice* input, QIODevice* output);
+    // Audio
+    bool decode_wwriff(QIODevice* input, QIODevice* output, NaoEntityWorker* progress);
 
-    bool decode_wwpcm(QIODevice* input, QIODevice* output);
+    bool decode_wwpcm(QIODevice* input, QIODevice* output, NaoEntityWorker* progress);
 
+    bool decode_adx(QIODevice* input, QIODevice* output, NaoEntityWorker* progress);
+
+    // Images
     bool dds_to_png(QIODevice* input, QIODevice* output);
-
 }

@@ -1,5 +1,9 @@
 #include "AV.h"
 
+#include "BinaryUtils.h"
+
+#include "NaoEntityWorker.h"
+
 #include <QIODevice>
 #include <QtEndian>
 
@@ -8,7 +12,7 @@
 #define NASSERT(cond) ASSERT_HELPER(!(cond))
 
 namespace AV {
-    bool decode_wwpcm(QIODevice* input, QIODevice* output) {
+    bool decode_wwpcm(QIODevice* input, QIODevice* output, NaoEntityWorker* progress) {
         try {
             ASSERT(input->isOpen() && input->isReadable() && input->seek(0));
             ASSERT(output->isOpen() && output->isWritable());
@@ -67,7 +71,26 @@ namespace AV {
 
             quint32 dataSize = qFromLittleEndian<quint32>(dataSizeData);
 
-            ASSERT(output->write(input->read(dataSize)) == dataSize);
+            progress->maxProgressChanged(dataSize);
+
+            const quint32 pageSize = BinaryUtils::getPageSize();
+            char* data = new char[pageSize];
+
+            qint64 read = 0;
+            while (read < dataSize) {
+                quint32 thisTime = input->bytesAvailable() > pageSize ? pageSize : input->bytesAvailable();
+
+                ASSERT(input->read(data, thisTime) == thisTime);
+                ASSERT(output->write(data, thisTime) == thisTime);
+
+                read += thisTime;
+
+                if (read % (pageSize * 32) == 0) {
+                    progress->progress(read);
+                }
+            }
+
+            delete[] data;
 
         } catch (const std::exception& e) {
             error() = e.what();

@@ -123,7 +123,7 @@ bool ChunkBasedFile::seek(qint64 pos) {
     ASSERT(QIODevice::seek(pos));
     ASSERT(pos <= m_totalSize)
 
-    if (pos == m_currentPos) {
+    if (pos != 0 && pos == m_currentPos) {
         return true;
     }
 

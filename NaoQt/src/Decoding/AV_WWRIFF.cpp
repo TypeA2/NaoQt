@@ -3,6 +3,8 @@
 
 #include "BinaryUtils.h"
 
+#include "NaoEntityWorker.h"
+
 #include <QtEndian>
 
 #include <QFile>
@@ -13,7 +15,7 @@
 #define NASSERT(cond) ASSERT_HELPER(!(cond))
 
 namespace AV {
-    bool decode_wwriff(QIODevice* input, QIODevice* output) {
+    bool decode_wwriff(QIODevice* input, QIODevice* output, NaoEntityWorker* progress) {
         try {
             ASSERT(input->isOpen() && input->isReadable() && input->seek(0));
             ASSERT(output->isOpen() && output->isWritable());
@@ -31,19 +33,16 @@ namespace AV {
             ASSERT(WWRIFF::_gatherRIFFchunks(input, riff));
             ASSERT(WWRIFF::_validateWWRIFF(input, riff, info));
             ASSERT(WWRIFF::_readWWRIFF(input, riff, info));
-
             // Writing the crappy ogg into memory to revorb it later
             QBuffer* oggMem = new QBuffer();
             ASSERT(oggMem->open(QIODevice::ReadWrite));
 
-            ASSERT(WWRIFF::_writeOGG(input, oggMem, riff, info));
-
+            ASSERT(WWRIFF::_writeOGG(input, oggMem, riff, info, progress));
             ASSERT(oggMem->seek(0));
 
             ASSERT(WWRIFF::_revorb(oggMem, output));
-
             oggMem->deleteLater();
-        } catch (std::exception& e) {
+        } catch (const std::exception& e) {
             error() = e.what();
 
             return false;
@@ -672,7 +671,9 @@ namespace AV {
 
         // --===-- Writing output ogg --===--
 
-        bool _writeOGG(QIODevice* input, QIODevice* output, const RIFF_File& riff, const AudioInfo& info) {
+        bool _writeOGG(QIODevice* input, QIODevice* output, const RIFF_File& riff, const AudioInfo& info,
+            NaoEntityWorker* progress) {
+
             OggStream* stream = OggStream::create(output);
             ASSERT(stream);
 
@@ -682,7 +683,7 @@ namespace AV {
             ASSERT(_writeID(stream, info));
             ASSERT(_writeComment(stream, info));
             ASSERT(_writeSetup(stream, input, riff, info, modeBlockflag, modeBits));
-            ASSERT(_writeAudio(stream, input, riff, info, modeBlockflag, modeBits));
+            ASSERT(_writeAudio(stream, input, riff, info, modeBlockflag, modeBits, progress));
 
             delete[] modeBlockflag;
             delete stream;
@@ -1020,10 +1021,14 @@ namespace AV {
         }
 
         bool _writeAudio(OggStream* stream, QIODevice* input, const RIFF_File& riff, const AudioInfo& info,
-            const bool* modeBlockflag, quint8& modeBits) {
+            const bool* modeBlockflag, quint8& modeBits, NaoEntityWorker* progress) {
             qint64 offset = riff.data.offset + info.vorb.firstAudio;
 
             bool prevBlockflag = false;
+
+            progress->maxProgressChanged((riff.data.offset + riff.data.size) - offset);
+
+            quint64 packetIndex = 0;
 
             while (offset < riff.data.offset + riff.data.size) {
                 Packet audioPacket(input, offset);
@@ -1094,6 +1099,10 @@ namespace AV {
                 offset = nextOffset;
 
                 ASSERT(stream->flush_page(false, offset == riff.data.offset + riff.data.size));
+
+                if (packetIndex++ % 8 == 0) {
+                    progress->progress(offset - (riff.data.offset + info.vorb.firstAudio));
+                }
             }
 
             ASSERT(offset <= riff.data.offset + riff.data.size);

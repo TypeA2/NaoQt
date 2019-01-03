@@ -2,16 +2,16 @@
 
 #include "UTFReader.h"
 
+#include "NaoEntityWorker.h"
+
 #include <QIODevice>
 #include <QtEndian>
-
-#include <QDebug>
 
 #define ASSERT(cond) if (!(cond)) { m_errored = true; m_error = #cond; return; }
 
 // --===-- Static constructor --===--
 
-USMReader* USMReader::create(QIODevice* input) {
+USMReader* USMReader::create(QIODevice* input, NaoEntityWorker* progress) {
     if (!input->isOpen() ||
         !input->isReadable() ||
         input->isSequential() ||
@@ -21,7 +21,7 @@ USMReader* USMReader::create(QIODevice* input) {
         return nullptr;
     }
 
-    return new USMReader(input);
+    return new USMReader(input, progress);
 }
 
 // --===-- Getters --===--
@@ -44,10 +44,12 @@ QVector<USMReader::Chunk> USMReader::chunks() const {
 
 // --===-- Private constructor --===--
 
-USMReader::USMReader(QIODevice* input) 
-    : m_errored(false)
-    , m_input(input) {
+USMReader::USMReader(QIODevice* input, NaoEntityWorker* progress)
+    : m_progress(progress)
+    , m_errored(false) {
     
+    m_input = input;
+
     _readContents();
 }
 
@@ -88,7 +90,9 @@ void USMReader::_readContents() {
     }
 
     ASSERT(m_input->seek(CRID.offset + CRID.size + 8));
-    
+
+    m_progress->maxProgressChanged(m_input->size());
+
     while (ready.values().contains(false) && !m_input->atEnd()) {
         Chunk ch = _readNextChunkHeader();
 
@@ -146,6 +150,8 @@ void USMReader::_readContents() {
         }
 
         ASSERT(m_input->seek(ch.offset + ch.size + 8));
+
+        m_progress->progress(m_input->pos());
     }
 
     ASSERT(!m_videoChunks.isEmpty() || !m_audioChunks.isEmpty());

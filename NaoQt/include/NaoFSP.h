@@ -6,6 +6,7 @@
 
 class QProgressDialog;
 class NaoArchiveEntity;
+class NaoEntityWorker;
 
 class NaoFSP : public QObject {
     Q_OBJECT
@@ -53,5 +54,6 @@ class NaoFSP : public QObject {
     bool m_inArchive;
 
     QProgressDialog* m_loadingProgress;
+    NaoEntityWorker* m_worker;
 };
 

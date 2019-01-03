@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QVector>
+#include <QObject>
 
 class QIODevice;
 
@@ -22,13 +23,7 @@ class NaoEntity {
     // -- Constructors --
     NaoEntity(FileInfo file);
     NaoEntity(DirInfo directory);
-
-    // -- Static constructor --
-    static NaoEntity* getEntity(NaoEntity* parent, bool couldBeSequenced = true);
     
-    // -- Static decoder --
-    static bool decodeEntity(NaoEntity* entity, QIODevice* to);
-
     // -- Static getters --
     static QString getDecodedName(NaoEntity* entity);
     static QString getEmbeddedFileExtension(QIODevice* device);
@@ -59,18 +54,4 @@ class NaoEntity {
     FileInfo m_fileInfo;
 
     DirInfo m_dirInfo;
-
-    private:
-
-    // -- Private static constructors --
-    static NaoEntity* _getCPK(NaoEntity* parent);
-    static NaoEntity* _getDAT(NaoEntity* parent);
-    static NaoEntity* _getWTP(NaoEntity* parent);
-    static NaoEntity* _getWSP(NaoEntity* parent);
-    static NaoEntity* _getUSM(NaoEntity* parent);
-
-    // -- Private static decoders --
-    static bool _decodeDDS(NaoEntity* in, QIODevice* out);
-    static bool _decodeWWRIFF(NaoEntity* in, QIODevice* out);
-    static bool _decodeWWPCM(NaoEntity* in, QIODevice* out);
 };

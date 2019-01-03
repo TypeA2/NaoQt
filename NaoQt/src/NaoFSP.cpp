@@ -7,6 +7,7 @@
 
 #include "Utils.h"
 #include "NaoEntity.h"
+#include "NaoEntityWorker.h"
 
 #include "AV.h"
 
@@ -23,14 +24,23 @@ NaoFSP::NaoFSP(const QString& path, QWidget* parent)
     m_loadingProgress = new QProgressDialog(parent);
     m_loadingProgress->reset(); // https://bugreports.qt.io/browse/QTBUG-47042
     m_loadingProgress->setRange(0, 0);
-    m_loadingProgress->setModal(true);
+    m_loadingProgress->setModal(false); // ffs: https://bugreports.qt.io/browse/QTBUG-10561
     m_loadingProgress->setCancelButton(nullptr);
+    m_loadingProgress->setWindowFlags(m_loadingProgress->windowFlags() & ~Qt::WindowCloseButtonHint);
+
+    m_worker = new NaoEntityWorker;
+
+    connect(m_worker, &NaoEntityWorker::maxProgressChanged, m_loadingProgress, &QProgressDialog::setMaximum);
+    connect(m_worker, &NaoEntityWorker::progress, m_loadingProgress, &QProgressDialog::setValue);
 }
 
 // --===-- Destructor --===--
 
 NaoFSP::~NaoFSP() {
     delete m_entity;
+
+    m_loadingProgress->deleteLater();
+    m_worker->deleteLater();
 }
 
 // --===-- Getters --===--
@@ -72,8 +82,10 @@ void NaoFSP::changePath(QString to) {
         future = QtConcurrent::run(this, &NaoFSP::_changePathToDirectory, to);
     } else {
         if (!m_inArchive) {
+            m_loadingProgress->setMaximum(0);
             m_loadingProgress->setLabelText(QString("Loading %0").arg(to));
             m_loadingProgress->show();
+            m_loadingProgress->setFocus();
         }
 
         future = QtConcurrent::run(this, &NaoFSP::_changePathToArchive, to);
@@ -90,7 +102,7 @@ void NaoFSP::open(const QString& source, const QString& outdir) {
         return !entity->isDir() && entity->finfo().name == source;
     });
 
-    const QString fname = NaoEntity::getDecodedName(sourceEntity);
+    QString fname = NaoEntity::getDecodedName(sourceEntity);
 
     if (fname.isNull() || fname.isEmpty()) {
         return;
@@ -99,11 +111,13 @@ void NaoFSP::open(const QString& source, const QString& outdir) {
     const QString outfile = QString("%0/%1_%2").arg(
         outdir,
         QFileInfo(sourceEntity->finfo().name).absoluteDir().dirName().replace('.', '_'),
-        fname
+        Utils::sanitizeFileName(fname)
     );
 
+    m_loadingProgress->setMaximum(0);
     m_loadingProgress->setLabelText(QString("Decoding %0").arg(sourceEntity->finfo().name));
     m_loadingProgress->show();
+    m_loadingProgress->setFocus();
 
     QFile* output = new QFile(outfile);
     output->open(QIODevice::WriteOnly);
@@ -127,7 +141,7 @@ void NaoFSP::open(const QString& source, const QString& outdir) {
 
     connect(watcher, &QFutureWatcher<bool>::finished, &QFutureWatcher<bool>::deleteLater);
 
-    watcher->setFuture(QtConcurrent::run(&NaoEntity::decodeEntity, sourceEntity, output));
+    watcher->setFuture(QtConcurrent::run(m_worker, &NaoEntityWorker::decodeEntity, sourceEntity, output));
 }
 
 // --===-- Private member functions --===--
@@ -181,7 +195,7 @@ void NaoFSP::_changePathToArchive(const QString& target) {
 
         QFileInfo targetf(target);
 
-        m_entity = NaoEntity::getEntity(new NaoEntity(NaoEntity::FileInfo {
+        m_entity = m_worker->getEntity(new NaoEntity(NaoEntity::FileInfo {
             targetf.absoluteFilePath(),
             targetf.size(),
             targetf.size(),
