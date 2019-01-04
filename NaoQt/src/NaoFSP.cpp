@@ -1,9 +1,6 @@
 #include "NaoFSP.h"
 
-#include <QtConcurrent>
-#include <QProgressDialog>
-#include <QDesktopServices>
-#include <QMessageBox>
+#include "NaoQt.h"
 
 #include "Utils.h"
 #include "NaoEntity.h"
@@ -11,6 +8,12 @@
 
 #include "AV.h"
 
+#include <QtConcurrent>
+#include <QProgressDialog>
+#include <QDesktopServices>
+#include <QMessageBox>
+#include <QMenu>
+#include <QTreeWidgetItem>
 
 // --===-- Constructor --===--
 
@@ -142,6 +145,42 @@ void NaoFSP::open(const QString& source, const QString& outdir) {
     connect(watcher, &QFutureWatcher<bool>::finished, &QFutureWatcher<bool>::deleteLater);
 
     watcher->setFuture(QtConcurrent::run(m_worker, &NaoEntityWorker::decodeEntity, sourceEntity, output));
+}
+
+void NaoFSP::makeContextMenu(QTreeWidgetItem* row, QMenu* menu) {
+#define ADDOPT(text, target, handler) { \
+    QAction* act = new QAction(text, menu); \
+    connect(act, &QAction::triggered, target, handler); \
+    menu->addAction(act); \
+}
+
+    NaoQt* parent = reinterpret_cast<NaoQt*>(this->parent());
+
+    if (!row) {
+        ADDOPT("Refresh view", parent, &NaoQt::refreshView);
+        if (!m_inArchive) {
+            ADDOPT("Open in explorer", parent, [parent]() {
+                QDesktopServices::openUrl(QUrl::fromLocalFile(parent->m_pathDisplay->text()));
+            });
+        } else {
+            ADDOPT("Show archive in explorer", parent, [parent]() {
+                showInExplorer(getHighestFile(parent->m_pathDisplay->text()));
+            });
+        }
+
+        return;
+    }
+
+    if (row->data(0, NaoQt::IsNavigatableRole).toBool()) {
+        ADDOPT("Open", parent, ([parent, row]() {
+            parent->m_view->itemDoubleClicked(row, 0);
+        }));
+    }
+
+    if (row->data(0, NaoQt::IsNavigatableRole).toBool() &&
+        !row->data(0, NaoQt::IsFolderRole).toBool()) {
+        ADDOPT("Extract archive", parent, [](){});
+    }
 }
 
 // --===-- Private member functions --===--
@@ -327,4 +366,26 @@ QString NaoFSP::getHighestFile(QString path) {
     }
 
     return path;
+}
+
+// --===-- Static member functions --===-- 
+
+void NaoFSP::showInExplorer(const QString& target) {
+    const QFileInfo file(target);
+
+    // http://lynxline.com/show-in-finder-show-in-explorer/
+
+#if defined(Q_OS_DARWIN) 
+    QStringList args;
+    args << "-e" << "tell application \"Finder\""
+         << "-e" << "activate"
+         << "-e" << "select POSIX file \"" + file.absoluteFilePath() + "\""
+         << "-e" << "end tell";
+    QProcess::startDetached("osascript", args);
+#elif defined(Q_OS_WIN)
+    QStringList args;
+    args << "/select," << QDir::toNativeSeparators(file.absoluteFilePath());
+
+    QProcess::startDetached("explorer.exe", args);
+#endif
 }

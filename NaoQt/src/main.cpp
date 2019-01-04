@@ -1,4 +1,5 @@
 #include "NaoQt.h"
+
 #include <QtWidgets/QApplication>
 
 #include <QtAV/QtAV_Global.h>

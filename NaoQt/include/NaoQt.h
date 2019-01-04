@@ -1,15 +1,17 @@
 #pragma once
 
+#include "NaoFSP.h"
+
 #include <QMainWindow>
 #include <QLineEdit>
 #include <QTimer>
 #include <QMimeType>
+#include <QEvent>
 
 class QVBoxLayout;
 class QPushButton;
 class QTreeWidget;
 class QTreeWidgetItem;
-class NaoFSP;
 
 class NaoLineEdit : public QLineEdit {
     Q_OBJECT
@@ -32,11 +34,13 @@ class NaoQt : public QMainWindow {
     NaoQt();
     ~NaoQt();
 
+    public slots:
+    void refreshView();
+
     private slots:
     void openFolder();
     void sortColumn(int index, Qt::SortOrder order);
     void pathDisplayChanged();
-    void refreshView();
     void viewInteraction(QTreeWidgetItem* item, int column);
     void viewContextMenu(const QPoint& pos);
 
@@ -44,6 +48,9 @@ class NaoQt : public QMainWindow {
     void fspPathChanged();
 
     private:
+
+    friend void NaoFSP::makeContextMenu(QTreeWidgetItem* row, QMenu* menu);
+
     void setupMenuBar();
     void setupModel();
 
@@ -55,6 +62,7 @@ class NaoQt : public QMainWindow {
     QString m_prevPath;
 
     QTreeWidget* m_view;
+    QMenu* m_menu;
 
     QWidget* m_centralWidget;
     QVBoxLayout* m_centralLayout;

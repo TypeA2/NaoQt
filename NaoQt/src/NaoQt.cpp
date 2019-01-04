@@ -12,8 +12,6 @@
 
 #include <QtConcurrent>
 
-#include "NaoFSP.h"
-
 #include "Utils.h"
 
 #include "NaoEntity.h"
@@ -35,15 +33,14 @@ NaoQt::NaoQt() {
         QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0)) +"\\data";
 
     m_fsp = new NaoFSP(root, this);
-
     connect(m_fsp, &NaoFSP::pathChanged, this, &NaoQt::fspPathChanged);
+
+    m_menu = new QMenu(m_view);
 
     m_fsp->changePath();
 }
 
 NaoQt::~NaoQt() {
-    m_fsp->deleteLater();
-    
     // Remove the temporary directory
     QDir(m_tempdir).removeRecursively();
 }
@@ -278,160 +275,16 @@ void NaoQt::viewInteraction(QTreeWidgetItem* item, int column) {
 }
 
 void NaoQt::viewContextMenu(const QPoint& pos) {
-    /*QTreeWidgetItem* row = m_view->itemAt(pos);
+    
+    QTreeWidgetItem* row = m_view->itemAt(pos);
 
-    QMenu* ctx = new QMenu(m_view);
+    m_menu->clear();
 
-    if (row->data(0, IsNavigatableRole).toBool()) {
-        QAction* open = new QAction("Open", ctx);
-        connect(open, &QAction::triggered, this, [this, row]() {
-            m_fsp->changePath(m_fsp->currentPath() + row->text(0));
-        });
-        connect(open, &QAction::triggered, ctx, &QMenu::deleteLater);
-        ctx->addAction(open);
+    m_fsp->makeContextMenu(row, m_menu);
+
+    if (!m_menu->isEmpty()) {
+        m_menu->popup(m_view->viewport()->mapToGlobal(pos));
     }
-
-    if (!row->data(0, IsEmbeddedRole).toBool()) {
-        QAction* show = new QAction("Show in explorer", ctx);
-        connect(show, &QAction::triggered, this, [this]() {
-            QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text()));
-        });
-        connect(show, &QAction::triggered, ctx, &QMenu::deleteLater);
-        ctx->addAction(show);
-    }
-
-    ctx->popup(m_view->viewport()->mapToGlobal(pos));*/
-
-    /*
-    QModelIndex clickedIndex = m_view->indexAt(pos);
-
-    QVector<QStandardItem*> row = getRow(clickedIndex);
-
-    QMenu* ctxMenu = new QMenu(m_view);
-
-    if (row.at(0) == nullptr) {
-        QAction* refreshDirAct = new QAction("Refresh view", ctxMenu);
-
-
-        connect(refreshDirAct, &QAction::triggered, this, &NaoQt::refreshView);
-        connect(refreshDirAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
-
-        ctxMenu->addAction(refreshDirAct);
-
-        if (!m_isInCpk) {
-            QAction* openInExplorerAct = new QAction("Open in Explorer", ctxMenu);
-
-            connect(openInExplorerAct, &QAction::triggered, this, [this]() {
-                QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text()));
-            });
-            connect(openInExplorerAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
-
-            ctxMenu->addAction(openInExplorerAct);
-        }
-    } else if (row.at(0)->data(IsFolderRole).toBool()) {
-        QString targetDir = row.at(0)->text();
-
-        QAction* openFolderAct = new QAction("Open", ctxMenu);
-        connect(openFolderAct, &QAction::triggered, this, [this, targetDir]() {
-            changePath(Utils::cleanDirPath(m_pathDisplay->text() + targetDir));
-        });
-        connect(openFolderAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
-        ctxMenu->addAction(openFolderAct);
-
-        if (!m_isInCpk) {
-            QAction* openInExplorerAct = new QAction("Open in Explorer", ctxMenu);
-            connect(openInExplorerAct, &QAction::triggered, this, [this, targetDir]() {
-                QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text() + targetDir));
-            });
-            connect(openInExplorerAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
-
-            ctxMenu->addAction(openInExplorerAct);
-        } else {
-            QAction* extractCpkFolderAct = new QAction("Extract to...", this);
-            connect(extractCpkFolderAct, &QAction::triggered, this, [this, targetDir]() {
-                this->extractCpkFolder(targetDir);
-            });
-            connect(extractCpkFolderAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
-
-            ctxMenu->addAction(extractCpkFolderAct);
-        }
-    } else if (row.at(0)->text().endsWith(".usm")) {
-        QAction* playFileAct = new QAction("Play", ctxMenu);
-        QAction* saveAsAct = new QAction("Save as", ctxMenu);
-        QAction* showInExplorerAct = new QAction("Open in Explorer", ctxMenu);
-
-        connect(playFileAct, &QAction::triggered, this, [this, clickedIndex]() {
-            m_view->doubleClicked(clickedIndex);
-        });
-        connect(playFileAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
-
-        connect(saveAsAct, &QAction::triggered, this, [this, clickedIndex]() {
-            deinterleaveSaveAs(clickedIndex);
-        });
-        connect(saveAsAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
-
-        connect(showInExplorerAct, &QAction::triggered, this, [this]() {
-            QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text()));
-        });
-        connect(showInExplorerAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
-
-
-        ctxMenu->addAction(playFileAct);
-        ctxMenu->addAction(saveAsAct);
-        ctxMenu->addSeparator();
-        ctxMenu->addAction(showInExplorerAct);
-    } else if (row.at(0)->text().endsWith(".cpk")) {
-        QString targetFile = row.at(0)->text();
-
-        QAction* openArchiveAct = new QAction("Open", ctxMenu);
-        connect(openArchiveAct, &QAction::triggered, this, [this, targetFile]() {
-            changePath(Utils::cleanDirPath(m_pathDisplay->text() + targetFile));
-        });
-        connect(openArchiveAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
-        ctxMenu->addAction(openArchiveAct);
-
-        QAction* extractCpkFolderAct = new QAction("Extract to...", this);
-        connect(extractCpkFolderAct, &QAction::triggered, this, [this, targetFile]() {
-            this->extractCpk(m_pathDisplay->text() + targetFile);
-        });
-        connect(extractCpkFolderAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
-        ctxMenu->addAction(extractCpkFolderAct);
-
-        QAction* openInExplorerAct = new QAction("Open in Explorer", ctxMenu);
-        connect(openInExplorerAct, &QAction::triggered, this, [this]() {
-            QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text()));
-        });
-        connect(openInExplorerAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
-
-        ctxMenu->addAction(openInExplorerAct);
-    } else if (!m_isInCpk) {
-        QAction* openFileAct = new QAction("Open", ctxMenu);
-        QAction* showInExplorerAct = new QAction("Open containing folder", ctxMenu);
-
-        connect(openFileAct, &QAction::triggered, this, [this, clickedIndex]() {
-            m_view->doubleClicked(clickedIndex);
-        });
-        connect(openFileAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
-
-        connect(showInExplorerAct, &QAction::triggered, this, [this]() {
-            QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text()));
-        });
-        connect(showInExplorerAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
-
-        ctxMenu->addAction(openFileAct);
-        ctxMenu->addAction(showInExplorerAct);
-    } else {
-        QAction* extractToAct = new QAction("Extract to...", ctxMenu);
-
-        connect(extractToAct, &QAction::triggered, this, [this, row]() {
-            extractCpkFile(m_pathDisplay->text() + row.at(0)->text());
-        });
-        connect(extractToAct, &QAction::triggered, ctxMenu, &QMenu::deleteLater);
-
-        ctxMenu->addAction(extractToAct);
-    }
-
-    ctxMenu->popup(m_view->viewport()->mapToGlobal(pos));*/
 
 }
 
