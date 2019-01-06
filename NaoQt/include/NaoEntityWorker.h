@@ -4,25 +4,33 @@
 
 class NaoEntity;
 class QIODevice;
+class QDir;
+class QFileInfo;
 
 class NaoEntityWorker : public QObject {
     Q_OBJECT
 
     public:
     // -- Getter --
-    NaoEntity* getEntity(NaoEntity* parent, bool couldBeSequenced = true);
+    NaoEntity* getEntity(NaoEntity* parent, bool couldBeSequenced = true, bool recursive = true);
 
     // -- Decoder --
     bool decodeEntity(NaoEntity* entity, QIODevice* to);
 
+    // -- Utility functions --
+    void dumpToDir(NaoEntity* entity, const QDir& dir, bool own, bool recursive);
+    void dumpToFile(NaoEntity* entity, const QFileInfo& file);
+
     signals:
     void maxProgressChanged(qint64 max);
+    void changeProgressLabel(const QString& label);
     void progress(qint64 value);
+    void finished();
 
     private:
     // -- Private constructors --
-    NaoEntity* _getCPK(NaoEntity* parent);
-    NaoEntity* _getDAT(NaoEntity* parent);
+    NaoEntity* _getCPK(NaoEntity* parent, bool recursive);
+    NaoEntity* _getDAT(NaoEntity* parent, bool recursive);
     NaoEntity* _getWTP(NaoEntity* parent);
     NaoEntity* _getWSP(NaoEntity* parent);
     NaoEntity* _getUSM(NaoEntity* parent);

@@ -4,6 +4,7 @@
 
 #include <QObject>
 
+class QDir;
 class QProgressDialog;
 class NaoArchiveEntity;
 class NaoEntityWorker;
@@ -46,6 +47,9 @@ class NaoFSP : public QObject {
 
     private slots:
     void _pathChanged();
+
+    void _extractEntity(const QString& path, bool recursive, bool isFolder);
+    void _extractFile(const QString& path);
 
     private:
 

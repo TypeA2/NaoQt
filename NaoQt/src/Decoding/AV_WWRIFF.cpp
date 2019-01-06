@@ -42,6 +42,8 @@ namespace AV {
 
             ASSERT(WWRIFF::_revorb(oggMem, output));
             oggMem->deleteLater();
+
+            progress->finished();
         } catch (const std::exception& e) {
             error() = e.what();
 

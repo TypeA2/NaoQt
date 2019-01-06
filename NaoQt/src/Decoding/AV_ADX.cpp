@@ -69,6 +69,8 @@ namespace AV {
                 }
             }
 
+            progress->finished();
+
         } catch (const std::exception& e) {
             error() = e.what();
             return false;

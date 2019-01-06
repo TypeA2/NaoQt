@@ -39,16 +39,18 @@ class NaoEntity {
 
     // -- Getters --
     bool hasChildren() const;
+    bool hadChildren() const;
     bool isDir() const;
     QVector<NaoEntity*> children() const;
     FileInfo finfo() const;
     DirInfo dinfo() const;
-
     FileInfo& finfoRef();
     DirInfo& dinfoRef();
+    const QString& name() const;
 
     protected:
     bool m_dir;
+    bool m_hadChildren;
     QVector<NaoEntity*> m_children;
 
     FileInfo m_fileInfo;

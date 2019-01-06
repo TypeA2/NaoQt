@@ -90,6 +90,8 @@ namespace AV {
                 }
             }
 
+            progress->finished();
+
             delete[] data;
 
         } catch (const std::exception& e) {

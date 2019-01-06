@@ -12,6 +12,7 @@
 
 NaoEntity::NaoEntity(FileInfo file)
     : m_dir(false)
+    , m_hadChildren(false)
     , m_children(0)
     , m_fileInfo(file) {
 
@@ -20,6 +21,7 @@ NaoEntity::NaoEntity(FileInfo file)
 
 NaoEntity::NaoEntity(DirInfo directory)
     : m_dir(true)
+    , m_hadChildren(false)
     , m_children(0)
     , m_dirInfo(directory) {
 
@@ -114,6 +116,8 @@ NaoEntity::~NaoEntity() {
 // --===-- Setters --===--
 
 void NaoEntity::addChildren(NaoEntity* child, bool isCPS) {
+    m_hadChildren = true;
+
     m_children.append(child);
 
     if (isCPS && child->hasChildren()) {
@@ -125,6 +129,8 @@ void NaoEntity::addChildren(NaoEntity* child, bool isCPS) {
 }
 
 void NaoEntity::addChildren(const QVector<NaoEntity*>& children) {
+    m_hadChildren = true;
+
     m_children.append(children);
 }
 
@@ -142,6 +148,10 @@ void NaoEntity::removeChildren(const QVector<NaoEntity*>& children) {
 
 bool NaoEntity::hasChildren() const {
     return !m_children.empty();
+}
+
+bool NaoEntity::hadChildren() const {
+    return m_hadChildren;
 }
 
 bool NaoEntity::isDir() const {
@@ -166,4 +176,8 @@ NaoEntity::FileInfo& NaoEntity::finfoRef() {
 
 NaoEntity::DirInfo& NaoEntity::dinfoRef() {
     return m_dirInfo;
+}
+
+const QString& NaoEntity::name() const {
+    return (m_dir ? m_dirInfo.name : m_fileInfo.name);
 }

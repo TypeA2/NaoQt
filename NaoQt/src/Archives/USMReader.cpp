@@ -154,6 +154,8 @@ void USMReader::_readContents() {
         m_progress->progress(m_input->pos());
     }
 
+    m_progress->finished();
+
     ASSERT(!m_videoChunks.isEmpty() || !m_audioChunks.isEmpty());
 }
 
