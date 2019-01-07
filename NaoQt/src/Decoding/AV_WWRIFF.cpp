@@ -1,6 +1,8 @@
 #include "AV.h"
 #include "AV_WWRIFF.h"
 
+#include "Decoding.h"
+
 #include "BinaryUtils.h"
 
 #include "NaoEntityWorker.h"
@@ -45,7 +47,7 @@ namespace AV {
 
             progress->finished();
         } catch (const std::exception& e) {
-            error() = e.what();
+            Decoding::error() = e.what();
 
             return false;
         }

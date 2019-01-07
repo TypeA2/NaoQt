@@ -10,6 +10,7 @@ class NaoArchiveEntity;
 class NaoEntityWorker;
 class QTreeWidgetItem;
 class QMenu;
+class QFileSystemWatcher;
 
 class NaoFSP : public QObject {
     Q_OBJECT
@@ -30,7 +31,7 @@ class NaoFSP : public QObject {
     // -- Member functions --
     void changePath();
     void changePath(QString to);
-    void open(const QString& source, const QString& outdir);
+    bool open(const QString& source, const QString& outdir, bool checkDecodable = false);
     void makeContextMenu(QTreeWidgetItem* row, QMenu* menu);
 
     // -- Static getters --
@@ -65,5 +66,6 @@ class NaoFSP : public QObject {
 
     QProgressDialog* m_loadingProgress;
     NaoEntityWorker* m_worker;
+    QFileSystemWatcher* m_fswatcher;
 };
 

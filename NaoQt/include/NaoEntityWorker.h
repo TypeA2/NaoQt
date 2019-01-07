@@ -15,7 +15,7 @@ class NaoEntityWorker : public QObject {
     NaoEntity* getEntity(NaoEntity* parent, bool couldBeSequenced = true, bool recursive = true);
 
     // -- Decoder --
-    bool decodeEntity(NaoEntity* entity, QIODevice* to);
+    bool decodeEntity(NaoEntity* entity, QIODevice* to, bool checkDecodable = false);
 
     // -- Utility functions --
     void dumpToDir(NaoEntity* entity, const QDir& dir, bool own, bool recursive);
@@ -41,5 +41,6 @@ class NaoEntityWorker : public QObject {
     bool _decodeWWPCM(NaoEntity* in, QIODevice* out);
     bool _decodeMPEG(NaoEntity* in, QIODevice* out);
     bool _decodeADX(NaoEntity* in, QIODevice* out);
+    bool _decodeDXSHADER(NaoEntity* in, QIODevice* out);
 };
 

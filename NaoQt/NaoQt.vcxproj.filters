@@ -114,6 +114,9 @@
     <ClCompile Include="src\Decoding\AV_ADX.cpp">
       <Filter>Source Files\Decoding</Filter>
     </ClCompile>
+    <ClCompile Include="src\Decoding\DirectX.cpp">
+      <Filter>Source Files\Decoding</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="include\NaoFSP.h">
@@ -175,6 +178,12 @@
       <Filter>Header Files\Entities</Filter>
     </ClInclude>
     <ClInclude Include="include\AV_ADX.h">
+      <Filter>Header Files\Decoding</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DirectX.h">
+      <Filter>Header Files\Decoding</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Decoding.h">
       <Filter>Header Files\Decoding</Filter>
     </ClInclude>
   </ItemGroup>

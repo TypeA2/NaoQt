@@ -58,6 +58,10 @@ QString NaoEntity::getDecodedName(NaoEntity* entity) {
         return base + ".mpeg";
     }
 
+    if (fname.endsWith(".pso") || fname.endsWith(".vso")) {
+        return base + ".asm";
+    }
+
     return QString();
 }
 

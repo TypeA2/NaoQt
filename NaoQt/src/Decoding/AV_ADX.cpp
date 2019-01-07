@@ -1,6 +1,8 @@
 #include "AV.h"
 #include "AV_ADX.h"
 
+#include "Decoding.h"
+
 #include "Utils.h"
 
 #include "NaoEntityWorker.h"
@@ -72,7 +74,7 @@ namespace AV {
             progress->finished();
 
         } catch (const std::exception& e) {
-            error() = e.what();
+            Decoding::error() = e.what();
             return false;
         }
 

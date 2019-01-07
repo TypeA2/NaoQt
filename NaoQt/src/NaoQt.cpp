@@ -267,10 +267,11 @@ void NaoQt::viewInteraction(QTreeWidgetItem* item, int column) {
 
     if (item->data(0, IsNavigatableRole).toBool()) {
         changePath(m_pathDisplay->text() + item->text(0));
-    } else if (!m_fsp->inArchive()) {
+    } else if (!m_fsp->inArchive() &&
+        !m_fsp->open(m_pathDisplay->text() + item->text(0), m_tempdir, true)) { // TODO Possibly separate function? Could cause code duplication
         QDesktopServices::openUrl(QUrl::fromLocalFile(m_pathDisplay->text() + QDir::separator() + item->text(0)));
     } else {
-        m_fsp->open(m_pathDisplay->text() + item->text(0), m_tempdir);
+        m_fsp->open(m_pathDisplay->text() + item->text(0), m_tempdir, false);
     }
 }
 

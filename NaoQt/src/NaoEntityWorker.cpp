@@ -7,7 +7,9 @@
 #include "Decompression.h"
 #include "ChunkBasedFile.h"
 
+#include "Decoding.h"
 #include "AV.h"
+#include "DirectX.h"
 
 #include "CPKReader.h"
 #include "DATReader.h"
@@ -85,9 +87,9 @@ NaoEntity* NaoEntityWorker::getEntity(NaoEntity* parent, bool couldBeSequenced, 
 
 // --===-- Decoder --===--
 
-bool NaoEntityWorker::decodeEntity(NaoEntity* entity, QIODevice* to) {
-    if (!to->isOpen() ||
-        !to->isWritable() ||
+bool NaoEntityWorker::decodeEntity(NaoEntity* entity, QIODevice* to, bool checkDecodable) {
+    if ((!checkDecodable &&
+            (!to->isOpen() || !to->isWritable())) ||
         entity->isDir()) {
         return false;
     }
@@ -95,6 +97,12 @@ bool NaoEntityWorker::decodeEntity(NaoEntity* entity, QIODevice* to) {
     NaoEntity::FileInfo finfo = entity->finfo();
 
     QIODevice* input = finfo.device;
+
+    if (checkDecodable && !input->isOpen()) {
+        if (!input->open(QIODevice::ReadOnly)) {
+            return false;
+        }
+    }
 
     if (!input->isOpen() ||
         !input->isReadable() ||
@@ -109,30 +117,38 @@ bool NaoEntityWorker::decodeEntity(NaoEntity* entity, QIODevice* to) {
         return false;
     }
 
+#define _return return checkDecodable ? true : 
+
     if (fcc == QByteArray("DDS ", 4) && finfo.name.endsWith(".dds")) {
-        return _decodeDDS(entity, to);
+        _return _decodeDDS(entity, to);
     }
 
     if (fcc == QByteArray("RIFF", 4) && input->seek(20)) {
         quint16 fmt = qFromLittleEndian<quint16>(input->read(2));
         if (fmt == 0xFFFF) {
-            return _decodeWWRIFF(entity, to);
+            _return _decodeWWRIFF(entity, to);
         }
 
         if (fmt == 0xFFFE) {
-            return _decodeWWPCM(entity, to);
+            _return _decodeWWPCM(entity, to);
         }
 
         return false;
     }
 
+    if (fcc == QByteArray("DXBC", 4) && input->seek(0)) {
+        _return _decodeDXSHADER(entity, to);
+    }
+
     if (qFromBigEndian<quint32>(fcc) == 0x1B3) {
-        return _decodeMPEG(entity, to);
+        _return _decodeMPEG(entity, to);
     }
 
     if (qFromBigEndian<quint16>(fcc.left(2)) == 0x8000) {
-        return _decodeADX(entity, to);
+        _return _decodeADX(entity, to);
     }
+
+#undef _return
 
     return false;
 }
@@ -597,7 +613,7 @@ bool NaoEntityWorker::_decodeMPEG(NaoEntity* in, QIODevice* out) {
     QIODevice* input = info.device;
 
     if (!input || !input->seek(0)) {
-        AV::error() = "Could not seek input file";
+        Decoding::error() = "Could not seek input file";
 
         return false;
     }
@@ -632,4 +648,10 @@ bool NaoEntityWorker::_decodeMPEG(NaoEntity* in, QIODevice* out) {
 
 bool NaoEntityWorker::_decodeADX(NaoEntity* in, QIODevice* out) {
     return AV::decode_adx(in->finfoRef().device, out, this);
+}
+
+bool NaoEntityWorker::_decodeDXSHADER(NaoEntity* in, QIODevice* out) {
+    (void) this;
+
+    return DirectX::decompile_shader(in->finfoRef().device, out);
 }

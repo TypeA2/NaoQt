@@ -6,7 +6,7 @@
 #include "NaoEntity.h"
 #include "NaoEntityWorker.h"
 
-#include "AV.h"
+#include "Decoding.h"
 
 #include <QtConcurrent>
 #include <QProgressDialog>
@@ -42,6 +42,17 @@ NaoFSP::NaoFSP(const QString& path, QWidget* parent)
         m_loadingProgress->setLabelText("");
         m_loadingProgress->setMaximum(0);
     });
+
+    m_fswatcher = new QFileSystemWatcher(this);
+    // Sometimes this causes some QVector code to fuckup somewhere, so I guess it won't happen now
+    //connect(m_fswatcher, &QFileSystemWatcher::fileChanged, this, [this]() {
+    //    changePath();
+    //});
+    connect(m_fswatcher, &QFileSystemWatcher::directoryChanged, this, [this]() {
+        changePath();
+    });
+
+    m_fswatcher->addPath(path);
 }
 
 // --===-- Destructor --===--
@@ -103,7 +114,7 @@ void NaoFSP::changePath(QString to) {
     watcher->setFuture(future);
 }
 
-void NaoFSP::open(const QString& source, const QString& outdir) {
+bool NaoFSP::open(const QString& source, const QString& outdir, bool checkDecodable) {
     QVector<NaoEntity*> children = m_entity->children();
 
     NaoEntity* sourceEntity = *std::find_if(std::begin(children), std::end(children),
@@ -114,7 +125,7 @@ void NaoFSP::open(const QString& source, const QString& outdir) {
     QString fname = NaoEntity::getDecodedName(sourceEntity);
 
     if (fname.isNull() || fname.isEmpty()) {
-        return;
+        return false;
     }
 
     const QString outfile = QString("%0/%1_%2").arg(
@@ -123,7 +134,10 @@ void NaoFSP::open(const QString& source, const QString& outdir) {
         Utils::sanitizeFileName(fname)
     );
 
-    //m_loadingProgress->setMaximum(0);
+    if (checkDecodable) {
+        return m_worker->decodeEntity(sourceEntity, nullptr, true);
+    }
+
     m_loadingProgress->setLabelText(QString("Decoding %0").arg(sourceEntity->finfo().name));
     m_loadingProgress->show();
     m_loadingProgress->setFocus();
@@ -144,13 +158,15 @@ void NaoFSP::open(const QString& source, const QString& outdir) {
         } else {
             QMessageBox::critical(reinterpret_cast<QWidget*>(this->parent()), "Error",
                 QString("Failed extracting %0.<br>Error at statement:<pre>%1</pre>")
-                    .arg(QFileInfo(sourceEntity->finfo().name).fileName(), AV::error()));
+                    .arg(QFileInfo(sourceEntity->finfo().name).fileName(), Decoding::error()));
         }
     });
 
     connect(watcher, &QFutureWatcher<bool>::finished, &QFutureWatcher<bool>::deleteLater);
 
-    watcher->setFuture(QtConcurrent::run(m_worker, &NaoEntityWorker::decodeEntity, sourceEntity, output));
+    watcher->setFuture(QtConcurrent::run(m_worker, &NaoEntityWorker::decodeEntity, sourceEntity, output, false));
+
+    return true;
 }
 
 void NaoFSP::makeContextMenu(QTreeWidgetItem* row, QMenu* menu) {
@@ -248,6 +264,8 @@ void NaoFSP::makeContextMenu(QTreeWidgetItem* row, QMenu* menu) {
             showInExplorer(target);
         });
     }
+
+#undef ADDOPT
 }
 
 // --===-- Private member functions --===--
@@ -313,6 +331,10 @@ void NaoFSP::_changePathToArchive(const QString& target) {
 // --===-- Private Slots --===--
 
 void NaoFSP::_pathChanged() {
+
+    m_fswatcher->removePaths(m_fswatcher->directories());
+    m_fswatcher->addPath(m_path);
+
     emit pathChanged();
 
     if (m_inArchive) {
@@ -562,6 +584,10 @@ QString NaoFSP::getFileDescription(const QString& path, QIODevice* device) {
 
     if (path.endsWith(".adx")) {
         return "ADX audio";
+    }
+
+    if (path.endsWith(".pso") || path.endsWith(".vso")) {
+        return "DirectX shader";
     }
 
     if (path.endsWith(".ogg")) {

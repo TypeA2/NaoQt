@@ -1,5 +1,7 @@
 #include "AV.h"
 
+#include "Decoding.h"
+
 #include "BinaryUtils.h"
 
 #include "NaoEntityWorker.h"
@@ -95,7 +97,7 @@ namespace AV {
             delete[] data;
 
         } catch (const std::exception& e) {
-            error() = e.what();
+            Decoding::error() = e.what();
 
             return false;
         }
