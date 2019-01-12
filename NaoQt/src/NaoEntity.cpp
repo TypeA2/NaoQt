@@ -37,7 +37,7 @@ QString NaoEntity::getDecodedName(NaoEntity* entity) {
         return QString();
     }
 
-    QFileInfo finfo(entity->finfoRef().name);
+    QFileInfo finfo(entity->name());
     const QString fname = finfo.fileName();
     const QString base = finfo.completeBaseName();
 
@@ -60,6 +60,22 @@ QString NaoEntity::getDecodedName(NaoEntity* entity) {
 
     if (fname.endsWith(".pso") || fname.endsWith(".vso")) {
         return base + ".asm";
+    }
+
+    QIODevice* device = entity->finfoRef().device;
+
+    if (!device->isOpen()) {
+        if (!device->open(QIODevice::ReadOnly)) {
+            return QString();
+        }
+    }
+
+    device->seek(0);
+
+    if (fname.endsWith(".bin") &&
+        device->read(8) == QByteArray("RITE0003", 8) &&
+        device->seek(0)) {
+        return base + ".txt";
     }
 
     return QString();

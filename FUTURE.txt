@@ -1,0 +1,1 @@
+ - All file type detection (including description and decoding) in separate modules

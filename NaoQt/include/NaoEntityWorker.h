@@ -42,5 +42,6 @@ class NaoEntityWorker : public QObject {
     bool _decodeMPEG(NaoEntity* in, QIODevice* out);
     bool _decodeADX(NaoEntity* in, QIODevice* out);
     bool _decodeDXSHADER(NaoEntity* in, QIODevice* out);
+    bool _decodeRITE_BIN(NaoEntity* in, QIODevice* out);
 };
 

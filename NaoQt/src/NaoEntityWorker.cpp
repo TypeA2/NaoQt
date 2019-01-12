@@ -136,7 +136,7 @@ bool NaoEntityWorker::decodeEntity(NaoEntity* entity, QIODevice* to, bool checkD
         return false;
     }
 
-    if (fcc == QByteArray("DXBC", 4) && input->seek(0)) {
+    if (fcc == QByteArray("DXBC", 4)) {
         _return _decodeDXSHADER(entity, to);
     }
 
@@ -146,6 +146,12 @@ bool NaoEntityWorker::decodeEntity(NaoEntity* entity, QIODevice* to, bool checkD
 
     if (qFromBigEndian<quint16>(fcc.left(2)) == 0x8000) {
         _return _decodeADX(entity, to);
+    }
+
+    if (entity->name().endsWith(".bin") &&
+        fcc == QByteArray("RITE", 4) &&
+        input->read(8) == QByteArray("RITE0003", 8)) {
+        _return _decodeRITE_BIN(entity, to);
     }
 
 #undef _return
@@ -654,4 +660,11 @@ bool NaoEntityWorker::_decodeDXSHADER(NaoEntity* in, QIODevice* out) {
     (void) this;
 
     return DirectX::decompile_shader(in->finfoRef().device, out);
+}
+
+bool NaoEntityWorker::_decodeRITE_BIN(NaoEntity* in, QIODevice* out) {
+    (void) this;
+
+
+    return true;
 }

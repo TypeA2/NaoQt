@@ -590,21 +590,28 @@ QString NaoFSP::getFileDescription(const QString& path, QIODevice* device) {
         return "DirectX shader";
     }
 
-    if (path.endsWith(".ogg")) {
-        if (device &&
-            device->isReadable() &&
-            device->seek(20) &&
-            qFromLittleEndian<quint16>(device->read(2)) == 0xFFFF) {
-            return "WWise Vorbis";
+    if (device &&
+        (device->isOpen() || device->open(QIODevice::ReadOnly))) {
+        if (path.endsWith(".ogg")) {
+            if (device->seek(20) &&
+                qFromLittleEndian<quint16>(device->read(2)) == 0xFFFF) {
+                return "WWise Vorbis";
+            }
         }
-    }
 
-    if (path.endsWith(".wav")) {
-        if (device &&
-            device->isReadable() &&
-            device->seek(20) &&
-            qFromLittleEndian<quint16>(device->read(2)) == 0xFFFE) {
-            return "WWise PCM";
+        if (path.endsWith(".wav")) {
+            if (device->isReadable() &&
+                device->seek(20) &&
+                qFromLittleEndian<quint16>(device->read(2)) == 0xFFFE) {
+                return "WWise PCM";
+            }
+        }
+
+        if (path.endsWith(".bin")) {
+            if (device->seek(0) &&
+                device->read(8) == QByteArray("RITE0003", 8)) {
+                return "String translations";
+            }
         }
     }
 
