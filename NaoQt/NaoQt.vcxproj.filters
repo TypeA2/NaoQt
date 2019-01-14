@@ -58,6 +58,12 @@
     <Filter Include="Source Files\Wrappers">
       <UniqueIdentifier>{cefe2010-72a7-43e0-9127-aa316b6a2851}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Entities\Containers">
+      <UniqueIdentifier>{0520f9b6-31f9-4e3d-8e84-a1bc57b4db7e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Entities\Containers">
+      <UniqueIdentifier>{d77b36b1-c7ec-4fca-836b-35fbfbb7070e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Decoding\AV_WWRIFF.cpp">
@@ -116,6 +122,12 @@
     </ClCompile>
     <ClCompile Include="src\Decoding\DirectX.cpp">
       <Filter>Source Files\Decoding</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Containers\BINRITEReader.cpp">
+      <Filter>Source Files\Entities\Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Containers\StringsReader.cpp">
+      <Filter>Source Files\Entities\Containers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -185,6 +197,12 @@
     </ClInclude>
     <ClInclude Include="include\Decoding.h">
       <Filter>Header Files\Decoding</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Containers\StringsReader.h">
+      <Filter>Header Files\Entities\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Containers\BINRITEReader.h">
+      <Filter>Header Files\Entities\Containers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

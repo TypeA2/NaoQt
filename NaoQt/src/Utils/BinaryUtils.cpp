@@ -35,6 +35,24 @@ namespace BinaryUtils {
 
             return crc_reg;
         }
+
+        quint16 crc16_ccitt(const char* data, qint64 size, quint16 crc_base) {
+            quint32 crc = crc_base << 8;
+
+            for (qint64 byte = 0; byte < size; ++byte) {
+                crc |= *data++;
+
+                for (quint8 bit = 0; bit < 8; ++bit) {
+                    crc <<= 1;
+
+                    if (crc & 0x1000000) {
+                        crc ^= (0x1102100UL);
+                    }
+                }
+            }
+
+            return crc >> 8;
+        }
     }
 
     namespace Integer {

@@ -1,1 +1,5 @@
+Short term:
+ - Better folder structuring
+
+Long term:
  - All file type detection (including description and decoding) in separate modules

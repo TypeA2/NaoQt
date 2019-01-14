@@ -16,6 +16,8 @@
 #include "SequencedFileReader.h"
 #include "USMReader.h"
 
+#include "Containers/BINRITEReader.h"
+
 #include <QtEndian>
 #include <QtCore/QBuffer>
 #include <QDir>
@@ -665,6 +667,16 @@ bool NaoEntityWorker::_decodeDXSHADER(NaoEntity* in, QIODevice* out) {
 bool NaoEntityWorker::_decodeRITE_BIN(NaoEntity* in, QIODevice* out) {
     (void) this;
 
+    if (BINRITEReader* reader = BINRITEReader::create(in->finfoRef().device)) {
+        if (reader->read() != StringsReader::SUCCESS) {
+            Decoding::error() = reader->error();
+            return false;
+        }
+
+        QString formatted = reader->formatted();
+
+        out->write(formatted.toUtf8());
+    }
 
     return true;
 }
