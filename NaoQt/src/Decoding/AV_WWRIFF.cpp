@@ -35,6 +35,7 @@ namespace AV {
             ASSERT(WWRIFF::_gatherRIFFchunks(input, riff));
             ASSERT(WWRIFF::_validateWWRIFF(input, riff, info));
             ASSERT(WWRIFF::_readWWRIFF(input, riff, info));
+
             // Writing the crappy ogg into memory to revorb it later
             QBuffer* oggMem = new QBuffer();
             ASSERT(oggMem->open(QIODevice::ReadWrite));

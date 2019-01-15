@@ -606,6 +606,8 @@ NaoEntity* NaoEntityWorker::_getUSM(NaoEntity* parent) {
 }
 
 NaoEntity* NaoEntityWorker::_getWWBnk(NaoEntity* parent) {
+    (void) this;
+
     NaoEntity::FileInfo finfo = parent->finfo();
 
     parent->addChildren(new NaoEntity(NaoEntity::DirInfo {
@@ -614,6 +616,17 @@ NaoEntity* NaoEntityWorker::_getWWBnk(NaoEntity* parent) {
 
     if (WWBnkReader* reader = WWBnkReader::create(finfo.device)) {
         
+        QVector<WWBnkReader::Entry> files = reader->files();
+        
+        for (const WWBnkReader::Entry& file : files) {
+            parent->addChildren(new NaoEntity(NaoEntity::FileInfo {
+                finfo.name + '/' + file.name,
+                file.size,
+                file.size,
+                file.device
+                }), true);
+        }
+
         delete reader;
     }
 

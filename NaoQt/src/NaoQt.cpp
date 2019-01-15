@@ -323,6 +323,7 @@ void NaoQt::fspPathChanged() {
                 continue;
             }
 
+
             if (inArchive) {
                 QString subpath = (entry->isDir() ? entry->dinfo().name : entry->finfo().name)
                     .remove(root).mid(1);

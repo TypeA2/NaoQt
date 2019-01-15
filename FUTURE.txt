@@ -1,3 +1,8 @@
+Formats:
+ - .bnk metadata extraction
+ - .wai metadata extraction if at all possible
+ - fix discrepancy between in-archive and out-of-archive file opening
+
 Short term:
  - Better folder structuring
 

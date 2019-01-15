@@ -590,6 +590,10 @@ QString NaoFSP::getFileDescription(const QString& path, QIODevice* device) {
         return "DirectX shader";
     }
 
+    if (path.endsWith(".wai")) {
+        return "WWise metadata";
+    }
+
     if (device &&
         (device->isOpen() || device->open(QIODevice::ReadOnly)) &&
         device->seek(0)) {

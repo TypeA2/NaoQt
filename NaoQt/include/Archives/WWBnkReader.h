@@ -60,7 +60,9 @@ class WWBnkReader {
     void _read_BKHD();
     void _read_DIDX(const SectionHeader& hdr);
     void _read_DATA(qint64 baseOffset);
+#if 0
     void _read_HIRC();
+#endif
 
     // -- Private member variables --
     QIODevice* m_device;

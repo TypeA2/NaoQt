@@ -44,16 +44,6 @@ QString NaoEntity::getDecodedName(NaoEntity* entity) {
     if (fname.endsWith(".dds")) {
         return base + ".png";
     }
-
-    if (fname.endsWith(".ogg")) {
-        return base + ".ogg";
-    }
-
-    if (fname.endsWith(".wav") ||
-        fname.endsWith(".adx")) {
-        return base + ".wav";
-    }
-
     if (fname.endsWith(".mpeg")) {
         return base + ".mpeg";
     }
@@ -76,6 +66,23 @@ QString NaoEntity::getDecodedName(NaoEntity* entity) {
         device->read(8) == QByteArray("RITE0003", 8) &&
         device->seek(0)) {
         return base + ".txt";
+    }
+
+    if (device->read(4) == QByteArray("RIFF", 4) &&
+        device->seek(8) &&
+        device->read(8) == QByteArray("WAVEfmt ")) {
+        
+        device->seek(20);
+
+        quint16 fmt = qFromLittleEndian<quint16>(device->read(2));
+
+        if (fmt == 0xFFFF) {
+            return base + ".ogg";
+        }
+
+        if (fmt == 0xFFFE) {
+            return base + ".wav";
+        }
     }
 
     return QString();

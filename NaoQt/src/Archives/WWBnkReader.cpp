@@ -48,12 +48,12 @@ void WWBnkReader::_parse() {
         if (memcmp(hdr.fourcc, "BKHD", 4) == 0) {
             _read_BKHD();
         } else if (memcmp(hdr.fourcc, "DIDX", 4) == 0) {
+            //qDebug() << "DIDX at" << pos;
             _read_DIDX(hdr);
         } else if (!m_didxFiles.isEmpty() &&
             memcmp(hdr.fourcc, "DATA", 4) == 0) {
+            //qDebug() << "DATA at" << pos;
             _read_DATA(pos + sizeof(hdr));
-        } else if (memcmp(hdr.fourcc, "HIRC", 4) == 0) {
-            _read_HIRC();
         }
 
         m_device->seek(pos + sizeof(hdr) + hdr.size);
@@ -80,6 +80,7 @@ void WWBnkReader::_read_DATA(qint64 baseOffset) {
     const qint64 fnameSize = static_cast<qint64>(std::log10(static_cast<double>(m_didxFiles.size())) + 1);
     qint64 i = 0;
     for (const DIDXFile& file : m_didxFiles) {
+        //qDebug() << "DIDX file" << file.size << file.offset << file.id;
         ChunkBasedFile* cbf = new ChunkBasedFile(ChunkBasedFile::Chunk {
             baseOffset + file.offset,
             file.size,
@@ -97,6 +98,7 @@ void WWBnkReader::_read_DATA(qint64 baseOffset) {
     }
 }
 
+#if 0
 void WWBnkReader::_read_HIRC() {
     quint32 objectCount = qFromLittleEndian<quint32>(m_device->read(4));
     HIRCSection section;
@@ -138,7 +140,7 @@ void WWBnkReader::_read_HIRC() {
                     StreamedZeroLatency
                 } embedded = static_cast<EmbeddedState>(qFromLittleEndian<quint32>(m_device->read(4)));
 
-                qDebug() << "SFX at" << m_device->pos();
+                //qDebug() << "SFX at" << pos;
 
                 break;
             }
@@ -150,3 +152,5 @@ void WWBnkReader::_read_HIRC() {
         m_device->seek(pos + sizeof(section) + section.size);
     }
 }
+
+#endif
