@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>Resources/refresh.png</file>
+    </qresource>
+    <qresource prefix="/decoding">
+        <file>Resources/packed_codebooks_aoTuV_603.bin</file>
+    </qresource>
+</RCC>
