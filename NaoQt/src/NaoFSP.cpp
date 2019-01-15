@@ -594,6 +594,10 @@ QString NaoFSP::getFileDescription(const QString& path, QIODevice* device) {
         return "WWise metadata";
     }
 
+    if (path.endsWith(".wmb")) {
+        return "Model data";
+    }
+
     if (device &&
         (device->isOpen() || device->open(QIODevice::ReadOnly)) &&
         device->seek(0)) {
