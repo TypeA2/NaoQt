@@ -15,5 +15,10 @@
     along with NaoQt.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "libNaoQt.h"
+#pragma once
 
+#ifdef LIBNAO_EXPORTS
+#define LIBNAO_API __declspec(dllexport)
+#else
+#define LIBNAO_API __declspec(dllimport)
+#endif

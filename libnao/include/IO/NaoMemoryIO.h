@@ -15,15 +15,4 @@
     along with NaoQt.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "NaoQt.h"
-
-#include <QtWidgets/QApplication>
-
-int main(int argc, char *argv[]) {
-    QApplication a(argc, argv);
-
-    NaoQt nao;
-    nao.show();
-
-    return a.exec();
-}
+#pragma once

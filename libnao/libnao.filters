@@ -18,13 +18,13 @@
     <None Include="NaoQt.licenseheader" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\libNaoQt.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="include\libNaoQt.h">
+    <ClInclude Include="include\libnao.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\libnao.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

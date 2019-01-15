@@ -15,10 +15,5 @@
     along with NaoQt.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#pragma once
+#include "IO/NaoMemoryIO.h"
 
-#ifdef LIBNAOQT_EXPORTS
-#define LIBNAOQT_API __declspec(dllexport)
-#else
-#define LIBNAOQT_API __declspec(dllimport)
-#endif
