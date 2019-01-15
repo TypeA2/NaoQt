@@ -1,6 +1,6 @@
-#include "CPKReader.h"
+#include "Archives/CPKReader.h"
 
-#include "UTFReader.h"
+#include "Archives/UTFReader.h"
 
 #include <QIODevice>
 

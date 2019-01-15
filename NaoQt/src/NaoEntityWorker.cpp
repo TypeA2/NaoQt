@@ -11,10 +11,11 @@
 #include "AV.h"
 #include "DirectX.h"
 
-#include "CPKReader.h"
-#include "DATReader.h"
-#include "SequencedFileReader.h"
-#include "USMReader.h"
+#include "Archives/CPKReader.h"
+#include "Archives/DATReader.h"
+#include "Archives/SequencedFileReader.h"
+#include "Archives/USMReader.h"
+#include "Archives/WWBnkReader.h"
 
 #include "Containers/BINRITEReader.h"
 
@@ -61,7 +62,7 @@ NaoEntity* NaoEntityWorker::getEntity(NaoEntity* parent, bool couldBeSequenced, 
         return parent;
     }
 
-    if (fcc == QByteArray("CPK ")) {
+    if (fcc == QByteArray("CPK ", 4)) {
         return _getCPK(parent, recursive);
     }
 
@@ -69,8 +70,12 @@ NaoEntity* NaoEntityWorker::getEntity(NaoEntity* parent, bool couldBeSequenced, 
         return _getDAT(parent, recursive);
     }
 
-    if (fcc == QByteArray("CRID")) {
+    if (fcc == QByteArray("CRID", 4)) {
         return _getUSM(parent);
+    }
+
+    if (fcc == QByteArray("BKHD", 4)) {
+        return _getWWBnk(parent);
     }
 
     if (couldBeSequenced) {
@@ -520,7 +525,7 @@ NaoEntity* NaoEntityWorker::_getWSP(NaoEntity* parent) {
             -1, WWRIFFSizeFunc)) {
 
         QVector<SequencedFileReader::FileEntry> files = reader->files();
-        const int fnameSize = std::log10(static_cast<double>(files.size())) + 1;
+        const qint64 fnameSize = static_cast<qint64>(std::log10(static_cast<double>(files.size())) + 1);
         quint64 i = 0;
         for (const SequencedFileReader::FileEntry& entry : files) {
             ChunkBasedFile* cbf = new ChunkBasedFile({
@@ -599,6 +604,22 @@ NaoEntity* NaoEntityWorker::_getUSM(NaoEntity* parent) {
 
     return parent;
 }
+
+NaoEntity* NaoEntityWorker::_getWWBnk(NaoEntity* parent) {
+    NaoEntity::FileInfo finfo = parent->finfo();
+
+    parent->addChildren(new NaoEntity(NaoEntity::DirInfo {
+        finfo.name + "/.."
+        }));
+
+    if (WWBnkReader* reader = WWBnkReader::create(finfo.device)) {
+        
+        delete reader;
+    }
+
+    return parent;
+}
+
 
 // --===-- Private decoders --===--
 

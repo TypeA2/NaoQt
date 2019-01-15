@@ -34,6 +34,7 @@ class NaoEntityWorker : public QObject {
     NaoEntity* _getWTP(NaoEntity* parent);
     NaoEntity* _getWSP(NaoEntity* parent);
     NaoEntity* _getUSM(NaoEntity* parent);
+    NaoEntity* _getWWBnk(NaoEntity* parent);
 
     // -- Private decoders --
     bool _decodeDDS(NaoEntity* in, QIODevice* out);

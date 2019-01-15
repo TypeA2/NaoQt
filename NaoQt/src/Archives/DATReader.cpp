@@ -1,4 +1,4 @@
-#include "DATReader.h"
+#include "Archives/DATReader.h"
 
 #include <QtEndian>
 #include <QIODevice>

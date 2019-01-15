@@ -591,26 +591,32 @@ QString NaoFSP::getFileDescription(const QString& path, QIODevice* device) {
     }
 
     if (device &&
-        (device->isOpen() || device->open(QIODevice::ReadOnly))) {
-        if (path.endsWith(".ogg")) {
-            if (device->seek(20) &&
-                qFromLittleEndian<quint16>(device->read(2)) == 0xFFFF) {
-                return "WWise Vorbis";
-            }
-        }
-
+        (device->isOpen() || device->open(QIODevice::ReadOnly)) &&
+        device->seek(0)) {
         if (path.endsWith(".wav")) {
-            if (device->isReadable() &&
-                device->seek(20) &&
-                qFromLittleEndian<quint16>(device->read(2)) == 0xFFFE) {
-                return "WWise PCM";
+            if (device->seek(20)) {
+                quint16 fmt = qFromLittleEndian<quint16>(device->read(2));
+                if (fmt == 0xFFFE) {
+                    return "WWise PCM";
+                } 
+                
+                if (fmt == 0xFFFF) {
+                    return "WWise Vorbis";
+                }
             }
+
+            return "WAVE audio";
         }
 
         if (path.endsWith(".bin")) {
-            if (device->seek(0) &&
-                device->read(8) == QByteArray("RITE0003", 8)) {
+            if (device->read(8) == QByteArray("RITE0003", 8)) {
                 return "String translations";
+            }
+        }
+
+        if (path.endsWith(".bnk")) {
+            if (device->read(4) == QByteArray("BKHD", 4)) {
+                return "WWise SoundBank";
             }
         }
     }
@@ -629,7 +635,8 @@ bool NaoFSP::getNavigatable(const QString& path) {
         path.endsWith(".wtp") ||
         path.endsWith(".eff") ||
         path.endsWith(".evn") ||
-        path.endsWith(".usm");
+        path.endsWith(".usm") ||
+        path.endsWith(".bnk");
 }
 
 QString NaoFSP::getHighestDirectory(QString path) {

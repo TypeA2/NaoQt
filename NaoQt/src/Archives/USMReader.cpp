@@ -1,6 +1,6 @@
-#include "USMReader.h"
+#include "Archives/USMReader.h"
 
-#include "UTFReader.h"
+#include "Archives/UTFReader.h"
 
 #include "NaoEntityWorker.h"
 

@@ -96,6 +96,10 @@ QString NaoEntity::getEmbeddedFileExtension(QIODevice* device) {
         device->seek(8);
 
         if (device->read(8) == QByteArray("WAVEfmt ", 8)) {
+            
+            return ".wav";
+
+#if 0
             device->seek(20);
 
             quint16 fmt = qFromLittleEndian<quint16>(device->read(2));
@@ -107,6 +111,7 @@ QString NaoEntity::getEmbeddedFileExtension(QIODevice* device) {
             if (fmt == 0xFFFE) {
                 return ".wav";
             }
+#endif
         }
     }
 

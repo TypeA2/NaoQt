@@ -129,6 +129,9 @@
     <ClCompile Include="src\Containers\StringsReader.cpp">
       <Filter>Source Files\Entities\Containers</Filter>
     </ClCompile>
+    <ClCompile Include="src\Archives\WWBnkReader.cpp">
+      <Filter>Source Files\Entities\Archives</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="include\NaoFSP.h">
@@ -140,11 +143,11 @@
     <QtMoc Include="include\ChunkBasedFile.h">
       <Filter>Header Files\Wrappers</Filter>
     </QtMoc>
-    <QtMoc Include="include\UTFReader.h">
-      <Filter>Header Files\Entities\Archives</Filter>
-    </QtMoc>
     <QtMoc Include="include\NaoEntityWorker.h">
       <Filter>Header Files\Entities</Filter>
+    </QtMoc>
+    <QtMoc Include="include\Archives\UTFReader.h">
+      <Filter>Header Files\Entities\Archives</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
@@ -162,15 +165,6 @@
     <ClInclude Include="include\Utils.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="include\CPKReader.h">
-      <Filter>Header Files\Entities\Archives</Filter>
-    </ClInclude>
-    <ClInclude Include="include\DATReader.h">
-      <Filter>Header Files\Entities\Archives</Filter>
-    </ClInclude>
-    <ClInclude Include="include\SequencedFileReader.h">
-      <Filter>Header Files\Entities\Archives</Filter>
-    </ClInclude>
     <ClInclude Include="include\AV.h">
       <Filter>Header Files\Decoding</Filter>
     </ClInclude>
@@ -182,9 +176,6 @@
     </ClInclude>
     <ClInclude Include="include\AV_WWRIFF.h">
       <Filter>Header Files\Decoding</Filter>
-    </ClInclude>
-    <ClInclude Include="include\USMReader.h">
-      <Filter>Header Files\Entities\Archives</Filter>
     </ClInclude>
     <ClInclude Include="include\NaoEntity.h">
       <Filter>Header Files\Entities</Filter>
@@ -203,6 +194,21 @@
     </ClInclude>
     <ClInclude Include="include\Containers\BINRITEReader.h">
       <Filter>Header Files\Entities\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Archives\CPKReader.h">
+      <Filter>Header Files\Entities\Archives</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Archives\DATReader.h">
+      <Filter>Header Files\Entities\Archives</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Archives\SequencedFileReader.h">
+      <Filter>Header Files\Entities\Archives</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Archives\USMReader.h">
+      <Filter>Header Files\Entities\Archives</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Archives\WWBnkReader.h">
+      <Filter>Header Files\Entities\Archives</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

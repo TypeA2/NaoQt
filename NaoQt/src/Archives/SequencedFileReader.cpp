@@ -1,4 +1,4 @@
-#include "SequencedFileReader.h"
+#include "Archives/SequencedFileReader.h"
 
 #include <QtEndian>
 #include <QIODevice>
