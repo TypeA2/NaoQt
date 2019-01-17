@@ -15,27 +15,35 @@
     along with NaoQt.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-
 #pragma once
 
-#include <QtWidgets/QMainWindow>
+#include "libnao.h"
 
-class NaoQt : public QMainWindow {
-    Q_OBJECT
+#include <memory>
 
+#define PluginManager NaoPluginManager::global_instance()
+
+/*
+ * Loads and manages all plugins.
+ * Plugins need to expose the following functions (with LIBNAO_CALL):
+ * 
+ *  - const char* NaoName()
+ *  - const char* NaoDescription()
+ *  - uint64_t NaoVersion()
+ */
+class NaoPluginManager {
     public:
+    // Getter for global instance
+    LIBNAO_API static NaoPluginManager& global_instance();
 
-    // Constructors
-    NaoQt(QWidget *parent = nullptr);
-
-    // Static getters
-    static QString get_config_path();
+    LIBNAO_API bool init(const char* plugins_dir);
+    LIBNAO_API bool load(const wchar_t* plugin_name);
 
     private:
-    // Stores all settings in key/value pairs
-    std::map<QString, QString> _m_settings;
 
-    // Loads all settings from the .ini file
-    void _load_settings();
-    static void _write_default_settings();
+    // Constructor for initialising d_ptr
+    NaoPluginManager();
+
+    class NaoPluginManagerPrivate;
+    std::unique_ptr<NaoPluginManagerPrivate> d_ptr;
 };

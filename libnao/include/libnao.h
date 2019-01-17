@@ -17,8 +17,43 @@
 
 #pragma once
 
-#ifdef LIBNAO_EXPORTS
-#define LIBNAO_API __declspec(dllexport)
+#include <cstdint>
+
+#ifndef _WIN64
+#   error "Windows x64 only for now, sorry!"
 #else
-#define LIBNAO_API __declspec(dllimport)
+#   define NAO_WINDOWS
 #endif
+
+#ifdef LIBNAO_EXPORTS
+#   define LIBNAO_API __declspec(dllexport)
+#else
+#   define LIBNAO_API __declspec(dllimport)
+#endif
+
+#ifdef _DEBUG
+#   define NAO_DEBUG
+#else
+#   define NAO_NDEBUG
+#endif
+
+#ifdef NAO_WINDOWS
+#   define LIBNAO_PLUGIN_EXTENSION ".dll"
+#else
+#   define LIBNAO_PLUGIN_EXT ""
+#endif
+
+#define LIBNAO_CALL extern "C"
+#define LIBNAO_PLUGIN __declspec(dllexport)
+
+#define NAO_UNUSED(v) (void)v
+
+class NaoIO;
+struct LIBNAO_API NaoObject {
+    NaoIO* io;
+    
+    int64_t binary_size;
+    int64_t real_size;
+
+    bool compressed;
+};

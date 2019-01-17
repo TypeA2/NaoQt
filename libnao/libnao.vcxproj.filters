@@ -1,3 +1,66 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <None Include="NaoQt.licenseheader" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{9c61dfd6-0349-4d34-9157-b12e77c72c0a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{86fdf8cf-b319-4976-9402-b291f6da82ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\IO">
+      <UniqueIdentifier>{88546d16-811a-466c-9fa4-418fdd874483}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\IO">
+      <UniqueIdentifier>{d60f486d-1193-4b30-85be-871656906571}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Logging">
+      <UniqueIdentifier>{8442a525-e7ec-42fc-b19e-e895c0a0f12f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Logging">
+      <UniqueIdentifier>{d1451b67-659e-474d-b4b8-ef3ce98bac4e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Plugin">
+      <UniqueIdentifier>{fd511bb2-0136-4900-be7f-e26bd5146478}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Plugin">
+      <UniqueIdentifier>{8913e6a5-7df9-4576-a818-53b487aa15b8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\libnao.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\IO\NaoMemoryIO.h">
+      <Filter>Headers\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Logging\NaoLogging.h">
+      <Filter>Headers\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Plugin\NaoPluginManager.h">
+      <Filter>Headers\Plugin</Filter>
+    </ClInclude>
+    <ClInclude Include="include\IO\NaoIO.h">
+      <Filter>Headers\IO</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\libnao.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\IO\NaoMemoryIO.cpp">
+      <Filter>Sources\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Logging\NaoLogging.cpp">
+      <Filter>Sources\Logging</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Plugin\NaoPluginManager.cpp">
+      <Filter>Sources\Plugin</Filter>
+    </ClCompile>
+    <ClCompile Include="src\IO\NaoIO.cpp">
+      <Filter>Sources\IO</Filter>
+    </ClCompile>
+  </ItemGroup>
 </Project>

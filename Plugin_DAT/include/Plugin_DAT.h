@@ -15,27 +15,10 @@
     along with NaoQt.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-
 #pragma once
 
-#include <QtWidgets/QMainWindow>
+#include <libnao.h>
 
-class NaoQt : public QMainWindow {
-    Q_OBJECT
-
-    public:
-
-    // Constructors
-    NaoQt(QWidget *parent = nullptr);
-
-    // Static getters
-    static QString get_config_path();
-
-    private:
-    // Stores all settings in key/value pairs
-    std::map<QString, QString> _m_settings;
-
-    // Loads all settings from the .ini file
-    void _load_settings();
-    static void _write_default_settings();
-};
+LIBNAO_CALL LIBNAO_PLUGIN const char* NaoName();
+LIBNAO_CALL LIBNAO_PLUGIN const char* NaoDescription();
+LIBNAO_CALL LIBNAO_PLUGIN uint64_t NaoVersion();

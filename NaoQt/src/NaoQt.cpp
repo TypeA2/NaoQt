@@ -15,10 +15,57 @@
     along with NaoQt.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-
 #include "NaoQt.h"
+
+#include "DefaultSettingsValues.h"
+
+#include <Logging/NaoLogging.h>
+#include <Plugin/NaoPluginManager.h>
+
+#include <QSettings>
+#include <QCoreApplication>
+#include <QFile>
+
+//// Public
+
+// Constructors
 
 NaoQt::NaoQt(QWidget *parent)
     : QMainWindow(parent) {
 
+    _load_settings();
+
+    nDebug << PluginManager.init(_m_settings.at("plugins/plugins_directory").toStdString().c_str());
+
+}
+
+QString NaoQt::get_config_path() {
+    return QCoreApplication::applicationDirPath() + "/NaoQt.ini";
+}
+
+//// Private
+
+void NaoQt::_load_settings() {
+    if (!QFile(get_config_path()).exists()) {
+        _write_default_settings();
+    }
+
+    QSettings settings(get_config_path(), QSettings::IniFormat);
+    QStringList existings_keys = settings.allKeys();
+
+    for (std::pair<const char*, const char*> pair : DefaultSettings) {
+        if (!existings_keys.contains(pair.first)) {
+            settings.setValue(pair.first, pair.second);
+        }
+
+        _m_settings.insert(pair);
+    }
+}
+
+void NaoQt::_write_default_settings() {
+    QSettings settings(get_config_path(), QSettings::IniFormat);
+
+    for (std::pair<const char*, const char*> pair : DefaultSettings) {
+        settings.setValue(pair.first, pair.second);
+    }
 }

@@ -15,27 +15,19 @@
     along with NaoQt.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "Plugin_DAT.h"
 
-#pragma once
+#include <Logging/NaoLogging.h>
 
-#include <QtWidgets/QMainWindow>
+LIBNAO_CALL const char* NaoName() {
+    return "DAT plugin bundled with NaoQt";
+}
 
-class NaoQt : public QMainWindow {
-    Q_OBJECT
+LIBNAO_CALL const char* NaoDescription() {
+    return "Reads DAT archives";
+}
 
-    public:
+LIBNAO_CALL uint64_t NaoVersion() {
+    return 1ui64;
+}
 
-    // Constructors
-    NaoQt(QWidget *parent = nullptr);
-
-    // Static getters
-    static QString get_config_path();
-
-    private:
-    // Stores all settings in key/value pairs
-    std::map<QString, QString> _m_settings;
-
-    // Loads all settings from the .ini file
-    void _load_settings();
-    static void _write_default_settings();
-};
