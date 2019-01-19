@@ -19,6 +19,8 @@
 
 #include "libnao.h"
 
+#include "Containers/NaoString.h"
+
 #include <string>
 
 #ifdef NAO_WINDOWS
@@ -45,9 +47,7 @@ class LIBNAO_API NaoLogger {
 
     // Logging functions
     template <typename T>
-    void print(T msg, bool quote = true) const {
-        NAO_UNUSED(quote);
-
+    void print(T msg, NAO_UNUSED bool quote = true) const {
         std::string str = std::to_string(msg);
 
         print(str.c_str(), false);
@@ -56,7 +56,7 @@ class LIBNAO_API NaoLogger {
     // Operator overloads
     template <typename T>
     NaoLogger& operator<<(T val) {
-        this->print(val);
+        print(val);
 
         return *this;
     }
@@ -113,36 +113,31 @@ inline void NaoLogger::print(const wchar_t* msg, bool quote) const {
 // ReSharper disable performance-unnecessary-value-param
 
 template <>
-inline void NaoLogger::print(std::string msg, bool quote) const {
-    NAO_UNUSED(quote);
-
+inline void NaoLogger::print(std::string msg, NAO_UNUSED bool quote) const {
     print(msg.c_str());
 }
 
 template <>
-inline void NaoLogger::print(std::wstring msg, bool quote) const {
-    NAO_UNUSED(quote);
-
+inline void NaoLogger::print(std::wstring msg, NAO_UNUSED bool quote) const {
     print(msg.c_str());
 }
 
 template <>
-inline void NaoLogger::print(const std::string& msg, bool quote) const {
-    NAO_UNUSED(quote);
-
+inline void NaoLogger::print(const std::string& msg, NAO_UNUSED bool quote) const {
     print(msg.c_str());
 }
 
 template <>
-inline void NaoLogger::print(const std::wstring& msg, bool quote) const {
-    NAO_UNUSED(quote);
-
+inline void NaoLogger::print(const std::wstring& msg, NAO_UNUSED bool quote) const {
     print(msg.c_str());
 }
 
-template <>
-inline void NaoLogger::print(bool msg, bool quote) const {
-    NAO_UNUSED(quote);
+template<>
+inline void NaoLogger::print(const NaoString& msg, NAO_UNUSED bool quote) const {
+    //print(msg.c_str());
+}
 
+template <>
+inline void NaoLogger::print(bool msg, NAO_UNUSED bool quote) const {
     print(msg ? "true" : "false", false);
 }

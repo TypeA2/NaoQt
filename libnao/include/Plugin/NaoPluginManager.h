@@ -19,7 +19,11 @@
 
 #include "libnao.h"
 
+#include "Containers/NaoString.h"
+#include "Containers/NaoMap.h"
+
 #include <memory>
+#include <map>
 
 #define PluginManager NaoPluginManager::global_instance()
 
@@ -27,9 +31,7 @@
  * Loads and manages all plugins.
  * Plugins need to expose the following functions (with LIBNAO_CALL):
  * 
- *  - const char* NaoName()
- *  - const char* NaoDescription()
- *  - uint64_t NaoVersion()
+ *  - NaoPlugin NaoPlugin();
  */
 class NaoPluginManager {
     public:
@@ -38,6 +40,8 @@ class NaoPluginManager {
 
     LIBNAO_API bool init(const char* plugins_dir);
     LIBNAO_API bool load(const wchar_t* plugin_name);
+
+    LIBNAO_API const NaoMap<NaoString, NaoString>& errored_list() const;
 
     private:
 

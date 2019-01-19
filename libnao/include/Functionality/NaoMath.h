@@ -15,15 +15,14 @@
     along with NaoQt.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "NaoQt.h"
+#pragma once
 
-#include <QtWidgets/QApplication>
+#include <type_traits>
 
-int main(int argc, char *argv[]) {
-    QApplication a(argc, argv);
-
-    NaoQt nao;
-    nao.show();
-
-    return a.exec();
+namespace NaoMath {
+    template <typename T>
+    constexpr std::enable_if_t<std::is_arithmetic_v<T>, T>
+        round_up(const T& v, const T& m) noexcept {
+        return ((v / m) + 1) * m;
+    }
 }

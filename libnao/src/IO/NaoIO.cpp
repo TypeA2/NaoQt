@@ -27,6 +27,18 @@ bool NaoIO::seekc(int64_t pos) {
     return seek(pos, cur);
 }
 
+NaoBytes NaoIO::read(size_t size) {
+    NaoBytes bytes('\0', size);
+
+    //read(bytes.data(), size);
+
+    return bytes;
+}
+
+int64_t NaoIO::write(const NaoBytes& bytes) {
+    return write(bytes.const_data(), bytes.size());
+}
+
 int64_t NaoIO::size() const {
     return __m_size;
 }

@@ -28,6 +28,15 @@
     <Filter Include="Sources\Plugin">
       <UniqueIdentifier>{8913e6a5-7df9-4576-a818-53b487aa15b8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sources\Containers">
+      <UniqueIdentifier>{aadf85d8-7958-4eb4-8b6d-711d8ed4c2d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Containers">
+      <UniqueIdentifier>{89cc2e81-736b-48f1-b907-e003ca04f4f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Functionality">
+      <UniqueIdentifier>{2d062e0b-1d1b-4762-9b23-e29b748d83d1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\libnao.h">
@@ -45,6 +54,30 @@
     <ClInclude Include="include\IO\NaoIO.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
+    <ClInclude Include="include\Containers\NaoBytes.h">
+      <Filter>Headers\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NaoObject.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Plugin\NaoPlugin.h">
+      <Filter>Headers\Plugin</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Containers\NaoString.h">
+      <Filter>Headers\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Containers\NaoMap.h">
+      <Filter>Headers\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Containers\NaoPair.h">
+      <Filter>Headers\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Containers\NaoVector.h">
+      <Filter>Headers\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Functionality\NaoMath.h">
+      <Filter>Headers\Functionality</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\libnao.cpp">
@@ -61,6 +94,18 @@
     </ClCompile>
     <ClCompile Include="src\IO\NaoIO.cpp">
       <Filter>Sources\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Containers\NaoBytes.cpp">
+      <Filter>Sources\Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\NaoObject.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Plugin\NaoPlugin.cpp">
+      <Filter>Sources\Plugin</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Containers\NaoString.cpp">
+      <Filter>Sources\Containers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

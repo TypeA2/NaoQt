@@ -15,15 +15,37 @@
     along with NaoQt.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "NaoQt.h"
+#pragma once
 
-#include <QtWidgets/QApplication>
+#include "Containers/NaoPair.h"
+#include "Containers/NaoVector.h"
 
-int main(int argc, char *argv[]) {
-    QApplication a(argc, argv);
+template <typename Key, typename Val>
+class NaoMap {
+    /*public:
 
-    NaoQt nao;
-    nao.show();
+    using value_type = NaoPair<Key, Val>;
 
-    return a.exec();
-}
+    typedef value_type* iterator;
+
+    NaoMap() { }
+
+    void insert(Key _key, Val _val) {
+        _m_vector.push_back(value_type(_key, _val));
+    }
+
+    bool empty() const noexcept {
+        return std::empty(_m_vector);
+    }
+
+    iterator begin() noexcept {
+        return std::begin(_m_vector);
+    }
+
+    iterator end() noexcept {
+        return std::end(_m_vector);
+    }
+
+    private:
+    NaoVector<value_type> _m_vector;*/
+};

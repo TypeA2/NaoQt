@@ -175,17 +175,29 @@
     <None Include="NaoQt.licenseheader" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Containers\NaoBytes.cpp" />
+    <ClCompile Include="src\Containers\NaoString.cpp" />
     <ClCompile Include="src\IO\NaoIO.cpp" />
     <ClCompile Include="src\IO\NaoMemoryIO.cpp" />
     <ClCompile Include="src\libnao.cpp" />
     <ClCompile Include="src\Logging\NaoLogging.cpp" />
+    <ClCompile Include="src\NaoObject.cpp" />
+    <ClCompile Include="src\Plugin\NaoPlugin.cpp" />
     <ClCompile Include="src\Plugin\NaoPluginManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Containers\NaoBytes.h" />
+    <ClInclude Include="include\Containers\NaoMap.h" />
+    <ClInclude Include="include\Containers\NaoPair.h" />
+    <ClInclude Include="include\Containers\NaoString.h" />
+    <ClInclude Include="include\Containers\NaoVector.h" />
+    <ClInclude Include="include\Functionality\NaoMath.h" />
     <ClInclude Include="include\IO\NaoIO.h" />
     <ClInclude Include="include\IO\NaoMemoryIO.h" />
     <ClInclude Include="include\libnao.h" />
     <ClInclude Include="include\Logging\NaoLogging.h" />
+    <ClInclude Include="include\NaoObject.h" />
+    <ClInclude Include="include\Plugin\NaoPlugin.h" />
     <ClInclude Include="include\Plugin\NaoPluginManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

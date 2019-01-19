@@ -15,15 +15,20 @@
     along with NaoQt.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "NaoQt.h"
+#include "Plugin/NaoPlugin.h"
 
-#include <QtWidgets/QApplication>
-
-int main(int argc, char *argv[]) {
-    QApplication a(argc, argv);
-
-    NaoQt nao;
-    nao.show();
-
-    return a.exec();
+bool plugin_complete(const NaoPlugin& plugin) {
+    return plugin.plugin
+        && plugin.plugin_name
+        && plugin.plugin_desc
+        && plugin.plugin_version
+        && plugin.error
+        && plugin.supports
+        && plugin.populatable
+        && plugin.decodable
+        && plugin.description
+        && plugin.populate
+        && plugin.decode;
 }
+
+

@@ -1,7 +1,3 @@
-Formats:
- - .bnk metadata extraction
- - .wai metadata extraction if at all possible
- - fix discrepancy between in-archive and out-of-archive file opening
-
-Short term:
- - Better folder structuring
+Containers:
+ - Separate, non-STL implementation of container classes
+ - Performance improvements by doing the latter

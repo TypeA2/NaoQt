@@ -17,14 +17,18 @@
 
 #include "Plugin/NaoPluginManager.h"
 
-#include "Logging/NaoLogging.h"
+#include "Plugin/NaoPlugin.h"
 
 #include <experimental/filesystem>
 #include <string>
 #include <vector>
 
 #ifdef NAO_WINDOWS
+#define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
 #include <Windows.h>
+#undef VC_EXTRALEAN
+#undef WIN32_LEAN_AND_MEAN
 #endif
 
 namespace fs = std::experimental::filesystem;
@@ -34,17 +38,13 @@ namespace fs = std::experimental::filesystem;
 class NaoPluginManager::NaoPluginManagerPrivate {
     public:
 
-    // Function pointers for all exposed functions
-    using NameFunc = const char*(*)();
-    using DescFunc = NameFunc;
-    using VerFunc = uint64_t(*)();
+    // Destructor that frees all loaded handles
+    ~NaoPluginManagerPrivate();
 
     // Struct to hold each plugin
     struct Plugin {
         HMODULE handle;
-        NameFunc name;
-        DescFunc description;
-        VerFunc version;
+        NaoPlugin plugin;
     };
 
     // All plugins and their handles
@@ -52,6 +52,12 @@ class NaoPluginManager::NaoPluginManagerPrivate {
 
     // Path (relative or absolute) to the plugins directory
     std::string m_plugins_dir;
+
+    // Latest error message
+    NaoString m_error;
+
+    // All errored plugins
+    NaoMap<NaoString, NaoString> m_errored_list;
 
     // If the plugin manager was initialised already
     bool m_initialised = false;
@@ -80,6 +86,10 @@ bool NaoPluginManager::load(const wchar_t* plugin_name) {
     return d_ptr->load(plugin_name);
 }
 
+const NaoMap<NaoString, NaoString>& NaoPluginManager::errored_list() const {
+    return d_ptr->m_errored_list;
+}
+
 //// Private
 
 NaoPluginManager::NaoPluginManager() {
@@ -88,6 +98,12 @@ NaoPluginManager::NaoPluginManager() {
 
 
 //////// NaoPluginManagerPrivate
+
+NaoPluginManager::NaoPluginManagerPrivate::~NaoPluginManagerPrivate() {
+    for (Plugin plugin : m_plugins) {
+        FreeLibrary(plugin.handle);
+    }
+}
 
 bool NaoPluginManager::NaoPluginManagerPrivate::init(const char* plugins_dir) {
     m_plugins_dir = fs::absolute(plugins_dir).string();
@@ -98,18 +114,22 @@ bool NaoPluginManager::NaoPluginManagerPrivate::init(const char* plugins_dir) {
             file.path().extension() == LIBNAO_PLUGIN_EXTENSION) {
 
             if (!load(file.path().c_str())) {
-                return false;
+               // m_errored_list.insert(
+                    //file.path().filename().string().c_str(), m_error);
+            } else {
+                //if (!std::empty(m_error)) {
+                    //m_error.clear();
+                //}
             }
         }
     }
 
     m_initialised = true;
 
+    //return std::empty(m_errored_list);
     return true;
 }
 
-
-// TODO error handling that release can keep
 bool NaoPluginManager::NaoPluginManagerPrivate::load(const wchar_t* plugin_name) {
 #ifdef NAO_WINDOWS
 
@@ -121,22 +141,22 @@ bool NaoPluginManager::NaoPluginManagerPrivate::load(const wchar_t* plugin_name)
         return false;
     }
 
-    plugin.name = reinterpret_cast<NameFunc>(
-        GetProcAddress(plugin.handle, "NaoName"));
+    NaoPlugin::PluginFunc plugin_func = reinterpret_cast<NaoPlugin::PluginFunc>(
+        GetProcAddress(plugin.handle, "NaoPlugin"));
 
-    plugin.description = reinterpret_cast<DescFunc>(
-        GetProcAddress(plugin.handle, "NaoDescription"));
+    if (plugin_func) {
 
-    plugin.version = reinterpret_cast<VerFunc>(
-        GetProcAddress(plugin.handle, "NaoVersion"));
+        plugin.plugin = plugin_func();
 
-    if (plugin.name &&
-        plugin.description &&
-        plugin.version ) {
+        if (plugin_complete(plugin.plugin)) {
+            m_plugins.push_back(plugin);
 
-        m_plugins.push_back(plugin);
+            return true;
+        }
 
-        return true;
+            //m_error = "Loaded plugin is not complete";
+    } else {
+       // m_error = "Could not get address for NaoPlugin() function.";
     }
 
 #endif

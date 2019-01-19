@@ -23,7 +23,11 @@
 #include <iostream>
 
 #ifdef NAO_WINDOWS
+#define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
 #include <Windows.h>
+#undef VC_EXTRALEAN
+#undef WIN32_LEAN_AND_MEAN
 #endif
 
 //// Public

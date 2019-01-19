@@ -38,4 +38,6 @@ class NaoQt : public QMainWindow {
     // Loads all settings from the .ini file
     void _load_settings();
     static void _write_default_settings();
+
+    void _load_plugins();
 };

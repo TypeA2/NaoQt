@@ -15,15 +15,18 @@
     along with NaoQt.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "NaoQt.h"
+#pragma once
 
-#include <QtWidgets/QApplication>
+template <typename First, typename Second>
+class NaoPair {
+    public:
+    // Explicit constructor with values
+    explicit NaoPair(First _first, Second _second) 
+        : first(_first)
+        , second(_second) {
+        
+    }
 
-int main(int argc, char *argv[]) {
-    QApplication a(argc, argv);
-
-    NaoQt nao;
-    nao.show();
-
-    return a.exec();
-}
+    First first;
+    Second second;
+};
