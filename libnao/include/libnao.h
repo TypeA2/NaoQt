@@ -49,4 +49,6 @@
 
 #define NAO_UNUSED [[maybe_unused]]
 
+
+
 #include "NaoObject.h"

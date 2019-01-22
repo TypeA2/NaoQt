@@ -72,15 +72,16 @@ void NaoQt::_write_default_settings() {
 
 void NaoQt::_load_plugins() {
     bool success = PluginManager.init(_m_settings.at("plugins/plugins_directory").toStdString().c_str());
+
     if (!success) {
 
         nDebug << "Errored plugins:";
 
-        /*NaoMap<NaoString, NaoString> errs = PluginManager.errored_list();
+        NaoMap<NaoString, NaoString> errs = PluginManager.errored_list();
         for (NaoMap<NaoString, NaoString>::iterator a = std::begin(errs);
             a != std::end(errs); ++a) {
-            nDebug << a->first.c_str() << a->second.c_str();
-        }*/
+            nDebug << a->first << a->second;
+        }
     }
 }
 

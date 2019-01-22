@@ -17,18 +17,19 @@
 
 #pragma once
 
-#include "Containers/NaoPair.h"
-#include "Containers/NaoVector.h"
+#include "./Containers/NaoPair.h"
+#include "./Containers/NaoVector.h"
+
+#include "./Logging/NaoLogging.h"
 
 template <typename Key, typename Val>
 class NaoMap {
-    /*public:
+    public:
 
     using value_type = NaoPair<Key, Val>;
+    using iterator = value_type*;
 
-    typedef value_type* iterator;
-
-    NaoMap() { }
+    NaoMap() = default;
 
     void insert(Key _key, Val _val) {
         _m_vector.push_back(value_type(_key, _val));
@@ -47,5 +48,5 @@ class NaoMap {
     }
 
     private:
-    NaoVector<value_type> _m_vector;*/
+    NaoVector<value_type> _m_vector;
 };

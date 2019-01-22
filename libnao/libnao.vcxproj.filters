@@ -104,8 +104,5 @@
     <ClCompile Include="src\Plugin\NaoPlugin.cpp">
       <Filter>Sources\Plugin</Filter>
     </ClCompile>
-    <ClCompile Include="src\Containers\NaoString.cpp">
-      <Filter>Sources\Containers</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

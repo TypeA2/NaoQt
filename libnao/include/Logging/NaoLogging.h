@@ -42,6 +42,7 @@ class LIBNAO_API NaoLogger {
     explicit NaoLogger(Destination dest = STDOUT,
         bool trailing_spaces = true, bool space_on_destruct = false);
 
+    // ReSharper disable once bugprone-exception-escape
     // Destructor
     ~NaoLogger();
 
@@ -132,12 +133,19 @@ inline void NaoLogger::print(const std::wstring& msg, NAO_UNUSED bool quote) con
     print(msg.c_str());
 }
 
-template<>
+template <>
+inline void NaoLogger::print(NaoString msg, NAO_UNUSED bool quote) const {
+    print(msg.c_str());
+}
+
+template <>
 inline void NaoLogger::print(const NaoString& msg, NAO_UNUSED bool quote) const {
-    //print(msg.c_str());
+    print(msg.c_str());
 }
 
 template <>
 inline void NaoLogger::print(bool msg, NAO_UNUSED bool quote) const {
     print(msg ? "true" : "false", false);
 }
+
+// ReSharper restore performance-unnecessary-value-param

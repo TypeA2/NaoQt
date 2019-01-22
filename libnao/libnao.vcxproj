@@ -176,7 +176,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Containers\NaoBytes.cpp" />
-    <ClCompile Include="src\Containers\NaoString.cpp" />
     <ClCompile Include="src\IO\NaoIO.cpp" />
     <ClCompile Include="src\IO\NaoMemoryIO.cpp" />
     <ClCompile Include="src\libnao.cpp" />

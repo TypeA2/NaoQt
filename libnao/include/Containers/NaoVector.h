@@ -23,39 +23,38 @@
 #include <algorithm>
 
 template <typename T>
-class LIBNAO_API NaoVector {
+class  NaoVector {
     public:
 
     using value_type = T;
     using size_type = size_t;
     using difference_type = ptrdiff_t;
-    using reference = value_type & ;
-    using const_reference = const value_type &;
-    using pointer = value_type * ;
-    using const_pointer = const value_type * ;
+    using reference = T & ;
+    using const_reference = const T &;
+    using pointer = T * ;
+    using const_pointer = const T * ;
     using iterator = T * ;
     using const_iterator = const T * ;
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-    typedef T* iterator;
-    typedef const T* const_iterator;
+    static constexpr size_type data_alignment = 16 * sizeof(T);
 
     explicit NaoVector(size_t size) 
         : _m_size(size) {
-        _m_allocated = NaoMath::round_up(size, alignof(T));
+        _m_allocated = NaoMath::round_up(size, data_alignment);
         _m_data = new T[_m_allocated];
         _m_end = _m_data + _m_size;
     }
 
     NaoVector() : NaoVector(0) { }
 
-    NaoVector(const NaoVector<T>& other) {
-        _m_size = other._m_size;
-        _m_allocated = other._m_allocated;
-        _m_data = new T[_m_allocated];
+    NaoVector(std::initializer_list<T> ilist) {
+        operator=(ilist);
+    }
 
-        _m_end = std::copy(other._m_data, other._m_end, _m_data);
+    NaoVector(const NaoVector<T>& other) {
+        operator=(other);
     }
 
     NaoVector(NaoVector<T>&& other) noexcept {
@@ -99,8 +98,8 @@ class LIBNAO_API NaoVector {
     }
 
     NaoVector& operator=(std::initializer_list<T> ilist) {
-        _m_size = ilist.size();
-        _m_allocated = NaoMath::round_up(_m_size, alignof(T));
+        _m_size = std::size(ilist);
+        _m_allocated = NaoMath::round_up(_m_size, data_alignment);
         _m_data = new T[_m_allocated];
 
         _m_end = std::copy(std::begin(ilist), std::end(ilist), _m_data);
@@ -227,16 +226,17 @@ class LIBNAO_API NaoVector {
     }
 
     void reserve(size_type new_cap) {
-        if (new_cap > max_size) {
+        if (new_cap > max_size()) {
             throw std::length_error("new cap is too large for size_type");
         }
         if (new_cap <= _m_allocated) {
+            shrink_to_fit();
             return;
         }
 
         T* old_data = _m_data;
 
-        _m_allocated = NaoMath::round_up(new_cap, alignof(T));
+        _m_allocated = NaoMath::round_up(new_cap, data_alignment);
         _m_data = new T[_m_allocated];
 
         _m_end = std::copy(old_data, old_data + _m_size, _m_data);
@@ -250,7 +250,19 @@ class LIBNAO_API NaoVector {
 
     // ReSharper disable once CppMemberFunctionMayBeStatic
 
-    void shrink_to_fit() { }
+    void shrink_to_fit() {
+        size_type allocate_target = NaoMath::round_up(_m_size, data_alignment);
+
+        if (_m_allocated > allocate_target) {
+            _m_allocated = allocate_target;
+            T* new_data = new T[_m_allocated];
+
+            _m_end = std::copy(_m_data, _m_end, new_data);
+
+            delete[] _m_data;
+            _m_data = new_data;
+        }
+    }
 
     void clear() noexcept {
         delete[] _m_data;
@@ -260,199 +272,14 @@ class LIBNAO_API NaoVector {
         _m_end = _m_data;
     }
 
-    const_iterator insert(const_iterator pos, const T& value) {
-        if (_m_size + 1 > _m_allocated) {
-            // calculate the new requires size
-            _m_allocated = NaoMath::round_up(_m_size + 1, alignof(T));
-            ++_m_size;
-
-            // allocate the new memory
-            T* new_data = new T[_m_allocated];
-
-            // copy over the values up to the inserted value
-            iterator new_pos = std::copy(_m_data, _m_data[std::distance(_m_data, pos - 1)], new_data);
-
-            // assign the new value
-            *new_pos = value;
-
-            // copy the rest
-            _m_end = std::copy(_m_data[std::distance(_m_data, pos)], _m_end, new_pos + 1);
-
-            delete[] _m_data;
-            _m_data = new_data;
-
-            return new_pos;
-        }
-
-        std::copy_backward(pos, _m_end, _m_end + 1);
-
-        ++_m_end;
-
-        *(pos - 1) = value;
-
-        return (pos - 1);
-    }
-
-    iterator insert(const_iterator pos, T&& value) {
-        return const_cast<iterator>(insert(pos, value));
-    }
-
-    iterator insert(const_iterator pos, size_type count, const T& value) {
-        if (count == 0) {
-            return pos;
-        }
-
-        if (_m_size + count > _m_allocated) {
-            _m_allocated = NaoMath::round_up(_m_size + count, alignof(T));
-            _m_size += count;
-
-            T* new_data = new T[_m_allocated];
-
-            iterator new_pos = std::copy(_m_data, _m_data[std::distance(_m_data, pos - 1)], new_data);
-
-            iterator new_start = std::fill_n(new_pos, count, value);
-
-            _m_end = std::copy(_m_data[std::distance(_m_data, pos - 1) + count], _m_end, new_start);
-
-            delete[] _m_data;
-            _m_data = new_data;
-
-            return new_pos;
-        }
-
-        std::copy_backward(pos, _m_end, _m_end + count);
-
-        _m_end += count;
-
-        std::fill_n(pos - 1, count, value);
-
-        return (pos - 1);
-    }
-
-    template <typename InputIt>
-    iterator insert(const_iterator pos, InputIt first, InputIt last) {
-        const size_type count = std::distance(first, last);
-
-        if (_m_size + count > _m_allocated) {
-            _m_allocated = NaoMath::round_up(_m_size + count, alignof(T));
-            _m_size += count;
-
-            T* new_data = new T[_m_allocated];
-
-            iterator new_pos = std::copy(_m_data, _m_data + std::distance(cbegin(), pos - 1), new_data);
-
-            iterator new_start = std::copy(first, last, new_pos);
-
-            _m_end = std::copy(begin() + std::distance(cbegin(), pos - 1) + count, _m_end, new_start);
-
-            delete[] _m_data;
-            _m_data = new_data;
-
-            return new_pos;
-        }
-
-        std::copy_backward(pos, const_cast<const_iterator>(_m_end), _m_end + count);
-        _m_end += count;
-        _m_size += count;
-
-        std::copy(first, last, const_cast<iterator>(pos - 1));
-
-        return const_cast<iterator>(pos - 1);
-    }
-
-    iterator insert(const_iterator pos, std::initializer_list<T> ilist) {
-        return insert(pos, std::begin(ilist), std::end(ilist));
-    }
-
-    template <typename... Args>
-    iterator emplace(const_iterator pos, Args&&... args) {
-        return insert(pos, std::forward<Args>(args)...);
-    }
-
-    iterator erase(const_iterator pos) {
-        _m_end = std::copy(pos + 1, _m_end, pos);
-        --_m_size;
-
-        return (pos + 1);
-    }
-
-    iterator erase(const_iterator first, const_iterator last) {
-        _m_end = std::copy(last, cend(), const_cast<iterator>(first));
-        _m_end -= std::distance(first, last);
-
-        _m_size -= std::distance(first, last);
-
-        return const_cast<iterator>(first + 1);
-    }
-
     void push_back(const T& value) {
-        if (_m_size + 1 > _m_allocated) {
-            _m_allocated = NaoMath::round_up(_m_size + 1, alignof(T));
-            ++_m_size;
-
-            T* new_data = new T[_m_allocated];
-            _m_end = std::copy(_m_data, _m_end, new_data);
-
-            delete[] _m_data;
-            _m_data = new_data;
-        } else {
-            *_m_end = value;
-
-            ++_m_end;
-            ++_m_size;
+        if (_m_size + 1 >= _m_allocated) {
+            reserve(_m_size + data_alignment);
         }
-    }
 
-    void push_back(T&& value) {
-        push_back(std::move(value));
-    }
-
-    template <typename... Args>
-    reference emplace_back(Args&&... args) {
-        push_back(std::forward<Args>(args)...);
-
-        return *back();
-    }
-
-    void pop_back() {
-        --_m_size;
-        --_m_end;
-    }
-
-    void resize(size_type count) {
-        if (_m_size != count) {
-
-            if (count <= _m_allocated) {
-                _m_end = _m_data + count;
-                _m_size = count;
-            } else {
-                _m_allocated = NaoMath::round_up(count, alignof(T));
-
-                T* new_data = new T[count];
-                _m_size = count;
-
-                std::copy(_m_data, _m_end, new_data);
-
-                _m_end = new_data + count;
-
-                delete[] _m_data;
-                _m_data = new_data;
-            }
-        }
-    }
-
-    void resize(size_type count, const value_type& value) {
-        if (_m_size != count) {
-            if (_m_size > count) {
-                resize(count);
-            } else {
-                iterator old_end = _m_end;
-
-                resize(count);
-
-                std::fill(old_end, _m_end, value);
-            }
-        }
+        *_m_end = value;
+        ++_m_end;
+        ++_m_size;
     }
 
     void swap(NaoVector<T>& other) noexcept {
@@ -470,6 +297,39 @@ class LIBNAO_API NaoVector {
         other._m_size = this_size;
         other._m_allocated = this_allocated;
         other._m_end = this_end;
+    }
+
+    template <class InputIt>
+    iterator insert(const_iterator pos, InputIt first, InputIt last) {
+        size_type count = std::distance(first, last);
+        size_type allocate_target = NaoMath::round_up(_m_size + count, data_alignment);
+
+        if (_m_allocated < allocate_target) {
+            _m_allocated = allocate_target;
+            T* new_data = new T[_m_allocated];
+
+            iterator insert_pos = std::copy(const_iterator(_m_data), pos - 1, new_data);
+            iterator continue_pos = std::copy(first, last, insert_pos);
+            _m_end = std::copy(pos, const_iterator(_m_end), continue_pos);
+            _m_size += count;
+
+            return continue_pos;
+        }
+
+        std::copy_backward(pos, const_iterator(_m_end), _m_end + count);
+        std::copy(first, last, const_cast<iterator>(pos - 1));
+
+        _m_end += count;
+        _m_size += count;
+
+        return const_cast<iterator>(pos - 1);
+    }
+
+    iterator erase(const_iterator first, const_iterator last) {
+        _m_end = std::copy(last, const_cast<const_iterator>(_m_end), const_cast<iterator>(first));
+        _m_size -= std::distance(first, last);
+
+        return const_cast<iterator>(last - 1);
     }
 
     private:

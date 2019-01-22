@@ -15,13 +15,11 @@
     along with NaoQt.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "Plugin/NaoPluginManager.h"
-
-#include "Plugin/NaoPlugin.h"
+#include "./Plugin/NaoPluginManager.h"
+#include "./Plugin/NaoPlugin.h"
+#include "./Logging/NaoLogging.h"
 
 #include <experimental/filesystem>
-#include <string>
-#include <vector>
 
 #ifdef NAO_WINDOWS
 #define WIN32_LEAN_AND_MEAN
@@ -114,20 +112,19 @@ bool NaoPluginManager::NaoPluginManagerPrivate::init(const char* plugins_dir) {
             file.path().extension() == LIBNAO_PLUGIN_EXTENSION) {
 
             if (!load(file.path().c_str())) {
-               // m_errored_list.insert(
-                    //file.path().filename().string().c_str(), m_error);
+                m_errored_list.insert(
+                    file.path().filename().string().c_str(), m_error);
             } else {
-                //if (!std::empty(m_error)) {
-                    //m_error.clear();
-                //}
+                if (!std::empty(m_error)) {
+                    m_error.clear();
+                }
             }
         }
     }
 
     m_initialised = true;
 
-    //return std::empty(m_errored_list);
-    return true;
+    return std::empty(m_errored_list);
 }
 
 bool NaoPluginManager::NaoPluginManagerPrivate::load(const wchar_t* plugin_name) {
@@ -154,9 +151,9 @@ bool NaoPluginManager::NaoPluginManagerPrivate::load(const wchar_t* plugin_name)
             return true;
         }
 
-            //m_error = "Loaded plugin is not complete";
+        m_error = "Loaded plugin is not complete.";
     } else {
-       // m_error = "Could not get address for NaoPlugin() function.";
+        m_error = "Could not get address for NaoPlugin() function.";
     }
 
 #endif

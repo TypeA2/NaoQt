@@ -94,6 +94,6 @@ NaoObject::Dir& NaoObject::dir_ref() {
     return _m_dir;
 }
 
-//const NaoString& NaoObject::name() const {
-//    return (_m_is_dir ? _m_dir.name : _m_file.name);
-//}
+const NaoString& NaoObject::name() const {
+    return (_m_is_dir ? _m_dir.name : _m_file.name);
+}

@@ -25,6 +25,8 @@
 class NaoObject;
 class NaoIO;
 
+template class LIBNAO_API NaoVector<NaoObject*>;
+
 class LIBNAO_API NaoObject {
 
     public:
@@ -38,11 +40,11 @@ class LIBNAO_API NaoObject {
 
         bool compressed;
 
-        //NaoString name;
+        NaoString name;
     };
 
     struct Dir {
-        //NaoString name;
+        NaoString name;
     };
 
 
@@ -67,7 +69,7 @@ class LIBNAO_API NaoObject {
     Dir dir() const;
     Dir& dir_ref();
 
-    //const NaoString& name() const;
+    const NaoString& name() const;
 
     private:
     bool _m_is_dir;
