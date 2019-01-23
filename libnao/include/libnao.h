@@ -1,24 +1,23 @@
 /*
-    This file is part of NaoQt.
+    This file is part of libnao.
 
-    NaoQt is free software: you can redistribute it and/or modify
+    libnao is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    NaoQt is distributed in the hope that it will be useful,
+    libnao is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with NaoQt.  If not, see <https://www.gnu.org/licenses/>.
+    along with libnao.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #pragma once
 
 #include <cstdint>
-#include <string>
 
 #ifndef _WIN64
 #   error "Windows x64 only for now, sorry!"
@@ -49,6 +48,7 @@
 
 #define NAO_UNUSED [[maybe_unused]]
 
-
+#define LIBNAO_VERSION_MAJOR 0
+#define LIBNAO_VERSION_MINOR 1
 
 #include "NaoObject.h"

@@ -24,6 +24,12 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="Sources\Dialog">
+      <UniqueIdentifier>{c3b9d4ef-d135-4831-820d-cd1671ba1ebe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Dialog">
+      <UniqueIdentifier>{281b3a0b-2d36-44d1-8c52-559091edf968}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="NaoQt.qrc">
@@ -40,6 +46,9 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="src\Dialog\NaoPluginDialog.cpp">
+      <Filter>Sources\Dialog</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="include\NaoQt.h">
@@ -50,5 +59,11 @@
     <ClInclude Include="include\DefaultSettingsValues.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="include\Dialog\NaoPluginDialog.h">
+      <Filter>Headers\Dialog</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="NaoQt.rc" />
   </ItemGroup>
 </Project>

@@ -172,9 +172,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="NaoQt.licenseheader" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="src\Containers\NaoBytes.cpp" />
     <ClCompile Include="src\IO\NaoIO.cpp" />
     <ClCompile Include="src\IO\NaoMemoryIO.cpp" />
@@ -186,7 +183,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Containers\NaoBytes.h" />
-    <ClInclude Include="include\Containers\NaoMap.h" />
     <ClInclude Include="include\Containers\NaoPair.h" />
     <ClInclude Include="include\Containers\NaoString.h" />
     <ClInclude Include="include\Containers\NaoVector.h" />
@@ -198,6 +194,9 @@
     <ClInclude Include="include\NaoObject.h" />
     <ClInclude Include="include\Plugin\NaoPlugin.h" />
     <ClInclude Include="include\Plugin\NaoPluginManager.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="libnao.licenseheader" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

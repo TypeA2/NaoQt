@@ -129,6 +129,7 @@
     <None Include="NaoQt.licenseheader" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Dialog\NaoPluginDialog.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\NaoQt.cpp" />
   </ItemGroup>
@@ -137,6 +138,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\DefaultSettingsValues.h" />
+    <ClInclude Include="include\Dialog\NaoPluginDialog.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="NaoQt.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

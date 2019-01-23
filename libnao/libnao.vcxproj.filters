@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <None Include="NaoQt.licenseheader" />
-  </ItemGroup>
-  <ItemGroup>
     <Filter Include="Headers">
       <UniqueIdentifier>{9c61dfd6-0349-4d34-9157-b12e77c72c0a}</UniqueIdentifier>
     </Filter>
@@ -48,9 +45,6 @@
     <ClInclude Include="include\Logging\NaoLogging.h">
       <Filter>Headers\Logging</Filter>
     </ClInclude>
-    <ClInclude Include="include\Plugin\NaoPluginManager.h">
-      <Filter>Headers\Plugin</Filter>
-    </ClInclude>
     <ClInclude Include="include\IO\NaoIO.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
@@ -66,9 +60,6 @@
     <ClInclude Include="include\Containers\NaoString.h">
       <Filter>Headers\Containers</Filter>
     </ClInclude>
-    <ClInclude Include="include\Containers\NaoMap.h">
-      <Filter>Headers\Containers</Filter>
-    </ClInclude>
     <ClInclude Include="include\Containers\NaoPair.h">
       <Filter>Headers\Containers</Filter>
     </ClInclude>
@@ -77,6 +68,9 @@
     </ClInclude>
     <ClInclude Include="include\Functionality\NaoMath.h">
       <Filter>Headers\Functionality</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Plugin\NaoPluginManager.h">
+      <Filter>Headers\Plugin</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -104,5 +98,8 @@
     <ClCompile Include="src\Plugin\NaoPlugin.cpp">
       <Filter>Sources\Plugin</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="libnao.licenseheader" />
   </ItemGroup>
 </Project>

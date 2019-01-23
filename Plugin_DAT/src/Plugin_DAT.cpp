@@ -17,17 +17,23 @@
 
 #include "Plugin_DAT.h"
 
-#include <Logging/NaoLogging.h>
+#define FNC(type, val) []() -> type { return val; }
 
-LIBNAO_CALL const char* NaoName() {
-    return "DAT plugin bundled with NaoQt";
+NaoPlugin GetNaoPlugin() {
+    return {
+        GetNaoPlugin,
+        FNC(const char*, "NaoQt DAT plugin"),
+        FNC(const char*, "Adds support for DAT/DTT archives"),
+        FNC(uint64_t, 1),
+        FNC(const char*, "TypeA2/I_Copy_Jokes"),
+        FNC(const char*, "License: LGPLv3 or later\nGithub: https://github.com/TypeA2\nSteam: https://steamcommunity.com/id/TypeA2/"),
+        FNC(const char*, "License: LGPLv3 or later<br><a href=\"https://github.com/TypeA2\">Github</a><br><a href=\"https://steamcommunity.com/id/TypeA2/\">Steam</a>"),
+        FNC(const char*, "No error"),
+        [](NaoObject* obj) -> bool { return false; },
+        [](NaoObject* obj) -> bool { return false; },
+        [](NaoObject* obj) -> bool { return false; },
+        [](NaoObject* obj) -> const char* { return "DAT archive"; },
+        [](NaoObject* obj) -> bool { return false; },
+        [](NaoObject* obj, NaoIO* io) -> bool { return false; }
+    };
 }
-
-LIBNAO_CALL const char* NaoDescription() {
-    return "Reads DAT archives";
-}
-
-LIBNAO_CALL uint64_t NaoVersion() {
-    return 1ui64;
-}
-

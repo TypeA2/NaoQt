@@ -20,6 +20,13 @@
 
 #include <QtWidgets/QMainWindow>
 
+#define NAOQT_VERSION_MAJOR 1
+#define NAOQT_VERSION_MINOR 0
+
+class QPushButton;
+class QLineEdit;
+class QTreeWidget;
+
 class NaoQt : public QMainWindow {
     Q_OBJECT
 
@@ -31,6 +38,20 @@ class NaoQt : public QMainWindow {
     // Static getters
     static QString get_config_path();
 
+    private slots:
+    void view_double_click();
+    void view_context_menu();
+    void view_sort_column();
+    void view_refresh();
+    void open_folder();
+
+    void path_display_changed();
+
+    void about_naoqt();
+    void about_libnao();
+    void about_qt();
+    void libnao_plugins();
+
     private:
     // Stores all settings in key/value pairs
     std::map<QString, QString> _m_settings;
@@ -39,5 +60,15 @@ class NaoQt : public QMainWindow {
     void _load_settings();
     static void _write_default_settings();
 
+    void _init_window();
+
     void _load_plugins();
+
+    // Private members
+
+    QPushButton* _m_refresh_button;
+    QLineEdit* _m_path_display;
+    QPushButton* _m_browse_button;
+
+    QTreeWidget* _m_tree_widget;
 };

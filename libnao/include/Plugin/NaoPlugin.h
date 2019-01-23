@@ -24,40 +24,50 @@
 class NaoObject;
 class NaoIO;
 
-LIBNAO_PLUGIN_CALL struct LIBNAO_API NaoPlugin {
-    using PluginFunc = NaoPlugin(*)();
+struct LIBNAO_API NaoPlugin;
 
-    using PluginNameFunc = const char*(*)();
-    using PluginDescFunc = const char*(*)();
-    using PluginVerFunc = uint64_t(*)();
+using PluginFunc = NaoPlugin(*)();
 
-    using ErrorFunc = const char*(*)();
+using PluginNameFunc = const char*(*)();
+using PluginDescFunc = const char*(*)();
+using PluginVerFunc = uint64_t(*)();
 
-    using SupportsFunc = bool(*)(NaoObject*);
-    using PopulatableFunc = bool(*)(NaoObject*);
-    using DecodableFunc = bool(*)(NaoObject*);
+using AuthorNameFunc = const char*(*)();
+using AuthorTextPlainFunc = const char*(*)();
+using AuthorTextRichFunc = const char*(*)();
 
-    using DescFunc = const char*(*)(NaoObject);
+using ErrorFunc = const char*(*)();
 
-    using PopulateFunc = bool(*)(NaoObject*);
-    using DecodeFunc = bool(*)(NaoObject*, NaoIO*);
+using SupportsFunc = bool(*)(NaoObject*);
+using PopulatableFunc = bool(*)(NaoObject*);
+using DecodableFunc = bool(*)(NaoObject*);
 
-    PluginFunc plugin = nullptr;
+using DescFunc = const char*(*)(NaoObject*);
 
-    PluginNameFunc plugin_name = nullptr;
-    PluginDescFunc plugin_desc = nullptr;
-    PluginVerFunc plugin_version = nullptr;
+using PopulateFunc = bool(*)(NaoObject*);
+using DecodeFunc = bool(*)(NaoObject*, NaoIO*);
 
-    ErrorFunc error = nullptr;
+struct LIBNAO_API NaoPlugin {
+    PluginFunc plugin;
 
-    SupportsFunc supports = nullptr;
-    PopulatableFunc populatable = nullptr;
-    DecodableFunc decodable = nullptr;
+    PluginNameFunc plugin_name;
+    PluginDescFunc plugin_desc;
+    PluginVerFunc plugin_version;
 
-    DescFunc description = nullptr;
+    AuthorNameFunc author_name;
+    AuthorTextPlainFunc author_text_plain;
+    AuthorTextRichFunc author_text_rich;
 
-    PopulateFunc populate = nullptr;
-    DecodeFunc decode = nullptr;
+    ErrorFunc error;
+
+    SupportsFunc supports;
+    PopulatableFunc populatable;
+    DecodableFunc decodable;
+
+    DescFunc description;
+
+    PopulateFunc populate;
+    DecodeFunc decode;
 };
 
 LIBNAO_API bool plugin_complete(const NaoPlugin& plugin);

@@ -18,7 +18,6 @@
 #pragma once
 
 #include <libnao.h>
+#include <Plugin/NaoPlugin.h>
 
-LIBNAO_CALL LIBNAO_PLUGIN const char* NaoName();
-LIBNAO_CALL LIBNAO_PLUGIN const char* NaoDescription();
-LIBNAO_CALL LIBNAO_PLUGIN uint64_t NaoVersion();
+LIBNAO_PLUGIN_CALL LIBNAO_PLUGIN NaoPlugin GetNaoPlugin();
