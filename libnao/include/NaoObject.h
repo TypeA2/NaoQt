@@ -19,8 +19,8 @@
 
 #include "libnao.h"
 
-#include "./Containers/NaoVector.h"
-#include "./Containers/NaoString.h"
+#include "Containers/NaoVector.h"
+#include "Containers/NaoString.h"
 
 class NaoObject;
 class NaoIO;
@@ -61,7 +61,7 @@ class LIBNAO_API NaoObject {
     bool has_children() const;
     bool is_dir() const;
     
-    NaoVector<NaoObject*> children() const;
+    const NaoVector<NaoObject*>& children() const;
 
     File file() const;
     File& file_ref();

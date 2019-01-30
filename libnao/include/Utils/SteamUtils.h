@@ -17,40 +17,15 @@
 
 #pragma once
 
-#include <cstdint>
+#include "libnao.h"
 
-#ifndef _WIN64
-#   error "Windows x64 only for now, sorry!"
-#else
-#   define NAO_WINDOWS
-#endif
+#include "Containers/NaoString.h"
 
-#ifdef LIBNAO_EXPORTS
-#   define LIBNAO_API __declspec(dllexport)
-#else
-#   define LIBNAO_API __declspec(dllimport)
-#endif
+namespace SteamUtils {
+    LIBNAO_API NaoString steam_path();
 
-#ifdef _DEBUG
-#   define NAO_DEBUG
-#else
-#   define NAO_NDEBUG
-#endif
+    LIBNAO_API NaoVector<NaoString> steam_install_folders();
 
-#ifdef NAO_WINDOWS
-#   define LIBNAO_PLUGIN_EXTENSION ".dll"
-#else
-#   define LIBNAO_PLUGIN_EXT ""
-#endif
+    LIBNAO_API NaoString game_path(const NaoString& game_dir, const NaoString& fallback);
+}
 
-#define LIBNAO_CALL __cdecl
-
-#define LIBNAO_PLUGIN_CALL extern "C"
-#define LIBNAO_PLUGIN_DECL __declspec(dllexport)
-
-#define NAO_UNUSED [[maybe_unused]]
-
-#define LIBNAO_VERSION_MAJOR 0
-#define LIBNAO_VERSION_MINOR 1
-
-#include "NaoObject.h"

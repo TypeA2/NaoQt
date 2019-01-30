@@ -24,9 +24,15 @@
 #include <string>
 
 #ifdef NAO_WINDOWS
-#   define nDebug NaoLogger(NaoLogger::DEBUG_WIN, true, true)
+#   define ndebug NaoLogger(NaoLogger::DEBUG_WIN, true, true, false)
 #else
-#   define nDebug NaoLogger(NaoLogger::STDERR, true, true)
+#   define ndebug NaoLogger(NaoLogger::STDERR, true, true, false)
+#endif
+
+#if defined(NAO_WINDOWS) && defined(NAO_DEBUG)
+#   define nerr NaoLogger(NaoLogger::DEBUG_WIN, true, true, true)
+#else
+#   define nerr NaoLogger(NaoLogger::STDERR, true, true, true)
 #endif
 
 class LIBNAO_API NaoLogger {
@@ -40,7 +46,7 @@ class LIBNAO_API NaoLogger {
 
     // Constructors
     explicit NaoLogger(Destination dest = STDOUT,
-        bool trailing_spaces = true, bool space_on_destruct = false);
+        bool trailing_spaces = true, bool newline_on_destruct = false, bool disable_quote = false);
 
     // ReSharper disable once bugprone-exception-escape
     // Destructor
@@ -70,13 +76,14 @@ class LIBNAO_API NaoLogger {
     // Private member variables
     Destination _m_destination;
     bool _m_trailing_spaces;
-    bool _m_space_on_destruct;
+    bool _m_newline_on_destruct;
+    bool _m_disable_quote;
 };
 
 template <>
 inline void NaoLogger::print(const char* msg, bool quote) const {
 
-    if (quote) {
+    if (!_m_disable_quote && quote) {
         _putchar('"');
     }
 
@@ -84,7 +91,7 @@ inline void NaoLogger::print(const char* msg, bool quote) const {
         _putchar(*msg++);
     }
 
-    if (quote) {
+    if (!_m_disable_quote && quote) {
         _putchar('"');
     }
 
@@ -95,14 +102,15 @@ inline void NaoLogger::print(const char* msg, bool quote) const {
 
 template <>
 inline void NaoLogger::print(const wchar_t* msg, bool quote) const {
-    if (quote) {
+    if (!_m_disable_quote && quote) {
         _putchar(L'"');
     }
 
     while (*msg != L'\0') {
         _putchar(*msg++);
     }
-    if (quote) {
+
+    if (!_m_disable_quote && quote) {
         _putchar(L'"');
     }
 

@@ -22,14 +22,14 @@
 #include "Containers/NaoBytes.h"
 
 // Base class for all disk and memory IO
-class NaoIO {
+class LIBNAO_API NaoIO {
     public:
 
     // Destructor
     virtual ~NaoIO() = 0;
 
     // Returns the position in the stream
-    virtual int64_t pos() const;
+    virtual int64_t pos() const = 0;
 
     // Seeks from a given position
     enum SeekDir {
@@ -46,42 +46,48 @@ class NaoIO {
     // Reads size bytes into buf
     // Returns the number of bytes actually read, or -1 on error
     virtual int64_t read(char* buf, int64_t size) = 0;
-    LIBNAO_API virtual NaoBytes read(size_t size);
+    virtual NaoBytes read(size_t size);
 
     // Writes size bytes from buf to the underlying device
     // Returns the number of bytes actually written, or -1 on error
     virtual int64_t write(const char* buf, int64_t size) = 0;
-    LIBNAO_API virtual int64_t write(const NaoBytes& bytes);
+    virtual int64_t write(const NaoBytes& bytes);
 
     // Returns the total size of the underlying device
-    LIBNAO_API virtual int64_t size() const;
+    virtual int64_t size() const;
 
     // Open the device for reading, writing or both
     enum OpenMode : uint8_t {
         Closed      = 0x00,
         ReadOnly    = 0x01,
         WriteOnly   = 0x02,
-        ReadWRite   = ReadOnly | WriteOnly
+
+        ReadWrite   = 0x04,
+        WriteRead   = 0x08,
+
+        Append      = 0x10,
+        AppendRead  = Append | ReadOnly
     };
 
-    LIBNAO_API virtual bool open(OpenMode mode = ReadOnly);
-    LIBNAO_API virtual OpenMode open_mode() const;
-    LIBNAO_API virtual void close();
+    virtual bool open(OpenMode mode = ReadOnly);
+    virtual OpenMode open_mode() const;
+
+    virtual void close();
 
     // Returns if the device is opened in mode,
     // or if it's open at all if mode == Closed
-    LIBNAO_API virtual bool is_open(OpenMode mode = Closed) const;
+    virtual bool is_open(OpenMode mode = Closed) const;
 
     protected:
 
     // Manually set the size after initialisation
-    LIBNAO_API void set_size(int64_t size);
+    void set_size(int64_t size);
 
-    LIBNAO_API NaoIO(int64_t size);
+    NaoIO(int64_t size);
+    NaoIO();
 
     private:
 
     int64_t __m_size;
     OpenMode __m_open_mode;
-    int64_t __m_pos;
 };

@@ -61,8 +61,8 @@ class NaoQt : public QMainWindow {
     static void _write_default_settings();
 
     void _init_window();
-
     void _load_plugins();
+    void _init_filesystem();
 
     // Private members
 

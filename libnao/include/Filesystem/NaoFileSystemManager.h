@@ -17,40 +17,25 @@
 
 #pragma once
 
-#include <cstdint>
+#include "libnao.h"
 
-#ifndef _WIN64
-#   error "Windows x64 only for now, sorry!"
-#else
-#   define NAO_WINDOWS
-#endif
+#define NaoFSM NaoFileSystemManager::global_instance()
 
-#ifdef LIBNAO_EXPORTS
-#   define LIBNAO_API __declspec(dllexport)
-#else
-#   define LIBNAO_API __declspec(dllimport)
-#endif
+class NaoFileSystemManager {
+    public:
+    // Global instance
+    LIBNAO_API static NaoFileSystemManager& global_instance();
 
-#ifdef _DEBUG
-#   define NAO_DEBUG
-#else
-#   define NAO_NDEBUG
-#endif
+    LIBNAO_API bool init(const NaoString& root_dir);
+    LIBNAO_API bool move(const NaoString& target);
 
-#ifdef NAO_WINDOWS
-#   define LIBNAO_PLUGIN_EXTENSION ".dll"
-#else
-#   define LIBNAO_PLUGIN_EXT ""
-#endif
+    LIBNAO_API NaoObject* current_object() const;
+    LIBNAO_API const NaoString& last_error() const;
 
-#define LIBNAO_CALL __cdecl
+    private:
 
-#define LIBNAO_PLUGIN_CALL extern "C"
-#define LIBNAO_PLUGIN_DECL __declspec(dllexport)
+    NaoFileSystemManager();
 
-#define NAO_UNUSED [[maybe_unused]]
-
-#define LIBNAO_VERSION_MAJOR 0
-#define LIBNAO_VERSION_MINOR 1
-
-#include "NaoObject.h"
+    class NFSMPrivate;
+    std::unique_ptr<NFSMPrivate> d_ptr;
+};

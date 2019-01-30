@@ -15,10 +15,10 @@
     along with libnao.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "./Plugin/NaoPluginManager.h"
-#include "./Plugin/NaoPlugin.h"
+#include "Plugin/NaoPluginManager.h"
+#include "Plugin/NaoPlugin.h"
 
-#include <experimental/filesystem>
+#include "Filesystem/Filesystem.h"
 
 #ifdef NAO_WINDOWS
 #define WIN32_LEAN_AND_MEAN
@@ -27,8 +27,6 @@
 #undef VC_EXTRALEAN
 #undef WIN32_LEAN_AND_MEAN
 #endif
-
-namespace fs = std::experimental::filesystem;
 
 //// D-pointer class
 
@@ -47,6 +45,9 @@ class NaoPluginManager::NaoPluginManagerPrivate {
     // All plugins and their handles
     NaoVector<Plugin> m_plugins;
 
+    // All plugins without their handle
+    NaoVector<NaoPlugin> m_plugins_raw;
+
     // Path (relative or absolute) to the plugins directory
     NaoString m_plugins_dir;
 
@@ -60,10 +61,12 @@ class NaoPluginManager::NaoPluginManagerPrivate {
     bool m_initialised = false;
 
     // Loads all plugins from plugins_dir
-    bool init(const char* plugins_dir);
+    bool init(const NaoString& plugins_dir);
 
     // Loads a single plugin
-    bool load(const wchar_t* plugin_name);
+    bool load(const NaoString& plugin_name);
+
+    NaoPlugin* get_plugin_for_object(NaoObject* object);
 };
 
 //////// NaoPluginManager
@@ -75,11 +78,11 @@ NaoPluginManager& NaoPluginManager::global_instance() {
     return global;
 }
 
-bool NaoPluginManager::init(const char* plugins_dir) {
+bool NaoPluginManager::init(const NaoString& plugins_dir) {
     return d_ptr->init(plugins_dir);
 }
 
-bool NaoPluginManager::load(const wchar_t* plugin_name) {
+bool NaoPluginManager::load(const NaoString& plugin_name) {
     return d_ptr->load(plugin_name);
 }
 
@@ -87,16 +90,19 @@ const NaoVector<NaoPair<NaoString, NaoString>>& NaoPluginManager::errored_list()
     return d_ptr->m_errored_list;
 }
 
-NaoVector<NaoPlugin> NaoPluginManager::loaded() const {
-    NaoVector<NaoPlugin> loaded;
-    loaded.reserve(std::size(d_ptr->m_plugins));
-
-    for (const NaoPluginManagerPrivate::Plugin& plugin : d_ptr->m_plugins) {
-        loaded.push_back(plugin.plugin);
-    }
-
-    return loaded;
+const NaoVector<NaoPlugin>& NaoPluginManager::loaded() const {
+    return d_ptr->m_plugins_raw;
 }
+
+
+bool NaoPluginManager::initialised() const {
+    return d_ptr->m_initialised;
+}
+
+NaoPlugin* NaoPluginManager::plugin_for_object(NaoObject* object) {
+    return d_ptr->get_plugin_for_object(object);
+}
+
 
 //// Private
 
@@ -113,15 +119,15 @@ NaoPluginManager::NaoPluginManagerPrivate::~NaoPluginManagerPrivate() {
     }
 }
 
-bool NaoPluginManager::NaoPluginManagerPrivate::init(const char* plugins_dir) {
-    m_plugins_dir = fs::absolute(plugins_dir).string().c_str();
+bool NaoPluginManager::NaoPluginManagerPrivate::init(const NaoString& plugins_dir) {
+    m_plugins_dir = fs::absolute(plugins_dir.c_str()).string().c_str();
 
     for (const fs::directory_entry& file : fs::directory_iterator(m_plugins_dir.c_str())) {
         if (!is_directory(file.path()) &&
             !is_empty(file.path()) &&
             file.path().extension() == LIBNAO_PLUGIN_EXTENSION) {
 
-            if (!load(file.path().c_str())) {
+            if (!load(file.path().string().c_str())) {
                 m_errored_list.push_back({
                     file.path().filename().string().c_str(),
                     m_error
@@ -139,12 +145,12 @@ bool NaoPluginManager::NaoPluginManagerPrivate::init(const char* plugins_dir) {
     return std::empty(m_errored_list);
 }
 
-bool NaoPluginManager::NaoPluginManagerPrivate::load(const wchar_t* plugin_name) {
+bool NaoPluginManager::NaoPluginManagerPrivate::load(const NaoString& plugin_name) {
 #ifdef NAO_WINDOWS
 
     Plugin plugin;
 
-    plugin.handle = LoadLibrary(plugin_name);
+    plugin.handle = LoadLibraryA(plugin_name.c_str());
 
     if (plugin.handle == nullptr) {
         return false;
@@ -159,6 +165,7 @@ bool NaoPluginManager::NaoPluginManagerPrivate::load(const wchar_t* plugin_name)
 
         if (plugin_complete(plugin.plugin)) {
             m_plugins.push_back(plugin);
+            m_plugins_raw.push_back(plugin.plugin);
 
             return true;
         }
@@ -172,3 +179,14 @@ bool NaoPluginManager::NaoPluginManagerPrivate::load(const wchar_t* plugin_name)
 
     return false;
 }
+
+NaoPlugin* NaoPluginManager::NaoPluginManagerPrivate::get_plugin_for_object(NaoObject* object) {
+    for (NaoPlugin& plugin : m_plugins_raw) {
+        if (plugin.supports(object)) {
+            return &plugin;
+        }
+    }
+
+    return nullptr;
+}
+

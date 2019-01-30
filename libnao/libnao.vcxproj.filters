@@ -34,6 +34,18 @@
     <Filter Include="Headers\Functionality">
       <UniqueIdentifier>{2d062e0b-1d1b-4762-9b23-e29b748d83d1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Headers\Filesystem">
+      <UniqueIdentifier>{5e3ba030-3d1d-46c2-946f-19b9e0107ac4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Filesystem">
+      <UniqueIdentifier>{db5759f0-49ff-4d40-94f6-8f5a2950d368}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Utils">
+      <UniqueIdentifier>{41700846-597b-492f-8ead-eabfdd62f0e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Utils">
+      <UniqueIdentifier>{30a892bf-da44-44d2-a5c2-bf833ee81f2e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\libnao.h">
@@ -72,6 +84,21 @@
     <ClInclude Include="include\Plugin\NaoPluginManager.h">
       <Filter>Headers\Plugin</Filter>
     </ClInclude>
+    <ClInclude Include="include\Filesystem\NaoFileSystemManager.h">
+      <Filter>Headers\Filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Filesystem\Filesystem.h">
+      <Filter>Headers\Filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="include\IO\NaoFileIO.h">
+      <Filter>Headers\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Utils\SteamUtils.h">
+      <Filter>Headers\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Utils\vdf_parser.hpp">
+      <Filter>Headers\Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\libnao.cpp">
@@ -97,6 +124,15 @@
     </ClCompile>
     <ClCompile Include="src\Plugin\NaoPlugin.cpp">
       <Filter>Sources\Plugin</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Filesystem\NaoFileSystemManager.cpp">
+      <Filter>Sources\Filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="src\IO\NaoFileIO.cpp">
+      <Filter>Sources\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Utils\SteamUtils.cpp">
+      <Filter>Sources\Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

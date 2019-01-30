@@ -19,6 +19,8 @@
 
 #include "libnao.h"
 
+#include "Containers/NaoString.h"
+
 #include <cstdint>
 
 class NaoObject;
@@ -28,21 +30,21 @@ struct LIBNAO_API NaoPlugin;
 
 using PluginFunc = NaoPlugin(*)();
 
-using PluginNameFunc = const char*(*)();
-using PluginDescFunc = const char*(*)();
+using PluginNameFunc = NaoString(*)();
+using PluginDescFunc = NaoString(*)();
 using PluginVerFunc = uint64_t(*)();
 
-using AuthorNameFunc = const char*(*)();
-using AuthorTextPlainFunc = const char*(*)();
-using AuthorTextRichFunc = const char*(*)();
+using AuthorNameFunc = NaoString(*)();
+using AuthorTextPlainFunc = NaoString(*)();
+using AuthorTextRichFunc = NaoString(*)();
 
-using ErrorFunc = const char*(*)();
+using ErrorFunc = const NaoString& (*)();
 
 using SupportsFunc = bool(*)(NaoObject*);
 using PopulatableFunc = bool(*)(NaoObject*);
 using DecodableFunc = bool(*)(NaoObject*);
 
-using DescFunc = const char*(*)(NaoObject*);
+using DescFunc = NaoString(*)(NaoObject*);
 
 using PopulateFunc = bool(*)(NaoObject*);
 using DecodeFunc = bool(*)(NaoObject*, NaoIO*);

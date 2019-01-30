@@ -19,20 +19,35 @@
 
 //// Public
 
-int64_t NaoIO::pos() const {
-    return __m_pos;
+
+// ReSharper disable once hicpp-use-equals-default
+
+NaoIO::~NaoIO() {
+    
+}
+
+bool NaoIO::seek(int64_t pos, SeekDir dir) {
+    return false;
 }
 
 bool NaoIO::seekc(int64_t pos) {
     return seek(pos, cur);
 }
 
+int64_t NaoIO::read(char* buf, int64_t size) {
+    return -1i64;
+}
+
 NaoBytes NaoIO::read(size_t size) {
     NaoBytes bytes('\0', size);
 
-    //read(bytes.data(), size);
+    read(bytes.data(), size);
 
     return bytes;
+}
+
+int64_t NaoIO::write(const char* buf, int64_t size) {
+    return -1i64;
 }
 
 int64_t NaoIO::write(const NaoBytes& bytes) {
@@ -73,8 +88,13 @@ void NaoIO::set_size(int64_t size) {
 
 NaoIO::NaoIO(int64_t size) 
     : __m_size(size)
-    , __m_open_mode(Closed)
-    , __m_pos(0ui64) {
+    , __m_open_mode(Closed) {
+    
+}
+
+NaoIO::NaoIO() 
+    : __m_size(-1i64)
+    , __m_open_mode(Closed) {
     
 }
 

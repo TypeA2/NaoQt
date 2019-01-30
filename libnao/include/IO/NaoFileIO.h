@@ -17,40 +17,33 @@
 
 #pragma once
 
-#include <cstdint>
+#include "IO/NaoIO.h"
 
-#ifndef _WIN64
-#   error "Windows x64 only for now, sorry!"
-#else
-#   define NAO_WINDOWS
-#endif
+/*
+ * File system file IO
+ */
+class LIBNAO_API NaoFileIO : public NaoIO {
+    public:
+    NaoFileIO(const NaoString& path);
 
-#ifdef LIBNAO_EXPORTS
-#   define LIBNAO_API __declspec(dllexport)
-#else
-#   define LIBNAO_API __declspec(dllimport)
-#endif
+    ~NaoFileIO() override;
 
-#ifdef _DEBUG
-#   define NAO_DEBUG
-#else
-#   define NAO_NDEBUG
-#endif
+    int64_t pos() const override;
 
-#ifdef NAO_WINDOWS
-#   define LIBNAO_PLUGIN_EXTENSION ".dll"
-#else
-#   define LIBNAO_PLUGIN_EXT ""
-#endif
+    // Seek to a position (relative or absolute)
+    bool seek(int64_t pos, SeekDir dir = set) override;
 
-#define LIBNAO_CALL __cdecl
+    // Read size bytes into buf
+    int64_t read(char* buf, int64_t size) override;
 
-#define LIBNAO_PLUGIN_CALL extern "C"
-#define LIBNAO_PLUGIN_DECL __declspec(dllexport)
+    // Write size bytes from buf
+    int64_t write(const char* buf, int64_t size) override;
 
-#define NAO_UNUSED [[maybe_unused]]
+    bool open(OpenMode mode = ReadOnly) override;
+    void close() override;
 
-#define LIBNAO_VERSION_MAJOR 0
-#define LIBNAO_VERSION_MINOR 1
+    private:
 
-#include "NaoObject.h"
+    NaoString _m_path;
+    FILE* _m_file_ptr;
+};

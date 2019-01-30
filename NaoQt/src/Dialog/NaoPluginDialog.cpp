@@ -46,13 +46,13 @@ void NaoPluginDialog::list(QWidget* parent) {
     for (const NaoPlugin& plugin : plugins) {
         QTreeWidgetItem* item = new QTreeWidgetItem(tree_widget);
 
-        item->setText(0, plugin.plugin_name());
+        item->setText(0, plugin.plugin_name().c_str());
         item->setText(1, QString::number(plugin.plugin_version()));
-        item->setText(2, plugin.author_name());
-        item->setText(3, plugin.plugin_desc());
+        item->setText(2, plugin.author_name().c_str());
+        item->setText(3, plugin.plugin_desc().c_str());
 
-        item->setData(0, AuthorText, plugin.author_text_plain());
-        item->setData(0, AutorTextRich, plugin.author_text_rich());
+        item->setData(0, AuthorText, plugin.author_text_plain().c_str());
+        item->setData(0, AutorTextRich, plugin.author_text_rich().c_str());
     }
 
     tree_widget->resizeColumnToContents(0);
@@ -70,7 +70,7 @@ void NaoPluginDialog::list(QWidget* parent) {
             QVBoxLayout* layout = new QVBoxLayout(subdialog);
 
             layout->addWidget(new QLabel(author_text_template
-                .arg(item->text(2))
+                .arg(QString("Author: %0").arg(item->text(2)))
                 .arg(item->data(0, AutorTextRich).toString())));
 
             subdialog->setModal(true);

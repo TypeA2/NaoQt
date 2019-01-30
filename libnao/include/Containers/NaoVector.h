@@ -38,7 +38,8 @@ class NaoVector {
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-    static constexpr size_type data_alignment = 16 * sizeof(T);
+    static constexpr size_type element_size = sizeof(T);
+    static constexpr size_type data_alignment = 16;
 
     explicit NaoVector(size_t size) 
         : _m_size(size) {
@@ -239,7 +240,7 @@ class NaoVector {
         _m_allocated = NaoMath::round_up(new_cap, data_alignment);
         _m_data = new T[_m_allocated];
 
-        _m_end = std::copy(old_data, old_data + _m_size, _m_data);
+        _m_end = std::copy(old_data, _m_end, _m_data);
 
         delete[] old_data;
     }
@@ -308,7 +309,7 @@ class NaoVector {
             _m_allocated = allocate_target;
             T* new_data = new T[_m_allocated];
 
-            iterator insert_pos = std::copy(const_iterator(_m_data), pos - 1, new_data);
+            iterator insert_pos = std::copy(const_iterator(_m_data), pos, new_data);
             iterator continue_pos = std::copy(first, last, insert_pos);
             _m_end = std::copy(pos, const_iterator(_m_end), continue_pos);
             _m_size += count;
@@ -317,19 +318,19 @@ class NaoVector {
         }
 
         std::copy_backward(pos, const_iterator(_m_end), _m_end + count);
-        std::copy(first, last, const_cast<iterator>(pos - 1));
+        std::copy(first, last, const_cast<iterator>(pos));
 
         _m_end += count;
         _m_size += count;
 
-        return const_cast<iterator>(pos - 1);
+        return const_cast<iterator>(pos);
     }
 
     iterator erase(const_iterator first, const_iterator last) {
         _m_end = std::copy(last, const_cast<const_iterator>(_m_end), const_cast<iterator>(first));
         _m_size -= std::distance(first, last);
 
-        return const_cast<iterator>(last - 1);
+        return _m_end;
     }
 
     private:

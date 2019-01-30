@@ -19,9 +19,9 @@
 
 #include "libnao.h"
 
-#include "./Containers/NaoString.h"
-#include "./Containers/NaoPair.h"
-#include "NaoPlugin.h"
+#include "Containers/NaoString.h"
+#include "Containers/NaoPair.h"
+#include "Plugin/NaoPlugin.h"
 
 #define PluginManager NaoPluginManager::global_instance()
 
@@ -36,11 +36,15 @@ class NaoPluginManager {
     // Getter for global instance
     LIBNAO_API static NaoPluginManager& global_instance();
 
-    LIBNAO_API bool init(const char* plugins_dir);
-    LIBNAO_API bool load(const wchar_t* plugin_name);
+    LIBNAO_API bool init(const NaoString& plugins_dir);
+    LIBNAO_API bool load(const NaoString& plugin_name);
 
     LIBNAO_API const NaoVector<NaoPair<NaoString, NaoString>>& errored_list() const;
-    LIBNAO_API NaoVector<NaoPlugin> loaded() const;
+    LIBNAO_API const NaoVector<NaoPlugin>& loaded() const;
+
+    LIBNAO_API bool initialised() const;
+
+    LIBNAO_API NaoPlugin* plugin_for_object(NaoObject* object);
 
     private:
 

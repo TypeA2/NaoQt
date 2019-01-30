@@ -61,8 +61,8 @@ void NaoObject::remove_child(NaoObject* child) {
 void NaoObject::remove_child(const NaoVector<NaoObject*>& children) {
     _m_children.erase(
         std::remove_if(std::begin(_m_children), std::end(_m_children),
-            [this](NaoObject* obj) -> bool {
-        return std::find(std::begin(_m_children), std::end(_m_children), obj) != std::end(_m_children);
+            [=](NaoObject* obj) -> bool {
+        return std::find(std::begin(children), std::end(children), obj) != std::end(children);
     }), std::end(_m_children));
 }
 
@@ -74,7 +74,7 @@ bool NaoObject::is_dir() const {
     return _m_is_dir;
 }
 
-NaoVector<NaoObject*> NaoObject::children() const {
+const NaoVector<NaoObject*>& NaoObject::children() const {
     return _m_children;
 }
 

@@ -590,7 +590,7 @@ class BasicNaoString<T> {
 
     iterator insert(const_iterator pos, size_type count, T ch) {
         if (ch == null_value) {
-            _m_end = pos - 1;
+            _m_end = iterator(pos) - 1;
             _m_size = std::distance(_m_data, _m_end);
 
             *_m_end = null_value;
@@ -604,9 +604,9 @@ class BasicNaoString<T> {
             _m_allocated = allocate_target;
             T* new_data = new T[_m_allocated]();
 
-            iterator target_pos = std::copy(_m_data, pos - 1, new_data);
+            iterator target_pos = std::copy(const_iterator(_m_data), pos - 1, new_data);
             iterator continue_pos = std::fill_n(target_pos, count, ch);
-            _m_end = std::copy(pos, _m_end, continue_pos);
+            _m_end = std::copy(pos, const_iterator(_m_end), continue_pos);
 
             delete[] _m_data;
             _m_data = new_data;
@@ -616,18 +616,18 @@ class BasicNaoString<T> {
             return (continue_pos - 1);
         }
 
-        std::copy_backward(pos, _m_end, _m_end + count);
+        std::copy_backward(pos, const_iterator(_m_end), _m_end + count);
         
         _m_size += count;
         _m_end += count;
 
-        return std::fill_n(pos - 1, count, ch) - 1;
+        return iterator(std::fill_n(iterator(pos) - 1, count, ch)) - 1;
     }
 
     template <class InputIt>
     iterator insert(const_iterator pos, InputIt first, InputIt last) {
         if (*first == null_value) {
-            _m_end = pos - 1;
+            _m_end = iterator(pos) - 1;
             _m_size = std::distance(_m_data, _m_end);
 
             *_m_end = null_value;
@@ -644,9 +644,9 @@ class BasicNaoString<T> {
             _m_allocated = allocate_target;
             T* new_data = new T[_m_allocated]();
 
-            iterator target_pos = std::copy(_m_data, pos - 1, new_data);
+            iterator target_pos = std::copy(const_iterator(_m_data), pos - 1, new_data);
             iterator continue_pos = std::copy(first, last, target_pos);
-            _m_end = std::copy(pos, _m_end, continue_pos);
+            _m_end = std::copy(pos, const_iterator(_m_end), continue_pos);
 
             delete[] _m_data;
             _m_data = new_data;
@@ -655,8 +655,8 @@ class BasicNaoString<T> {
 
             retval = continue_pos - 1;
         } else {
-            std::copy_backward(pos, _m_end, _m_end + count);
-            retval = std::copy(first, last, pos - 1) - 1;
+            std::copy_backward(pos, const_iterator(_m_end), _m_end + count);
+            retval = iterator(std::copy(first, last, iterator(pos) - 1)) - 1;
         }
 
         _m_size = 0;
@@ -684,14 +684,13 @@ class BasicNaoString<T> {
 
         size_type to_remove = 0;
 
-        if (count > _m_size - index) {
-            to_remove = _m_size - index;
+        if (count == size_type(-1) || count > _m_size - index) {
+            _m_end = _m_data + index;
+            _m_size = index;
         } else {
-            to_remove = count;
+            _m_end = std::copy(_m_data + index + count, _m_end, _m_data + index);
+            _m_size -= count;
         }
-
-        _m_end = std::copy_n(_m_data + index + to_remove, _m_end, _m_data + index + to_remove);
-        _m_size -= to_remove;
 
         *_m_end = null_value;
 
@@ -699,13 +698,13 @@ class BasicNaoString<T> {
     }
 
     iterator erase(const_iterator position) {
-        erase(std::distance(_m_data, position), 1);
+        erase(std::distance(const_iterator(_m_data), position), 1);
 
         return const_cast<iterator>(position);
     }
 
     iterator erase(const_iterator first, const_iterator last) {
-        erase(std::distance(_m_data, first), std::distance(first, last));
+        erase(std::distance(const_iterator(_m_data), first), std::distance(first, last));
 
         return const_cast<iterator>(first);
     }
@@ -724,6 +723,57 @@ class BasicNaoString<T> {
         *(--_m_end) = null_value;
     }
 
+    BasicNaoString& append(size_type count, T ch) {
+        insert(_m_end, count, ch);
+
+        return *this;
+    }
+
+    BasicNaoString& append(const BasicNaoString& str) {
+        return insert(_m_size, str);
+    }
+
+    BasicNaoString& append(const BasicNaoString& str, size_type pos, size_type count = size_type(-1)) {
+        if (count == size_type(-1)) {
+            return insert(_m_size, str.c_str() + pos);
+        }
+
+        return insert(_m_size, str.c_str() + pos, count);
+    }
+
+    BasicNaoString& append(const T* s, size_type count) {
+        return insert(_m_size, s, count);
+    }
+
+    BasicNaoString& append(const T* s) {
+        return insert(_m_size, s);
+    }
+
+    template <class InputIt>
+    BasicNaoString& append(InputIt first, InputIt last) {
+        insert(_m_end, first, last);
+
+        return *this;
+    }
+
+    BasicNaoString& operator+=(const BasicNaoString& str) {
+        return append(str);
+    }
+
+    BasicNaoString& operator+=(T ch) {
+        push_back(ch);
+
+        return *this;
+    }
+
+    BasicNaoString& operator+=(const T* s) {
+        return append(s);
+    }
+
+    BasicNaoString& operator+=(std::initializer_list<T> ilist) {
+        return append(std::begin(ilist), std::end(ilist));
+    }
+
     private:
     T* _m_data = nullptr;
     size_type _m_size = 0;
@@ -733,6 +783,58 @@ class BasicNaoString<T> {
 
 };
 
+template <class T>
+BasicNaoString<T> operator+(const BasicNaoString<T>& lhs, const BasicNaoString<T>& rhs) {
+    return BasicNaoString<T>(lhs).append(rhs);
+}
+
+template <class T>
+BasicNaoString<T> operator+(const BasicNaoString<T>& lhs, const T* rhs) {
+    return BasicNaoString<T>(lhs).append(rhs);
+}
+
+template <class T>
+BasicNaoString<T> operator+(const BasicNaoString<T>& lhs, T rhs) {
+    return BasicNaoString<T>(lhs).append(rhs);
+}
+
+template <class T>
+BasicNaoString<T> operator+(BasicNaoString<T>&& lhs, BasicNaoString<T>&& rhs) {
+    return BasicNaoString<T>(lhs).append(rhs);
+}
+
+template <class T>
+BasicNaoString<T> operator+(BasicNaoString<T>&& lhs, const BasicNaoString<T>& rhs) {
+    return BasicNaoString<T>(lhs).append(rhs);
+}
+
+template <class T>
+BasicNaoString<T> operator+(BasicNaoString<T>&& lhs, const T* rhs) {
+    return BasicNaoString<T>(lhs).append(rhs);
+}
+
+template <class T>
+BasicNaoString<T> operator+(BasicNaoString<T>&& lhs, T rhs) {
+    return BasicNaoString<T>(lhs).append(rhs);
+}
+
+template <class T>
+BasicNaoString<T> operator+(const BasicNaoString<T>& lhs, BasicNaoString<T>&& rhs) {
+    return BasicNaoString<T>(lhs).append(rhs);
+}
+
+template <class T>
+BasicNaoString<T> operator+(const T* lhs, BasicNaoString<T>&& rhs) {
+    return BasicNaoString<T>(lhs).append(rhs);
+}
+
+template <class T>
+BasicNaoString<T> operator+(T lhs, BasicNaoString<T>&& rhs) {
+    return BasicNaoString<T>(lhs).append(rhs);
+}
+
+template class LIBNAO_API BasicNaoString<char>;
+template class LIBNAO_API BasicNaoString<wchar_t>;
 
 using NaoString = BasicNaoString<char>;
 using NaoWString = BasicNaoString<wchar_t>;

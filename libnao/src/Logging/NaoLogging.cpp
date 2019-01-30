@@ -33,17 +33,18 @@
 //// Public
 
 // Constructors
-NaoLogger::NaoLogger(Destination dest, bool trailing_spaces, bool space_on_destruct)
+NaoLogger::NaoLogger(Destination dest, bool trailing_spaces, bool newline_on_destruct, bool disable_quote)
     : _m_destination(dest)
     , _m_trailing_spaces(trailing_spaces)
-    , _m_space_on_destruct(space_on_destruct) {
+    , _m_newline_on_destruct(newline_on_destruct)
+    , _m_disable_quote(disable_quote) {
     
 }
 
 // Destructor
 // ReSharper disable bugprone-exception-escape
 NaoLogger::~NaoLogger() {
-    if (_m_space_on_destruct) {
+    if (_m_newline_on_destruct) {
         _putchar('\n');
     }
 }
@@ -59,8 +60,7 @@ void NaoLogger::_putchar(char c) const {
         case STDERR:
             std::cerr.put(c);
 
-        case DEBUG_WIN:
-        {
+        case DEBUG_WIN: {
             std::vector<char> vec({ c, '\0' });
             std::string str(vec.data());
 #ifdef UNICODE

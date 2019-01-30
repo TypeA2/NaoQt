@@ -23,6 +23,9 @@
 
 #include <Logging/NaoLogging.h>
 #include <Plugin/NaoPluginManager.h>
+#include <Filesystem/NaoFileSystemManager.h>
+#include <Filesystem/Filesystem.h>
+#include <Utils/SteamUtils.h>
 
 #include <QSettings>
 #include <QCoreApplication>
@@ -35,6 +38,7 @@
 #include <QHeaderView>
 #include <QFileIconProvider>
 #include <QMenuBar>
+#include <QStandardPaths>
 
 //// Public
 
@@ -48,6 +52,8 @@ NaoQt::NaoQt(QWidget *parent)
     _init_window();
 
     _load_plugins();
+
+    _init_filesystem();
 
 }
 
@@ -194,6 +200,45 @@ void NaoQt::_load_plugins() {
             "Plugins failed to load",
             msg);
     }
+}
+
+void NaoQt::_init_filesystem() {
+    if (!NaoFSM.init(SteamUtils::game_path("NieRAutomata",
+        QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation).at(0).toUtf8().data()))) {
+        
+        QMessageBox::critical(this, "NaoFSM::init error",
+            NaoFSM.last_error().c_str());
+
+        throw std::exception(NaoFSM.last_error().c_str());
+    }
+
+    NaoObject* current_object = NaoFSM.current_object();
+
+    static QFileIconProvider ficonprovider;
+
+    for (NaoObject* child : current_object->children()) {
+        QTreeWidgetItem* item = new QTreeWidgetItem(_m_tree_widget);
+
+        const NaoString name = fs::path(child->name().c_str()).string().c_str();
+
+        item->setText(0, name.c_str());
+
+        if (child->is_dir()) {
+            item->setIcon(0, ficonprovider.icon(QFileIconProvider::Folder));
+
+            item->setText(2, "Directory");
+        } else {
+            item->setIcon(0, ficonprovider.icon(QFileInfo(child->name().c_str())));
+        }
+
+        _m_tree_widget->addTopLevelItem(item);
+    }
+
+    for (int i = 0; i < _m_tree_widget->columnCount(); ++i) {
+        _m_tree_widget->resizeColumnToContents(i);
+    }
+
+    _m_path_display->setText(current_object->name().c_str());
 }
 
 
