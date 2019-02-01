@@ -37,6 +37,7 @@ class NaoPluginManager {
     LIBNAO_API static NaoPluginManager& global_instance();
 
     LIBNAO_API bool init(const NaoString& plugins_dir);
+    
     LIBNAO_API bool load(const NaoString& plugin_name);
 
     LIBNAO_API const NaoVector<NaoPair<NaoString, NaoString>>& errored_list() const;
@@ -44,7 +45,9 @@ class NaoPluginManager {
 
     LIBNAO_API bool initialised() const;
 
-    LIBNAO_API NaoPlugin* plugin_for_object(NaoObject* object);
+    LIBNAO_API const NaoPlugin* plugin_for_object(NaoObject* object);
+
+    LIBNAO_API bool set_description(NaoObject* object);
 
     private:
 

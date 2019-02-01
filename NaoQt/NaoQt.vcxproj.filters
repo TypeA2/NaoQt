@@ -64,6 +64,8 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="NaoQt.rc" />
+    <ResourceCompile Include="NaoQt.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

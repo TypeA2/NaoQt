@@ -38,7 +38,12 @@ class NaoFileSystemManager::NFSMPrivate {
 
     // Latest error code
     NaoString m_last_error;
+
+    // All change handlers
+    NaoVector<NotifyerFunctionBase*> m_change_handlers;
 };
+
+#pragma region NaoFileSystemManager
 
 //// NaoFileSystemManager
 
@@ -65,6 +70,9 @@ const NaoString& NaoFileSystemManager::last_error() const {
     return d_ptr->m_last_error;
 }
 
+void NaoFileSystemManager::add_change_handler(NotifyerFunctionBase* func) {
+    d_ptr->m_change_handlers.push_back(func);
+}
 
 //// Private
 
@@ -72,12 +80,20 @@ NaoFileSystemManager::NaoFileSystemManager() {
     d_ptr = std::make_unique<NFSMPrivate>();
 }
 
+#pragma endregion 
+
+#pragma region NFSMPRivate
+
 //////// NFSMPrivate
 
 //// Public
 
 NaoFileSystemManager::NFSMPrivate::~NFSMPrivate() {
     delete m_current_object;
+
+    for (NotifyerFunctionBase* func : m_change_handlers) {
+        delete func;
+    }
 }
 
 
@@ -98,7 +114,7 @@ bool NaoFileSystemManager::NFSMPrivate::init(const NaoString& root_dir) {
 
     m_current_object = new NaoObject(NaoObject::Dir { root.string().c_str() });
 
-    NaoPlugin* plugin = PluginManager.plugin_for_object(m_current_object);
+    const NaoPlugin* plugin = PluginManager.plugin_for_object(m_current_object);
 
     if (!plugin || !plugin->populatable(m_current_object)) {
 
@@ -120,6 +136,8 @@ bool NaoFileSystemManager::NFSMPrivate::init(const NaoString& root_dir) {
         return false;
     }
 
+    m_change_handlers.at(0)->operator()();
+
     return true;
 }
 
@@ -132,3 +150,4 @@ bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
 //// Private
 
 
+#pragma endregion

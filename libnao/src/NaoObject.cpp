@@ -97,3 +97,12 @@ NaoObject::Dir& NaoObject::dir_ref() {
 const NaoString& NaoObject::name() const {
     return (_m_is_dir ? _m_dir.name : _m_file.name);
 }
+
+void NaoObject::set_description(const NaoString& desc) {
+    _m_description = desc;
+}
+
+const NaoString& NaoObject::description() const {
+    return _m_description;
+}
+

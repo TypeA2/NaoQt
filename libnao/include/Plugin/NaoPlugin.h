@@ -44,7 +44,7 @@ using SupportsFunc = bool(*)(NaoObject*);
 using PopulatableFunc = bool(*)(NaoObject*);
 using DecodableFunc = bool(*)(NaoObject*);
 
-using DescFunc = NaoString(*)(NaoObject*);
+using DescFunc = NaoString(*)();
 
 using PopulateFunc = bool(*)(NaoObject*);
 using DecodeFunc = bool(*)(NaoObject*, NaoIO*);

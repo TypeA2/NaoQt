@@ -49,7 +49,7 @@ namespace Plugin {
     }
 
     namespace Function {
-        LIBNAO_PLUGIN_DECL NaoString description(NAO_UNUSED NaoObject* object);
+        LIBNAO_PLUGIN_DECL NaoString description();
         LIBNAO_PLUGIN_DECL bool populate(NaoObject* object);
         LIBNAO_PLUGIN_DECL bool decode(NAO_UNUSED NaoObject* object,
             NAO_UNUSED NaoIO* out);

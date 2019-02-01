@@ -66,8 +66,12 @@ class NaoPluginManager::NaoPluginManagerPrivate {
     // Loads a single plugin
     bool load(const NaoString& plugin_name);
 
-    NaoPlugin* get_plugin_for_object(NaoObject* object);
+    const NaoPlugin* get_plugin_for_object(NaoObject* object);
+
+    bool set_description_for_object(NaoObject* object);
 };
+
+#pragma region NaoPluginManager
 
 //////// NaoPluginManager
 
@@ -99,10 +103,13 @@ bool NaoPluginManager::initialised() const {
     return d_ptr->m_initialised;
 }
 
-NaoPlugin* NaoPluginManager::plugin_for_object(NaoObject* object) {
+const NaoPlugin* NaoPluginManager::plugin_for_object(NaoObject* object) {
     return d_ptr->get_plugin_for_object(object);
 }
 
+bool NaoPluginManager::set_description(NaoObject* object) {
+    return d_ptr->set_description_for_object(object);
+}
 
 //// Private
 
@@ -110,6 +117,9 @@ NaoPluginManager::NaoPluginManager() {
     d_ptr = std::make_unique<NaoPluginManagerPrivate>();
 }
 
+#pragma endregion
+
+#pragma region NaoPluginManagerPrivate
 
 //////// NaoPluginManagerPrivate
 
@@ -180,7 +190,7 @@ bool NaoPluginManager::NaoPluginManagerPrivate::load(const NaoString& plugin_nam
     return false;
 }
 
-NaoPlugin* NaoPluginManager::NaoPluginManagerPrivate::get_plugin_for_object(NaoObject* object) {
+const NaoPlugin* NaoPluginManager::NaoPluginManagerPrivate::get_plugin_for_object(NaoObject* object) {
     for (NaoPlugin& plugin : m_plugins_raw) {
         if (plugin.supports(object)) {
             return &plugin;
@@ -190,3 +200,20 @@ NaoPlugin* NaoPluginManager::NaoPluginManagerPrivate::get_plugin_for_object(NaoO
     return nullptr;
 }
 
+bool NaoPluginManager::NaoPluginManagerPrivate::set_description_for_object(NaoObject* object) {
+    if (!object) {
+        return false;
+    }
+
+    const NaoPlugin* plugin = get_plugin_for_object(object);
+
+    if (!plugin) {
+        return false;
+    }
+
+    object->set_description(plugin->description());
+
+    return true;
+}
+
+#pragma endregion 

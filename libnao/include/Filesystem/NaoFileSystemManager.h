@@ -22,6 +22,34 @@
 #define NaoFSM NaoFileSystemManager::global_instance()
 
 class NaoFileSystemManager {
+
+    class NotifyerFunctionBase {
+        public:
+        virtual void operator()() = 0;
+        virtual ~NotifyerFunctionBase() = default;
+    };
+
+    template <class T>
+    class NotifyerFunction : public NotifyerFunctionBase {
+        public:
+        NotifyerFunction(T* context, void (T::* member)())
+            : _m_context(context)
+            , _m_member(member) {
+
+        }
+
+        NotifyerFunction() = delete;
+
+        void operator()() override {
+            (_m_context->*_m_member)();
+        }
+
+        private:
+
+        T* _m_context;
+        void (T::* _m_member)();
+    };
+
     public:
     // Global instance
     LIBNAO_API static NaoFileSystemManager& global_instance();
@@ -29,10 +57,17 @@ class NaoFileSystemManager {
     LIBNAO_API bool init(const NaoString& root_dir);
     LIBNAO_API bool move(const NaoString& target);
 
+    template <class T>
+    void add_change_handler(T* context, void (T::* member)()) {
+        add_change_handler(new NotifyerFunction(context, member));
+    }
+
     LIBNAO_API NaoObject* current_object() const;
     LIBNAO_API const NaoString& last_error() const;
 
     private:
+
+    LIBNAO_API void add_change_handler(NotifyerFunctionBase* func);
 
     NaoFileSystemManager();
 

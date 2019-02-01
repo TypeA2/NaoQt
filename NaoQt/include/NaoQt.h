@@ -37,25 +37,27 @@ class NaoQt : public QMainWindow {
 
     // Static getters
     static QString get_config_path();
+    static QString get_text_resource(const QString& path);
 
     private slots:
     void view_double_click();
     void view_context_menu();
     void view_sort_column();
+    void view_up();
     void view_refresh();
     void open_folder();
 
     void path_display_changed();
 
+    void fsm_notify();
+
     void about_naoqt();
     void about_libnao();
+    void about_icons8();
     void about_qt();
     void libnao_plugins();
 
     private:
-    // Stores all settings in key/value pairs
-    std::map<QString, QString> _m_settings;
-
     // Loads all settings from the .ini file
     void _load_settings();
     static void _write_default_settings();
@@ -66,6 +68,10 @@ class NaoQt : public QMainWindow {
 
     // Private members
 
+    // Stores all settings in key/value pairs
+    std::map<QString, QString> _m_settings;
+
+    QPushButton* _m_up_button;
     QPushButton* _m_refresh_button;
     QLineEdit* _m_path_display;
     QPushButton* _m_browse_button;

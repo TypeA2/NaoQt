@@ -71,6 +71,10 @@ class LIBNAO_API NaoObject {
 
     const NaoString& name() const;
 
+    void set_description(const NaoString& desc);
+
+    const NaoString& description() const;
+
     private:
     bool _m_is_dir;
 
@@ -78,4 +82,6 @@ class LIBNAO_API NaoObject {
 
     File _m_file;
     Dir _m_dir;
+
+    NaoString _m_description;
 };

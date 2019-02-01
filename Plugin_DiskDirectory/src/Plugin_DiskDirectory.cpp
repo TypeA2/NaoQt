@@ -20,6 +20,7 @@
 #include <Filesystem/Filesystem.h>
 #include <IO/NaoFileIO.h>
 #include <Logging/NaoLogging.h>
+#include <Plugin/NaoPluginManager.h>
 
 NaoPlugin GetNaoPlugin() {
     return {
@@ -117,7 +118,7 @@ namespace Plugin {
     }
 
     namespace Function {
-        NaoString description(NAO_UNUSED NaoObject* object) {
+        NaoString description() {
             return "Directory";
         }
 
@@ -125,6 +126,8 @@ namespace Plugin {
             if (!Capabilities::supports(object)) {
                 return false;
             }
+
+            object->set_description(description());
 
             NaoVector<NaoObject*> children;
 
@@ -136,6 +139,7 @@ namespace Plugin {
 
                 if (is_directory(entry.path())) {
                     children.push_back(new NaoObject({ path_str }));
+                    children.back()->set_description(description());
                 } else if (is_regular_file(entry.path())) {
                     NaoFileIO* io = new NaoFileIO(path_str);
 
@@ -156,6 +160,11 @@ namespace Plugin {
                         false,
                         path_str
                         }));
+
+                    if (!PluginManager.set_description(children.back())) {
+                        nerr << "Plugin_DiskDirectory::populate - failed to set description for"
+                             << children.back()->name();
+                    }
 
                 }
             }

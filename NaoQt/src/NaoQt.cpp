@@ -61,6 +61,17 @@ QString NaoQt::get_config_path() {
     return QCoreApplication::applicationDirPath() + "/NaoQt.ini";
 }
 
+QString NaoQt::get_text_resource(const QString& path) {
+    QFile file(":/NaoQt/Resources/" + path);
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+
+    QString str = file.readAll();
+
+    file.close();
+
+    return str;
+}
+
 //// Private
 
 void NaoQt::_load_settings() {
@@ -71,11 +82,11 @@ void NaoQt::_load_settings() {
     QSettings settings(get_config_path(), QSettings::IniFormat);
     QStringList existings_keys = settings.allKeys();
 
-    for (std::pair<const char*, const char*> pair : DefaultSettings) {
+    for (const std::pair<const char*, const char*> pair : DefaultSettings) {
         if (!existings_keys.contains(pair.first)) {
             settings.setValue(pair.first, pair.second);
         }
-
+        
         _m_settings.insert(pair);
     }
 }
@@ -91,14 +102,22 @@ void NaoQt::_write_default_settings() {
 void NaoQt::_init_window() {
     setMinimumSize(540, 360);
     resize(960, 640);
-    
+
+#pragma region Widgets
+
     QWidget* central_widget = new QWidget(this);
     QVBoxLayout* central_layout = new QVBoxLayout(central_widget);
     QHBoxLayout* path_display_layout = new QHBoxLayout();
 
-    _m_refresh_button = new QPushButton(QIcon(":/NaoQt/Resources/refresh.png"), "", central_widget);
+    _m_up_button = new QPushButton(QIcon(":/NaoQt/Resources/icons/up.png"), "", central_widget);
+    _m_up_button->setToolTip("Go up");
+    
+    _m_refresh_button = new QPushButton(QIcon(":/NaoQt/Resources/icons/refresh.svg"), "", central_widget);
+    _m_refresh_button->setToolTip("Refresh view");
+
     _m_path_display = new QLineEdit(this);
     _m_browse_button = new QPushButton("Browse", central_widget);
+    _m_browse_button->setToolTip("Browse folder");
 
     _m_tree_widget = new QTreeWidget(central_widget);
     _m_tree_widget->setColumnCount(4);
@@ -125,10 +144,12 @@ void NaoQt::_init_window() {
     _m_browse_button->setMaximumHeight(22);
     _m_browse_button->setIcon(QFileIconProvider().icon(QFileIconProvider::Folder));
 
+    connect(_m_up_button, &QPushButton::released, this, &NaoQt::view_up);
     connect(_m_refresh_button, &QPushButton::released, this, &NaoQt::view_refresh);
     connect(_m_browse_button, &QPushButton::released, this, &NaoQt::open_folder);
     connect(_m_path_display, &QLineEdit::editingFinished, this, &NaoQt::path_display_changed);
 
+    path_display_layout->addWidget(_m_up_button);
     path_display_layout->addWidget(_m_refresh_button);
     path_display_layout->addWidget(_m_path_display);
     path_display_layout->addWidget(_m_browse_button);
@@ -144,7 +165,9 @@ void NaoQt::_init_window() {
 
     _m_tree_widget->setFocus();
 
+#pragma endregion Widgets
 
+#pragma region MenuBar
 
     QMenuBar* menu = new QMenuBar(this);
 
@@ -162,16 +185,19 @@ void NaoQt::_init_window() {
     QMenu* help_menu = new QMenu("Help", menu);
     QAction* about_naoqt = new QAction("About NaoQt", help_menu);
     QAction* about_libnao = new QAction("About libnao", help_menu);
+    QAction* about_icons8 = new QAction("About Icons8", help_menu);
     QAction* about_qt = new QAction("About Qt", help_menu);
     QAction* libnao_plugins = new QAction("Plugins", help_menu);
 
     connect(about_naoqt, &QAction::triggered, this, &NaoQt::about_naoqt);
     connect(about_libnao, &QAction::triggered, this, &NaoQt::about_libnao);
+    connect(about_icons8, &QAction::triggered, this, &NaoQt::about_icons8);
     connect(about_qt, &QAction::triggered, this, &NaoQt::about_qt);
     connect(libnao_plugins, &QAction::triggered, this, &NaoQt::libnao_plugins);
 
     help_menu->addAction(about_naoqt);
     help_menu->addAction(about_libnao);
+    help_menu->addAction(about_icons8);
     help_menu->addAction(about_qt);
     help_menu->addSeparator();
     help_menu->addAction(libnao_plugins);
@@ -180,6 +206,8 @@ void NaoQt::_init_window() {
     menu->addMenu(help_menu);
 
     setMenuBar(menu);
+
+#pragma endregion MenuBar
 
 }
 
@@ -203,44 +231,21 @@ void NaoQt::_load_plugins() {
 }
 
 void NaoQt::_init_filesystem() {
-    if (!NaoFSM.init(SteamUtils::game_path("NieRAutomata",
-        QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation).at(0).toUtf8().data()))) {
-        
+
+    const NaoString default_path = SteamUtils::game_path(_m_settings.at("filesystem/default_game").toUtf8().constData(),
+        _m_settings.at("filesystem/default_fallback").toUtf8().constData());
+
+    NaoFSM.add_change_handler(this, &NaoQt::fsm_notify);
+
+    if (!NaoFSM.init(default_path)) {
         QMessageBox::critical(this, "NaoFSM::init error",
             NaoFSM.last_error().c_str());
 
         throw std::exception(NaoFSM.last_error().c_str());
     }
 
-    NaoObject* current_object = NaoFSM.current_object();
-
-    static QFileIconProvider ficonprovider;
-
-    for (NaoObject* child : current_object->children()) {
-        QTreeWidgetItem* item = new QTreeWidgetItem(_m_tree_widget);
-
-        const NaoString name = fs::path(child->name().c_str()).string().c_str();
-
-        item->setText(0, name.c_str());
-
-        if (child->is_dir()) {
-            item->setIcon(0, ficonprovider.icon(QFileIconProvider::Folder));
-
-            item->setText(2, "Directory");
-        } else {
-            item->setIcon(0, ficonprovider.icon(QFileInfo(child->name().c_str())));
-        }
-
-        _m_tree_widget->addTopLevelItem(item);
-    }
-
-    for (int i = 0; i < _m_tree_widget->columnCount(); ++i) {
-        _m_tree_widget->resizeColumnToContents(i);
-    }
-
-    _m_path_display->setText(current_object->name().c_str());
+    
 }
-
 
 //// Slots
 
@@ -256,6 +261,10 @@ void NaoQt::view_sort_column() {
     
 }
 
+void NaoQt::view_up() {
+
+}
+
 void NaoQt::view_refresh() {
     
 }
@@ -268,28 +277,56 @@ void NaoQt::path_display_changed() {
     
 }
 
+void NaoQt::fsm_notify() {
+    ndebug << "notified";
+
+    NaoObject* current_object = NaoFSM.current_object();
+
+    static QFileIconProvider ficonprovider;
+
+    for (NaoObject* child : current_object->children()) {
+        QTreeWidgetItem* item = new QTreeWidgetItem(_m_tree_widget);
+
+        const NaoString name = fs::path(child->name().c_str()).string().c_str();
+
+        item->setText(0, name.c_str());
+
+        if (child->is_dir()) {
+            item->setIcon(0, ficonprovider.icon(QFileIconProvider::Folder));
+
+            item->setText(2, child->description().c_str());
+        } else {
+            item->setIcon(0, ficonprovider.icon(QFileInfo(child->name().c_str())));
+        }
+
+        _m_tree_widget->addTopLevelItem(item);
+    }
+
+    for (int i = 0; i < _m_tree_widget->columnCount(); ++i) {
+        _m_tree_widget->resizeColumnToContents(i);
+    }
+
+    _m_path_display->setText(current_object->name().c_str());
+}
+
+
+#pragma region About
+
 void NaoQt::about_naoqt() {
-    QFile about_file(":/NaoQt/Resources/AboutNaoQt.html");
-    about_file.open(QIODevice::ReadOnly | QIODevice::Text);
-
-    QString about_naoqt = about_file.readAll();
-
-    about_file.close();
-
     QMessageBox::about(this, "About NaoQt",
-        about_naoqt.arg(QString("version %0.%1").arg(NAOQT_VERSION_MAJOR).arg(NAOQT_VERSION_MINOR)));
+        get_text_resource("AboutNaoQt.html").arg(QString("version %0.%1")
+            .arg(NAOQT_VERSION_MAJOR).arg(NAOQT_VERSION_MINOR)));
 }
 
 void NaoQt::about_libnao() {
-    QFile about_file(":/NaoQt/Resources/Aboutlibnao.html");
-    about_file.open(QIODevice::ReadOnly | QIODevice::Text);
-
-    QString about_libnao = about_file.readAll();
-
-    about_file.close();
-
     QMessageBox::about(this, "About libnao",
-        about_libnao.arg(QString("version %0.%1").arg(LIBNAO_VERSION_MAJOR).arg(LIBNAO_VERSION_MINOR)));
+        get_text_resource("Aboutlibnao.html").arg(QString("version %0.%1")
+            .arg(LIBNAO_VERSION_MAJOR).arg(LIBNAO_VERSION_MINOR)));
+}
+
+void NaoQt::about_icons8() {
+    QMessageBox::about(this, "About Icons8",
+        get_text_resource("AboutIcons8.html"));
 }
 
 void NaoQt::about_qt() {
@@ -299,3 +336,5 @@ void NaoQt::about_qt() {
 void NaoQt::libnao_plugins() {
     NaoPluginDialog::list(this);
 }
+
+#pragma endregion
