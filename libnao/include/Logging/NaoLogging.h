@@ -23,13 +23,13 @@
 
 #include <string>
 
-#ifdef NAO_WINDOWS
+#ifdef N_WINDOWS
 #   define ndebug NaoLogger(NaoLogger::DEBUG_WIN, true, true, false)
 #else
 #   define ndebug NaoLogger(NaoLogger::STDERR, true, true, false)
 #endif
 
-#if defined(NAO_WINDOWS) && defined(NAO_DEBUG)
+#if defined(N_WINDOWS) && defined(NAO_DEBUG)
 #   define nerr NaoLogger(NaoLogger::DEBUG_WIN, true, true, true)
 #else
 #   define nerr NaoLogger(NaoLogger::STDERR, true, true, true)
@@ -54,7 +54,7 @@ class LIBNAO_API NaoLogger {
 
     // Logging functions
     template <typename T>
-    void print(T msg, NAO_UNUSED bool quote = true) const {
+    void print(T msg, N_UNUSED bool quote = true) const {
         std::string str = std::to_string(msg);
 
         print(str.c_str(), false);
@@ -122,37 +122,37 @@ inline void NaoLogger::print(const wchar_t* msg, bool quote) const {
 // ReSharper disable performance-unnecessary-value-param
 
 template <>
-inline void NaoLogger::print(std::string msg, NAO_UNUSED bool quote) const {
+inline void NaoLogger::print(std::string msg, N_UNUSED bool quote) const {
     print(msg.c_str());
 }
 
 template <>
-inline void NaoLogger::print(std::wstring msg, NAO_UNUSED bool quote) const {
+inline void NaoLogger::print(std::wstring msg, N_UNUSED bool quote) const {
     print(msg.c_str());
 }
 
 template <>
-inline void NaoLogger::print(const std::string& msg, NAO_UNUSED bool quote) const {
+inline void NaoLogger::print(const std::string& msg, N_UNUSED bool quote) const {
     print(msg.c_str());
 }
 
 template <>
-inline void NaoLogger::print(const std::wstring& msg, NAO_UNUSED bool quote) const {
+inline void NaoLogger::print(const std::wstring& msg, N_UNUSED bool quote) const {
     print(msg.c_str());
 }
 
 template <>
-inline void NaoLogger::print(NaoString msg, NAO_UNUSED bool quote) const {
+inline void NaoLogger::print(NaoString msg, N_UNUSED bool quote) const {
     print(msg.c_str());
 }
 
 template <>
-inline void NaoLogger::print(const NaoString& msg, NAO_UNUSED bool quote) const {
+inline void NaoLogger::print(const NaoString& msg, N_UNUSED bool quote) const {
     print(msg.c_str());
 }
 
 template <>
-inline void NaoLogger::print(bool msg, NAO_UNUSED bool quote) const {
+inline void NaoLogger::print(bool msg, N_UNUSED bool quote) const {
     print(msg ? "true" : "false", false);
 }
 

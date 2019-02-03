@@ -45,13 +45,13 @@ namespace Plugin {
     namespace Capabilities {
         LIBNAO_PLUGIN_DECL bool supports(NaoObject* object);
         LIBNAO_PLUGIN_DECL bool populatable(NaoObject* object);
-        LIBNAO_PLUGIN_DECL bool decodable(NAO_UNUSED NaoObject* object);
+        LIBNAO_PLUGIN_DECL bool decodable(N_UNUSED NaoObject* object);
     }
 
     namespace Function {
         LIBNAO_PLUGIN_DECL NaoString description();
         LIBNAO_PLUGIN_DECL bool populate(NaoObject* object);
-        LIBNAO_PLUGIN_DECL bool decode(NAO_UNUSED NaoObject* object,
-            NAO_UNUSED NaoIO* out);
+        LIBNAO_PLUGIN_DECL bool decode(N_UNUSED NaoObject* object,
+            N_UNUSED NaoIO* out);
     }
 }

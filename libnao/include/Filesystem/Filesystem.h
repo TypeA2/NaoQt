@@ -64,35 +64,9 @@ namespace fs = std::filesystem;
 
 #endif
 
-#ifdef NAO_WINDOWS
+#ifdef N_WINDOWS
 #   define NAO_PATH_SEP "\\"
 #else
 #   define NAO_PATH_SEP "/"
 #endif
 
-inline NaoString& normalize(NaoString& in) {
-    char* data = std::data(in);
-
-    while (*data) {
-
-#ifdef NAO_WINDOWS
-        if (*data == '/') {
-            *data = '\\';
-        }
-#else
-        if (*data == '\\') {
-            *data = '/';
-        }
-#endif
-
-        ++data;
-    }
-
-    return in;
-}
-
-inline NaoString normalize(const char* in) {
-    NaoString out(in);
-
-    return normalize(out);
-}

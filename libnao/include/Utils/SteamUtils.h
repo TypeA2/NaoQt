@@ -20,6 +20,7 @@
 #include "libnao.h"
 
 #include "Containers/NaoString.h"
+#include "Containers/NaoVector.h"
 
 namespace SteamUtils {
     LIBNAO_API NaoString steam_path();

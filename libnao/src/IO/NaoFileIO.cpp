@@ -22,7 +22,7 @@
 NaoFileIO::NaoFileIO(const NaoString& path)
     : _m_file_ptr(nullptr) {
 
-    fs::path target_path = fs::absolute(path.c_str());
+    fs::path target_path = fs::absolute(path);
 
     if (exists(target_path)) {
         set_size(file_size(target_path));
@@ -30,7 +30,7 @@ NaoFileIO::NaoFileIO(const NaoString& path)
         set_size(0i64);
     }
 
-    _m_path = target_path.string().c_str();
+    _m_path = target_path;
 }
 
 NaoFileIO::~NaoFileIO() {

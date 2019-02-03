@@ -49,7 +49,7 @@ class NaoQt : public QMainWindow {
 
     void path_display_changed();
 
-    void fsm_notify();
+    void fsm_object_changed();
 
     void about_naoqt();
     void about_libnao();
@@ -67,6 +67,11 @@ class NaoQt : public QMainWindow {
     void _init_filesystem();
 
     // Private members
+
+    enum DataRoles : int {
+        ItemSizeRole = Qt::UserRole + 1,
+        CompressionRatioRole
+    };
 
     // Stores all settings in key/value pairs
     std::map<QString, QString> _m_settings;

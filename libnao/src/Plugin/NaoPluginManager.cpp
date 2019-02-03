@@ -16,11 +16,13 @@
 */
 
 #include "Plugin/NaoPluginManager.h"
+
+#include "NaoObject.h"
 #include "Plugin/NaoPlugin.h"
-
 #include "Filesystem/Filesystem.h"
+#include "Logging/NaoLogging.h"
 
-#ifdef NAO_WINDOWS
+#ifdef N_WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
 #include <Windows.h>
@@ -98,7 +100,6 @@ const NaoVector<NaoPlugin>& NaoPluginManager::loaded() const {
     return d_ptr->m_plugins_raw;
 }
 
-
 bool NaoPluginManager::initialised() const {
     return d_ptr->m_initialised;
 }
@@ -130,16 +131,16 @@ NaoPluginManager::NaoPluginManagerPrivate::~NaoPluginManagerPrivate() {
 }
 
 bool NaoPluginManager::NaoPluginManagerPrivate::init(const NaoString& plugins_dir) {
-    m_plugins_dir = fs::absolute(plugins_dir.c_str()).string().c_str();
+    m_plugins_dir = fs::absolute(plugins_dir);
 
-    for (const fs::directory_entry& file : fs::directory_iterator(m_plugins_dir.c_str())) {
+    for (const fs::directory_entry& file : fs::directory_iterator(m_plugins_dir)) {
         if (!is_directory(file.path()) &&
             !is_empty(file.path()) &&
             file.path().extension() == LIBNAO_PLUGIN_EXTENSION) {
 
-            if (!load(file.path().string().c_str())) {
+            if (!load(file.path())) {
                 m_errored_list.push_back({
-                    file.path().filename().string().c_str(),
+                    file.path().filename(),
                     m_error
                     });
             } else {
@@ -156,11 +157,11 @@ bool NaoPluginManager::NaoPluginManagerPrivate::init(const NaoString& plugins_di
 }
 
 bool NaoPluginManager::NaoPluginManagerPrivate::load(const NaoString& plugin_name) {
-#ifdef NAO_WINDOWS
+#ifdef N_WINDOWS
 
     Plugin plugin;
 
-    plugin.handle = LoadLibraryA(plugin_name.c_str());
+    plugin.handle = LoadLibraryA(plugin_name);
 
     if (plugin.handle == nullptr) {
         return false;

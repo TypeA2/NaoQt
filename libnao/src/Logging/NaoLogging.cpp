@@ -22,7 +22,7 @@
 #include <vector>
 #include <iostream>
 
-#ifdef NAO_WINDOWS
+#ifdef N_WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
 #include <Windows.h>

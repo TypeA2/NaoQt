@@ -21,6 +21,7 @@
 #include <IO/NaoFileIO.h>
 #include <Logging/NaoLogging.h>
 #include <Plugin/NaoPluginManager.h>
+#include <NaoObject.h>
 
 NaoPlugin GetNaoPlugin() {
     return {
@@ -112,7 +113,7 @@ namespace Plugin {
             return true;
         }
 
-        bool decodable(NAO_UNUSED NaoObject* object) {
+        bool decodable(N_UNUSED NaoObject* object) {
             return false;
         }
     }
@@ -178,7 +179,7 @@ namespace Plugin {
             return true;
         }
 
-        bool decode(NAO_UNUSED NaoObject* object, NAO_UNUSED NaoIO* out) {
+        bool decode(N_UNUSED NaoObject* object, N_UNUSED NaoIO* out) {
             return false;
         }
     }

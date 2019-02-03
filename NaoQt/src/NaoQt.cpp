@@ -29,7 +29,6 @@
 
 #include <QSettings>
 #include <QCoreApplication>
-
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -38,7 +37,9 @@
 #include <QHeaderView>
 #include <QFileIconProvider>
 #include <QMenuBar>
-#include <QStandardPaths>
+#include <QFutureWatcher>
+
+#include <QtConcurrent>
 
 //// Public
 
@@ -212,7 +213,7 @@ void NaoQt::_init_window() {
 }
 
 void NaoQt::_load_plugins() {
-    bool success = PluginManager.init(_m_settings.at("plugins/plugins_directory").toStdString().c_str());
+    bool success = PluginManager.init(_m_settings.at("plugins/plugins_directory"));
 
     if (!success) {
 
@@ -220,7 +221,7 @@ void NaoQt::_load_plugins() {
 
         NaoVector<NaoPair<NaoString, NaoString>> errs = PluginManager.errored_list();
         for (const NaoPair<NaoString, NaoString>& err : errs) {
-            msg.append(QString("%0: %1\n").arg(err.first.c_str(), err.second.c_str()));
+            msg.append(QString("%0: %1\n").arg(err.first, err.second));
         }
 
         QMessageBox::critical(
@@ -232,19 +233,25 @@ void NaoQt::_load_plugins() {
 
 void NaoQt::_init_filesystem() {
 
-    const NaoString default_path = SteamUtils::game_path(_m_settings.at("filesystem/default_game").toUtf8().constData(),
-        _m_settings.at("filesystem/default_fallback").toUtf8().constData());
+    const NaoString default_path = SteamUtils::game_path(_m_settings.at("filesystem/default_game"),
+        _m_settings.at("filesystem/default_fallback"));
 
-    NaoFSM.add_change_handler(this, &NaoQt::fsm_notify);
+    auto future_watcher = new QFutureWatcher<bool>(this);
 
-    if (!NaoFSM.init(default_path)) {
-        QMessageBox::critical(this, "NaoFSM::init error",
-            NaoFSM.last_error().c_str());
+    connect(future_watcher, &QFutureWatcher<void>::finished, this, [future_watcher, this] {
 
-        throw std::exception(NaoFSM.last_error().c_str());
-    }
+        if (!future_watcher->result()) {
+            QMessageBox::critical(this, "NaoFSM::init error",
+                NaoFSM.last_error());
 
-    
+            throw std::exception(NaoFSM.last_error());
+        }
+
+        fsm_object_changed();
+    });
+    connect(future_watcher, &QFutureWatcher<void>::finished, &QFutureWatcher<void>::deleteLater);
+
+    future_watcher->setFuture(QtConcurrent::run(&NaoFSM, &NaoFileSystemManager::init, default_path));
 }
 
 //// Slots
@@ -277,36 +284,55 @@ void NaoQt::path_display_changed() {
     
 }
 
-void NaoQt::fsm_notify() {
-    ndebug << "notified";
-
+void NaoQt::fsm_object_changed() {
     NaoObject* current_object = NaoFSM.current_object();
 
+    _m_path_display->setText(current_object->name());
+
     static QFileIconProvider ficonprovider;
+
+    const NaoString base_path = current_object->name().copy().append('/').normalize_path();
 
     for (NaoObject* child : current_object->children()) {
         QTreeWidgetItem* item = new QTreeWidgetItem(_m_tree_widget);
 
-        const NaoString name = fs::path(child->name().c_str()).string().c_str();
+        NaoString name = child->name().copy().normalize_path();
 
-        item->setText(0, name.c_str());
+        if (name.starts_with(base_path)) {
+            name = name.substr(std::size(base_path));
+        }
+
+        item->setText(0, name);
+
+        item->setText(2, child->description());
 
         if (child->is_dir()) {
             item->setIcon(0, ficonprovider.icon(QFileIconProvider::Folder));
 
-            item->setText(2, child->description().c_str());
+            item->setData(1, ItemSizeRole, -1i64);
         } else {
-            item->setIcon(0, ficonprovider.icon(QFileInfo(child->name().c_str())));
-        }
+            const NaoObject::File& file = child->file_ref();
 
+            item->setIcon(0, ficonprovider.icon(QFileInfo(child->name())));
+
+            item->setData(1, ItemSizeRole, file.real_size);
+
+            if (item->text(2).isEmpty()) {
+                static QMimeDatabase db;
+                item->setText(2, db.mimeTypeForUrl(QUrl::fromLocalFile(child->name())).comment());
+            }
+
+            double ratio = file.binary_size / double(file.real_size);
+            item->setData(3, CompressionRatioRole, ratio);
+            item->setText(3, QString("%0%").arg(qRound(100. * ratio)));
+        }
+        
         _m_tree_widget->addTopLevelItem(item);
     }
 
     for (int i = 0; i < _m_tree_widget->columnCount(); ++i) {
         _m_tree_widget->resizeColumnToContents(i);
     }
-
-    _m_path_display->setText(current_object->name().c_str());
 }
 
 

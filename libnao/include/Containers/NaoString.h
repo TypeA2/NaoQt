@@ -19,6 +19,24 @@
 
 #include "libnao.h"
 
+#include "Filesystem/Filesystem.h"
+
+#ifdef QT_VERSION
+#   define NAOSTRING_QT_EXTENSIONS
+#   include <QString>
+#   include "Functionality/NaoMath.h"
+#endif
+
+#ifdef N_WINDOWS
+#define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
+#include <Windows.h>
+#undef VC_EXTRALEAN
+#undef WIN32_LEAN_AND_MEAN
+#endif
+
+#if 0
+
 template <typename T,
     typename = std::enable_if_t<std::is_integral_v<T>>>
     class LIBNAO_API BasicNaoString;
@@ -68,6 +86,8 @@ class BasicNaoString<T> {
         other._m_end = nullptr;
     }
 
+#pragma region assign
+
     BasicNaoString& operator=(const T* str) {
         if (_m_allocated) {
             delete[] _m_data;
@@ -99,8 +119,6 @@ class BasicNaoString<T> {
         _m_allocated = NaoMath::round_up(_m_size, data_alignment);
 
         _m_data = new T[_m_allocated]();
-
-        _m_end = _m_data;
 
         _m_end = std::copy(std::begin(ilist), std::end(ilist), _m_data);
 
@@ -289,6 +307,10 @@ class BasicNaoString<T> {
         return *this;
     }
 
+#pragma endregion
+
+#pragma region access
+
     reference at(size_type pos) {
         if (pos >= _m_size) {
             throw std::out_of_range("position is out of range");
@@ -397,6 +419,10 @@ class BasicNaoString<T> {
         return const_reverse_iterator(_m_data);
     }
 
+#pragma endregion
+
+#pragma region properties
+
     bool empty() const noexcept {
         return _m_size == 0;
     }
@@ -438,6 +464,8 @@ class BasicNaoString<T> {
         return _m_allocated;
     }
 
+#pragma endregion
+
     void shrink_to_fit() {
         size_type allocate_target = NaoMath::round_up(_m_size, data_alignment);
 
@@ -457,7 +485,7 @@ class BasicNaoString<T> {
         _m_data[0] = null_value;
     }
 
-    // =====================================================================
+#pragma region insert
 
     BasicNaoString& insert(size_type index, size_type count, T ch) {
         if (index > size()) {
@@ -677,12 +705,12 @@ class BasicNaoString<T> {
         return insert(pos, std::begin(ilist), std::end(ilist));
     }
 
+#pragma endregion
+
     BasicNaoString& erase(size_type index = 0, size_type count = size_type(-1)) {
         if (index > size()) {
             throw std::out_of_range("index out of range");
         }
-
-        size_type to_remove = 0;
 
         if (count == size_type(-1) || count > _m_size - index) {
             _m_end = _m_data + index;
@@ -722,6 +750,8 @@ class BasicNaoString<T> {
 
         *(--_m_end) = null_value;
     }
+
+#pragma region append
 
     BasicNaoString& append(size_type count, T ch) {
         insert(_m_end, count, ch);
@@ -774,7 +804,9 @@ class BasicNaoString<T> {
         return append(std::begin(ilist), std::end(ilist));
     }
 
-    private:
+#pragma endregion
+
+    protected:
     T* _m_data = nullptr;
     size_type _m_size = 0;
     size_type _m_allocated = 0;
@@ -782,6 +814,8 @@ class BasicNaoString<T> {
     iterator _m_end;
 
 };
+
+#pragma region "Public operators"
 
 template <class T>
 BasicNaoString<T> operator+(const BasicNaoString<T>& lhs, const BasicNaoString<T>& rhs) {
@@ -833,8 +867,207 @@ BasicNaoString<T> operator+(T lhs, BasicNaoString<T>&& rhs) {
     return BasicNaoString<T>(lhs).append(rhs);
 }
 
+
+
+template <class T>
+bool operator==(const BasicNaoString<T>& lhs, const BasicNaoString<T>& rhs) {
+    return lhs.equals(rhs);
+}
+
+template <class T>
+bool operator==(const BasicNaoString<T>& lhs, const T* rhs) {
+    return lhs.equals(rhs);
+}
+
+template <class T>
+bool operator==(const BasicNaoString<T>& lhs, T rhs) {
+    return std::size(lhs) == 1 && lhs.at(0) == rhs;
+}
+
+template <class T>
+bool operator==(const T* lhs, const BasicNaoString<T>& rhs) {
+    return rhs.equals(lhs);
+}
+
+template <class T>
+bool operator==(T lhs, const BasicNaoString<T>& rhs) {
+    return std::size(rhs) == 1 && rhs.at(0) == lhs;
+}
+
+#pragma endregion
+
 template class LIBNAO_API BasicNaoString<char>;
 template class LIBNAO_API BasicNaoString<wchar_t>;
 
-using NaoString = BasicNaoString<char>;
-using NaoWString = BasicNaoString<wchar_t>;
+#endif
+
+class LIBNAO_API NaoString {
+    public:
+
+#pragma region "Types"
+
+    using reference = char & ;
+    using const_reference = const char &;
+    using pointer = char * ;
+    using const_pointer = const char *;
+    using iterator = char * ;
+    using const_iterator = const char *;
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+    static constexpr char null_value = char();
+    static constexpr size_t data_alignment = 16 * sizeof(char);
+
+#pragma endregion 
+
+#pragma region "Constructors"
+    NaoString();
+
+    NaoString(const char* str);
+
+    NaoString(char c);
+
+    NaoString(const NaoString& other);
+
+    NaoString(NaoString&& other) noexcept;
+
+#pragma endregion 
+
+#pragma region "Assignment operators"
+
+    NaoString& operator=(const char* str);
+
+    NaoString& operator=(const NaoString& other);
+
+#pragma endregion
+
+#pragma region "Conversion operators"
+
+    operator const char*() const;
+
+#pragma endregion
+
+#pragma region "Conversion functions"
+
+    const char* c_str() const;
+
+#pragma endregion 
+
+#pragma region "Append functions"
+
+    NaoString& append(const NaoString& other);
+    NaoString& append(const NaoString& other, size_t n);
+    NaoString& append(const char* other);
+    NaoString& append(const char* other, size_t n);
+    NaoString& append(char other);
+
+#pragma endregion
+
+#pragma region "General functions"
+
+    size_t size() const noexcept;
+
+    bool empty() const noexcept;
+
+    void clear() noexcept;
+
+    void reserve(size_t size);
+
+#pragma endregion
+
+    private:
+
+    void _reallocate_to(size_t size);
+
+    char* _m_data;
+    size_t _m_size;
+    size_t _m_allocated;
+
+    iterator _m_end;
+
+    public:
+
+#pragma region "Quality of life improvements"
+
+    NaoString copy() const;
+
+    reference operator[](size_t i);
+
+    bool starts_with(const NaoString& other) const noexcept;
+    bool starts_with(const char* other) const noexcept;
+    bool starts_with(char ch) const noexcept;
+
+    NaoString substr(size_t index, size_t len = size_t(-1)) const;
+
+#pragma endregion
+
+#pragma region "STL container compatibility"
+
+    NaoString(const std::string& other);
+
+    NaoString& operator=(const std::string& other);
+
+    operator std::string() const;
+
+#pragma endregion
+
+#pragma region "Filesystem compatibility"
+
+    NaoString(const fs::path& path);
+
+    NaoString& operator=(const fs::path& path);
+
+    operator fs::path() const;
+
+    NaoString& normalize_path();
+
+#pragma endregion
+
+#pragma region "Qt compatibility"
+
+#ifdef NAOSTRING_QT_EXTENSIONS
+    N_ESCAPE_DLLSPEC
+    NaoString(const QString& other) {
+        const QByteArray data = other.toUtf8();
+
+        _m_size = std::size(data);
+        _m_allocated = NaoMath::round_up(_m_size, data_alignment);
+        _m_data = new char[_m_allocated]();
+        _m_end = std::copy(std::begin(data), std::end(data), _m_data);
+    }
+
+    N_ESCAPE_DLLSPEC
+    NaoString& operator=(const QString& other) {
+        if (_m_allocated) {
+            delete[] _m_data;
+        }
+
+        const QByteArray data = other.toUtf8();
+
+        _m_size = std::size(data);
+        _m_allocated = NaoMath::round_up(_m_size, data_alignment);
+        _m_data = new char[_m_allocated]();
+        _m_end = std::copy(std::begin(data), std::end(data), _m_data);
+
+        return *this;
+    }
+
+    N_ESCAPE_DLLSPEC
+    operator QString() const {
+        return QString::fromUtf8(_m_data);
+    }
+#endif
+
+#pragma endregion
+};
+
+#pragma region "Global operators"
+
+LIBNAO_API NaoString operator+(const NaoString& lhs, const NaoString& rhs);
+LIBNAO_API NaoString operator+(const NaoString& lhs, const char* rhs);
+LIBNAO_API NaoString operator+(const NaoString& lhs, char rhs);
+
+LIBNAO_API NaoString operator+(const char* lhs, const NaoString& rhs);
+LIBNAO_API NaoString operator+(char lhs, const NaoString& rhs);
+
+#pragma endregion

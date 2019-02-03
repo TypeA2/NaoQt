@@ -17,6 +17,8 @@
 
 #include "Filesystem/NaoFileSystemManager.h"
 
+#include "NaoObject.h"
+
 #include "Filesystem/Filesystem.h"
 #include "Plugin/NaoPluginManager.h"
 
@@ -38,9 +40,6 @@ class NaoFileSystemManager::NFSMPrivate {
 
     // Latest error code
     NaoString m_last_error;
-
-    // All change handlers
-    NaoVector<NotifyerFunctionBase*> m_change_handlers;
 };
 
 #pragma region NaoFileSystemManager
@@ -70,10 +69,6 @@ const NaoString& NaoFileSystemManager::last_error() const {
     return d_ptr->m_last_error;
 }
 
-void NaoFileSystemManager::add_change_handler(NotifyerFunctionBase* func) {
-    d_ptr->m_change_handlers.push_back(func);
-}
-
 //// Private
 
 NaoFileSystemManager::NaoFileSystemManager() {
@@ -90,12 +85,7 @@ NaoFileSystemManager::NaoFileSystemManager() {
 
 NaoFileSystemManager::NFSMPrivate::~NFSMPrivate() {
     delete m_current_object;
-
-    for (NotifyerFunctionBase* func : m_change_handlers) {
-        delete func;
-    }
 }
-
 
 bool NaoFileSystemManager::NFSMPrivate::init(const NaoString& root_dir) {
 
@@ -103,16 +93,49 @@ bool NaoFileSystemManager::NFSMPrivate::init(const NaoString& root_dir) {
         return false;
     }
 
-    fs::path root = fs::absolute(root_dir.c_str());
-
-    if (!is_directory(root)) {
+    if (!fs::is_directory(root_dir)) {
 
         m_last_error = "NaoFSM::init - Path is not a directory";
 
         return false;
     }
 
-    m_current_object = new NaoObject(NaoObject::Dir { root.string().c_str() });
+    move(root_dir);
+
+    return true;
+}
+
+bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
+
+    fs::path target_path = fs::absolute(target);
+
+#if 0
+    if (m_current_object) {
+        const NaoVector<NaoObject*>& children = m_current_object->children();
+
+        auto pos = std::find_if(std::begin(children), std::end(children),
+            [&target_path](NaoObject* object) -> bool {
+            return object->name() == target_path.string().c_str();
+        });
+
+        if (pos == std::end(children)) {
+            delete m_current_object;
+            m_current_object = nullptr;
+        } else {
+            NaoObject* child_object = *pos;
+
+            m_current_object->remove_child(child_object);
+
+            delete m_current_object;
+
+            m_current_object = child_object;
+        }
+    }
+#endif
+
+    delete m_current_object;
+
+    m_current_object = new NaoObject(NaoObject::Dir { target });
 
     const NaoPlugin* plugin = PluginManager.plugin_for_object(m_current_object);
 
@@ -121,7 +144,8 @@ bool NaoFileSystemManager::NFSMPrivate::init(const NaoString& root_dir) {
         delete m_current_object;
         m_current_object = nullptr;
 
-        m_last_error = plugin ? "NaoFSM::init - path is not populatable by any plugin" : "NaoFSM::init - path is not supported";
+        m_last_error = plugin ? "NaoFSM::move - path is not populatable by any plugin" : 
+                                "NaoFSM::move - path is not supported";
 
         return false;
     }
@@ -136,13 +160,6 @@ bool NaoFileSystemManager::NFSMPrivate::init(const NaoString& root_dir) {
         return false;
     }
 
-    m_change_handlers.at(0)->operator()();
-
-    return true;
-}
-
-bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
-    (void) target;
     return true;
 }
 

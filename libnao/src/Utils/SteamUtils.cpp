@@ -27,7 +27,7 @@
 
 #include <regex>
 
-#ifdef NAO_WINDOWS
+#ifdef N_WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
 #include <Windows.h>
@@ -62,7 +62,7 @@ namespace SteamUtils {
             return NaoString();
         }
 
-#ifdef NAO_WINDOWS
+#ifdef N_WINDOWS
         int utf8_size = WideCharToMultiByte(CP_UTF8,
             WC_COMPOSITECHECK | WC_NO_BEST_FIT_CHARS,
             val,
@@ -90,14 +90,14 @@ namespace SteamUtils {
 
         return utf8_val;
 #else
-        nErr << "steam_path() is Windows-only";
+        nerr << "steam_path() is Windows-only";
 
         return NaoString();
 #endif
     }
 
     NaoVector<NaoString> steam_install_folders() {
-        NaoString libfolders_vdf_path = steam_path() + "/SteamApps/libraryfolders.vdf";
+        NaoString libfolders_vdf_path = steam_path() + NaoString("/SteamApps/libraryfolders.vdf").normalize_path();
 
         std::ifstream libfolders(libfolders_vdf_path.c_str());
 
@@ -105,12 +105,12 @@ namespace SteamUtils {
 
         NaoVector<NaoString> result(std::size(root.attribs) - 1);
 
-        result[0] = fs::absolute(steam_path().c_str()).lexically_normal().string().c_str();
+        result[0] = fs::absolute(steam_path()).lexically_normal();
 
         for (size_t i = 1; i <= std::size(root.attribs) - 2; ++i) {
             result[i] = fs::absolute(
                 root.attribs.at(std::to_string(i)))
-                .lexically_normal().string().c_str();
+                .lexically_normal();
 
         }
 
@@ -118,22 +118,22 @@ namespace SteamUtils {
     }
 
     NaoString game_path(const NaoString& game_dir, const NaoString& fallback) {
-#ifdef NAO_WINDOWS
+#ifdef N_WINDOWS
 
         for (const NaoString& folder : steam_install_folders()) {
 
             for (const fs::directory_entry& entry : 
-                fs::directory_iterator((folder + normalize("/SteamApps/common")).c_str())) {
+                fs::directory_iterator((folder + NaoString("/SteamApps/common").normalize_path()).c_str())) {
 
-                if (is_directory(entry.path()) && entry.path().filename() == game_dir.c_str()) {
-                    return entry.path().string().c_str();
+                if (is_directory(entry.path()) && entry.path().filename() == game_dir) {
+                    return entry.path();
                 }
             }
         }
 
         return fallback;
 #else
-        nErr << "game_path() is Windows-only";
+        nerr << "game_path() is Windows-only";
 
         return fallback;
 #endif

@@ -22,6 +22,10 @@
 #include <iterator>
 #include <algorithm>
 
+#ifdef max // a random max gets picked up somewhere
+#undef max
+#endif
+
 template <typename T>
 class NaoVector {
     public:

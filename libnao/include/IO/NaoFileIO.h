@@ -19,6 +19,8 @@
 
 #include "IO/NaoIO.h"
 
+#include  "Containers/NaoString.h"
+
 /*
  * File system file IO
  */

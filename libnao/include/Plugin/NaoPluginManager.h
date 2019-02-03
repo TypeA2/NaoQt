@@ -21,6 +21,7 @@
 
 #include "Containers/NaoString.h"
 #include "Containers/NaoPair.h"
+#include "Containers/NaoVector.h"
 #include "Plugin/NaoPlugin.h"
 
 #define PluginManager NaoPluginManager::global_instance()

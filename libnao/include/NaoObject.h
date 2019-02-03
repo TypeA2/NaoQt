@@ -19,8 +19,8 @@
 
 #include "libnao.h"
 
-#include "Containers/NaoVector.h"
 #include "Containers/NaoString.h"
+#include "Containers/NaoVector.h"
 
 class NaoObject;
 class NaoIO;
