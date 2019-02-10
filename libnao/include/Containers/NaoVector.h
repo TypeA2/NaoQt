@@ -318,7 +318,10 @@ class NaoVector {
             _m_end = std::copy(pos, const_iterator(_m_end), continue_pos);
             _m_size += count;
 
-            return continue_pos;
+            delete[] _m_data;
+            _m_data = new_data;
+
+            return insert_pos;
         }
 
         std::copy_backward(pos, const_iterator(_m_end), _m_end + count);

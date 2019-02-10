@@ -33,7 +33,11 @@ class NaoFileSystemManager {
     LIBNAO_API bool move(const NaoString& target);
 
     LIBNAO_API NaoObject* current_object() const;
+    LIBNAO_API const NaoString& current_path() const;
+
     LIBNAO_API const NaoString& last_error() const;
+
+    LIBNAO_API NaoString description(NaoObject* object) const;
 
     private:
 

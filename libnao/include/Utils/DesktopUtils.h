@@ -15,4 +15,14 @@
     along with libnao.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "Plugin/NaoPlugin.h"
+#pragma once
+
+#include "libnao.h"
+
+class NaoString;
+
+namespace DesktopUtils {
+    LIBNAO_API void show_in_explorer(const NaoString& target);
+    LIBNAO_API void open_in_explorer(const NaoString& target);
+    LIBNAO_API void open_file(const NaoString& target, bool choose = false);
+}

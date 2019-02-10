@@ -46,6 +46,23 @@ NaoBytes NaoIO::read(size_t size) {
     return bytes;
 }
 
+NaoBytes NaoIO::read_singleshot(size_t size) {
+    bool was_open = open_mode() != Closed;
+
+    if (!was_open) {
+        open(ReadOnly);
+    }
+
+    NaoBytes bytes = read(size);
+
+    if (!was_open) {
+        close();
+    }
+
+    return bytes;
+}
+
+
 int64_t NaoIO::write(const char* buf, int64_t size) {
     return -1i64;
 }

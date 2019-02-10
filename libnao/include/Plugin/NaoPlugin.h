@@ -20,6 +20,8 @@
 #include "libnao.h"
 
 #include "Containers/NaoString.h"
+#include "Containers/NaoVector.h"
+#include "Containers/NaoPair.h"
 
 #include <cstdint>
 
@@ -30,46 +32,45 @@ struct LIBNAO_API NaoPlugin;
 
 using PluginFunc = NaoPlugin(*)();
 
-using PluginNameFunc = NaoString(*)();
-using PluginDescFunc = NaoString(*)();
-using PluginVerFunc = uint64_t(*)();
-
-using AuthorNameFunc = NaoString(*)();
-using AuthorTextPlainFunc = NaoString(*)();
-using AuthorTextRichFunc = NaoString(*)();
-
-using ErrorFunc = const NaoString& (*)();
-
-using SupportsFunc = bool(*)(NaoObject*);
-using PopulatableFunc = bool(*)(NaoObject*);
-using DecodableFunc = bool(*)(NaoObject*);
-
-using DescFunc = NaoString(*)();
-
-using PopulateFunc = bool(*)(NaoObject*);
-using DecodeFunc = bool(*)(NaoObject*, NaoIO*);
-
 struct LIBNAO_API NaoPlugin {
     PluginFunc plugin;
 
-    PluginNameFunc plugin_name;
-    PluginDescFunc plugin_desc;
-    PluginVerFunc plugin_version;
+    const NaoString&(*error)();
 
-    AuthorNameFunc author_name;
-    AuthorTextPlainFunc author_text_plain;
-    AuthorTextRichFunc author_text_rich;
+    struct PluginInfo {
+        NaoString(*name)();
+        NaoString(*desc)();
+        uint64_t(*version)();
+    } plugin_info;
+    
+    struct AuthorInfo {
+        NaoString(*name)();
+        NaoString(*text_plain)();
+        NaoString(*text_rich)();
+    } author_info;
 
-    ErrorFunc error;
+    struct Description {
+        bool(*prioritise)();
+        NaoString(*get)();
+    } description;
 
-    SupportsFunc supports;
-    PopulatableFunc populatable;
-    DecodableFunc decodable;
+    struct Capabilities {
+        bool(*supports)(NaoObject* object);
+        bool(*populatable)(NaoObject* object);
+        bool(*decodable)(NaoObject* object);
+        bool(*can_move)(NaoObject* from, NaoObject* to);
+    } capabilities;
 
-    DescFunc description;
-
-    PopulateFunc populate;
-    DecodeFunc decode;
+    struct Functionality {
+        bool(*populate)(NaoObject* object);
+        bool(*decode)(NaoObject* object, NaoIO* out);
+        bool(*move)(NaoObject*& from, NaoObject* to);
+    } functionality;
+    
+    struct ContextMenu {
+        using ContextMenuEntry = NaoPair<NaoString, bool(*)(NaoObject* object)>;
+        
+        bool(*has_context_menu)();
+        NaoVector<ContextMenuEntry>(*get)(NaoObject* object);
+    } context_menu;
 };
-
-LIBNAO_API bool plugin_complete(const NaoPlugin& plugin);

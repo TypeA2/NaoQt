@@ -21,6 +21,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\NaoQt\NaoQt.licenseheader" />
+    <None Include="..\libnao\libnao.licenseheader" />
   </ItemGroup>
 </Project>

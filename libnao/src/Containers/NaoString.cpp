@@ -113,6 +113,25 @@ const char* NaoString::c_str() const {
 
 #pragma endregion 
 
+#pragma region "Comparison functions and operators"
+
+bool NaoString::operator==(const NaoString& other) const {
+    return (_m_size == std::size(other))
+        && std::equal(_m_data, _m_end, std::begin(other));
+}
+
+bool NaoString::operator==(const char* other) const {
+    return (_m_size == std::strlen(other))
+        && std::equal(_m_data, _m_end, other);
+}
+
+bool NaoString::operator==(char other) const {
+    return (_m_size == 1)
+        && *_m_data == other;
+}
+
+#pragma endregion 
+
 #pragma region "Append functions"
 
 NaoString& NaoString::append(const NaoString& other) {
@@ -188,6 +207,30 @@ void NaoString::reserve(size_t size) {
     _reallocate_to(size);
 }
 
+NaoString::iterator NaoString::begin() {
+    return _m_data;
+}
+
+NaoString::const_iterator NaoString::begin() const {
+    return _m_data;
+}
+
+NaoString::const_iterator NaoString::cbegin() const {
+    return _m_data;
+}
+
+NaoString::iterator NaoString::end() {
+    return _m_end;
+}
+
+NaoString::const_iterator NaoString::end() const {
+    return _m_end;
+}
+
+NaoString::const_iterator NaoString::cend() const {
+    return _m_end;
+}
+
 #pragma endregion
 
 void NaoString::_reallocate_to(size_t size) {
@@ -202,7 +245,7 @@ void NaoString::_reallocate_to(size_t size) {
     }
 }
 
-#pragma region "QOL improvements"
+#pragma region "Quality of life improvements"
 
 NaoString NaoString::copy() const {
     return NaoString(*this);
@@ -251,6 +294,18 @@ bool NaoString::starts_with(char ch) const noexcept {
     return _m_size > 0 && *_m_data == ch;
 }
 
+bool NaoString::ends_with(const NaoString& other) const noexcept {
+    return std::equal(_m_data + (_m_size - std::size(other)), _m_end, std::begin(other));
+}
+
+bool NaoString::ends_with(const char* other) const noexcept {
+    return std::equal(_m_data + (_m_size - std::strlen(other)), _m_end, other);
+}
+
+bool NaoString::ends_with(char ch) const noexcept {
+    return *(_m_end - 1) == ch;
+}
+
 NaoString NaoString::substr(size_t index, size_t len) const {
     if (index >= _m_size) {
         throw std::out_of_range("index out of range");
@@ -264,7 +319,72 @@ NaoString NaoString::substr(size_t index, size_t len) const {
     return str.append(_m_data + index, len);
 }
 
+NaoString::iterator NaoString::last_pos_of(char ch) const noexcept {
+    if (_m_size == 1) {
+        return *_m_data == ch ? _m_data : _m_end;
+    }
+
+    char* pos = _m_end - 1;
+
+    do {
+        if (*pos == ch) {
+            return pos;
+        }
+
+        --pos;
+
+    } while (pos != _m_data);
+
+    return _m_end;
+}
+
+size_t NaoString::last_index_of(char ch) const noexcept {
+    return std::distance(_m_data, last_pos_of(ch));
+}
+
+bool NaoString::contains(char ch) const noexcept {
+    for (iterator it = _m_data; it != _m_end; ++it) {
+        if (*it == ch) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 #pragma endregion 
+
+#pragma region "Static functions"
+
+NaoString NaoString::bytes(uint64_t n) {
+    if (n > 0x1000000000000000) {
+        return number((n >> 50) / 1024., 3) + " EiB";;
+    }
+
+    if (n > 0x4000000000000) {
+        return number((n >> 40) / 1024., 3) + " PiB";;
+    }
+
+    if (n > 0x10000000000) {
+        return number((n >> 30) / 1024., 3) + " TiB";;
+    }
+
+    if (n > 0x40000000) {
+        return number((n >> 20) / 1024., 3) + " GiB";;
+    }
+
+    if (n > 0x100000) {
+        return number((n >> 10) / 1024., 3) + " MiB";;
+    }
+
+    if (n > 0x400) {
+        return number(n / 1024., 3) + " KiB";;
+    }
+
+    return number(n) + " bytes";
+}
+
+#pragma endregion
 
 #pragma region "STL container compatibility"
 
@@ -325,22 +445,7 @@ NaoString::operator fs::path() const {
 }
 
 NaoString& NaoString::normalize_path() {
-    char* data = _m_data;
-
-    while (*data) {
-#ifdef N_WINDOWS
-        if (*data == '/') {
-            *data = '\\';
-        }
-#else
-        if (*data == '\\') {
-            *data = '/';
-        }
-#endif
-
-        ++data;
-    }
-
+    *this = fs::path(_m_data).lexically_normal();
     return *this;
 }
 
@@ -360,7 +465,6 @@ NaoString operator+(const NaoString& lhs, char rhs) {
     return lhs.copy().append(rhs);
 }
 
-
 NaoString operator+(const char* lhs, const NaoString& rhs) {
     return NaoString(lhs).append(rhs);
 }
@@ -368,6 +472,5 @@ NaoString operator+(const char* lhs, const NaoString& rhs) {
 NaoString operator+(char lhs, const NaoString& rhs) {
     return NaoString(lhs).append(rhs);
 }
-
 
 #pragma endregion

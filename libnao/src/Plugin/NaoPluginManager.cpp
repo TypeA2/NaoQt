@@ -68,7 +68,7 @@ class NaoPluginManager::NaoPluginManagerPrivate {
     // Loads a single plugin
     bool load(const NaoString& plugin_name);
 
-    const NaoPlugin* get_plugin_for_object(NaoObject* object);
+    NaoPlugin* get_plugin_for_object(NaoObject* object);
 
     bool set_description_for_object(NaoObject* object);
 };
@@ -104,7 +104,7 @@ bool NaoPluginManager::initialised() const {
     return d_ptr->m_initialised;
 }
 
-const NaoPlugin* NaoPluginManager::plugin_for_object(NaoObject* object) {
+NaoPlugin* NaoPluginManager::plugin_for_object(NaoObject* object) {
     return d_ptr->get_plugin_for_object(object);
 }
 
@@ -174,26 +174,22 @@ bool NaoPluginManager::NaoPluginManagerPrivate::load(const NaoString& plugin_nam
 
         plugin.plugin = plugin_func();
 
-        if (plugin_complete(plugin.plugin)) {
-            m_plugins.push_back(plugin);
-            m_plugins_raw.push_back(plugin.plugin);
+        m_plugins.push_back(plugin);
+        m_plugins_raw.push_back(plugin.plugin);
 
-            return true;
-        }
-
-        m_error = "Loaded plugin is not complete.";
-    } else {
-        m_error = "Could not get address of GetNaoPlugin() function.";
+        return true;
     }
+
+    m_error = "Could not get address of GetNaoPlugin() function.";
 
 #endif
 
     return false;
 }
 
-const NaoPlugin* NaoPluginManager::NaoPluginManagerPrivate::get_plugin_for_object(NaoObject* object) {
+NaoPlugin* NaoPluginManager::NaoPluginManagerPrivate::get_plugin_for_object(NaoObject* object) {
     for (NaoPlugin& plugin : m_plugins_raw) {
-        if (plugin.supports(object)) {
+        if (plugin.capabilities.supports(object)) {
             return &plugin;
         }
     }
@@ -212,7 +208,7 @@ bool NaoPluginManager::NaoPluginManagerPrivate::set_description_for_object(NaoOb
         return false;
     }
 
-    object->set_description(plugin->description());
+    object->set_description(plugin->description.get());
 
     return true;
 }

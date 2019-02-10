@@ -19,13 +19,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\DATReader.cpp" />
     <ClCompile Include="src\Plugin_DAT.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\DATReader.h" />
     <ClInclude Include="include\Plugin_DAT.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="NaoQt.licenseheader" />
+    <None Include="..\libnao\libnao.licenseheader" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

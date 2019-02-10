@@ -26,6 +26,7 @@
 class QPushButton;
 class QLineEdit;
 class QTreeWidget;
+class QTreeWidgetItem;
 
 class NaoQt : public QMainWindow {
     Q_OBJECT
@@ -40,9 +41,9 @@ class NaoQt : public QMainWindow {
     static QString get_text_resource(const QString& path);
 
     private slots:
-    void view_double_click();
-    void view_context_menu();
-    void view_sort_column();
+    void view_double_click(QTreeWidgetItem* item, int col);
+    void view_context_menu(const QPoint& pos);
+    void view_sort_column(int index, Qt::SortOrder order);
     void view_up();
     void view_refresh();
     void open_folder();
@@ -65,12 +66,15 @@ class NaoQt : public QMainWindow {
     void _init_window();
     void _load_plugins();
     void _init_filesystem();
+    void _move_async(const QString& to, bool _refresh = false);
 
     // Private members
 
     enum DataRoles : int {
-        ItemSizeRole = Qt::UserRole + 1,
-        CompressionRatioRole
+        ObjectRole = Qt::UserRole + 1,
+        ItemSizeRole,
+        CompressionRatioRole,
+        IsDirectoryRole
     };
 
     // Stores all settings in key/value pairs
@@ -82,4 +86,6 @@ class NaoQt : public QMainWindow {
     QPushButton* _m_browse_button;
 
     QTreeWidget* _m_tree_widget;
+
+    bool _is_moving;
 };

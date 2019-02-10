@@ -26,9 +26,8 @@
 #include <Filesystem/NaoFileSystemManager.h>
 #include <Filesystem/Filesystem.h>
 #include <Utils/SteamUtils.h>
+#include <Utils/DesktopUtils.h>
 
-#include <QSettings>
-#include <QCoreApplication>
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -37,16 +36,22 @@
 #include <QHeaderView>
 #include <QFileIconProvider>
 #include <QMenuBar>
-#include <QFutureWatcher>
-
 #include <QtConcurrent>
+#include <QFileDialog>
+
+#ifdef N_WINDOWS
+#   include <shellapi.h>
+#endif
+
+Q_DECLARE_METATYPE(NaoObject*);
 
 //// Public
 
 // Constructors
 
 NaoQt::NaoQt(QWidget *parent)
-    : QMainWindow(parent) {
+    : QMainWindow(parent)
+    , _is_moving(false) {
 
     _load_settings();
 
@@ -55,7 +60,6 @@ NaoQt::NaoQt(QWidget *parent)
     _load_plugins();
 
     _init_filesystem();
-
 }
 
 QString NaoQt::get_config_path() {
@@ -238,10 +242,10 @@ void NaoQt::_init_filesystem() {
 
     auto future_watcher = new QFutureWatcher<bool>(this);
 
-    connect(future_watcher, &QFutureWatcher<void>::finished, this, [future_watcher, this] {
+    connect(future_watcher, &QFutureWatcher<bool>::finished, this, [future_watcher, this] {
 
         if (!future_watcher->result()) {
-            QMessageBox::critical(this, "NaoFSM::init error",
+            QMessageBox::critical(this, "NaoFSM::init",
                 NaoFSM.last_error());
 
             throw std::exception(NaoFSM.last_error());
@@ -249,52 +253,233 @@ void NaoQt::_init_filesystem() {
 
         fsm_object_changed();
     });
-    connect(future_watcher, &QFutureWatcher<void>::finished, &QFutureWatcher<void>::deleteLater);
+    connect(future_watcher, &QFutureWatcher<bool>::finished, &QFutureWatcher<bool>::deleteLater);
 
     future_watcher->setFuture(QtConcurrent::run(&NaoFSM, &NaoFileSystemManager::init, default_path));
 }
 
+void NaoQt::_move_async(const QString& to, bool _refresh) {
+    if (_is_moving) {
+        nerr << "NaoQt::_move_async - Already moving";
+        return;
+    }
+
+    if (!_refresh) {
+        if (NaoFSM.current_path() == to) {
+            return;
+        }
+    }
+
+    _is_moving = true;
+
+    auto future_watcher = new QFutureWatcher<bool>(this);
+
+    connect(future_watcher, &QFutureWatcher<bool>::finished, this, [future_watcher, this] {
+        if (!future_watcher->result()) {
+            QMessageBox::critical(this, "NaoFSM::move", NaoFSM.last_error());
+        } else {
+            fsm_object_changed();
+        }
+
+        _is_moving = false;
+    });
+
+    connect(future_watcher, &QFutureWatcher<bool>::finished, &QFutureWatcher<bool>::deleteLater);
+
+    future_watcher->setFuture(QtConcurrent::run(&NaoFSM, &NaoFileSystemManager::move, to));
+}
+
 //// Slots
 
-void NaoQt::view_double_click() {
-    
+void NaoQt::view_double_click(QTreeWidgetItem* item, int col) {
+    Q_UNUSED(col);
+
+    NaoObject* object = item->data(0, ObjectRole).value<NaoObject*>();
+
+    if (object->is_dir()) {
+        _move_async(object->name());
+        return;
+    }
+
+    NaoPlugin* plugin = PluginManager.plugin_for_object(object);
+
+    if (!plugin && QFile(object->name()).exists()) {
+        DesktopUtils::open_file(object->name());
+    } else if (plugin) {
+        
+    }
 }
 
-void NaoQt::view_context_menu() {
+void NaoQt::view_context_menu(const QPoint& pos) {
+
+#define ADDOPT(text, target, handler) { \
+    QAction* act = new QAction(text, menu); \
+    connect(act, &QAction::triggered, target, handler); \
+    connect(act, &QAction::triggered, menu, &QMenu::deleteLater); \
+    menu->addAction(act); \
+}
+    QMenu* menu = new QMenu(this);
+
+    QTreeWidgetItem* item = _m_tree_widget->itemAt(pos);
     
+    if (!item) {
+        ADDOPT("Refresh view", this, &NaoQt::view_refresh);
+        ADDOPT("Show in explorer", this, [this] {
+            DesktopUtils::open_in_explorer(_m_path_display->text() + N_PATHSEP);
+        });
+    } else {
+        NaoObject* object = item->data(0, ObjectRole).value<NaoObject*>();
+
+        if (PluginManager.plugin_for_object(object)) {
+            ADDOPT("Open", this, ([this, object] {
+                _move_async(object->name());
+            }));
+        } else {
+            ADDOPT("Open", this, [object] {
+                DesktopUtils::open_file(object->name());
+            });
+            ADDOPT("Open with...", this, [object] {
+                DesktopUtils::open_file(object->name(), true);
+            });
+        }
+
+        menu->addSeparator();
+
+        ADDOPT("Show in explorer", this, [object] {
+            DesktopUtils::show_in_explorer(object->name());
+        });
+
+    }
+
+    menu->popup(_m_tree_widget->viewport()->mapToGlobal(pos));
+
+#undef ADDOPT
 }
 
-void NaoQt::view_sort_column() {
-    
+void NaoQt::view_sort_column(int index, Qt::SortOrder order) {
+
+    NaoVector<QTreeWidgetItem*> files;
+    NaoVector<QTreeWidgetItem*> directories;
+
+    while (_m_tree_widget->topLevelItemCount() > 0) {
+        QTreeWidgetItem* row = _m_tree_widget->takeTopLevelItem(0);
+
+        (row->data(0, IsDirectoryRole).toBool() ? directories : files).push_back(row);
+    }
+
+    // Always sort directories alphabetically
+    std::sort(std::begin(directories), std::end(directories), 
+        [](QTreeWidgetItem* a, QTreeWidgetItem* b) -> bool {
+        return a->text(0).compare(b->text(0), Qt::CaseInsensitive) < 0;
+    });
+
+    std::sort(std::begin(files), std::end(files), 
+        [index](QTreeWidgetItem* a, QTreeWidgetItem* b) -> bool {
+       
+        if (index == 1) {
+            const qint64 size_a = a->data(1, ItemSizeRole).toLongLong();
+            const qint64 size_b = b->data(1, ItemSizeRole).toLongLong();
+
+            if (size_a != size_b) {
+                return size_a > size_b;
+            }
+        } else if(index == 2) {
+            const QString type_a = a->text(2);
+            const QString type_b = b->text(2);
+
+            if (type_a != type_b) {
+                return type_a.compare(type_b, Qt::CaseInsensitive) < 0;
+            }
+        } else if (index == 3) {
+            const double ratio_a = a->data(3, CompressionRatioRole).toDouble();
+            const double ratio_b = b->data(3, CompressionRatioRole).toDouble();
+
+            if (ratio_a != ratio_b) {
+                return ratio_a > ratio_b;
+            }
+        }
+
+       return a->text(0).compare(b->text(0), Qt::CaseInsensitive) < 0;
+    });
+
+    if (order == Qt::AscendingOrder) {
+        for (int64_t i = int64_t(std::size(directories)) - 1; i >= 0; --i) {
+            _m_tree_widget->addTopLevelItem(directories.at(i));
+        }
+
+        for (int64_t i = int64_t(std::size(files)) - 1; i >= 0; --i) {
+            _m_tree_widget->addTopLevelItem(files.at(i));
+        }
+    } else {
+        for (size_t i = 0; i < std::size(directories); ++i) {
+            _m_tree_widget->addTopLevelItem(directories.at(i));
+        }
+
+        for (size_t i = 0; i < std::size(files); ++i) {
+            _m_tree_widget->addTopLevelItem(files.at(i));
+        }
+    }
 }
 
 void NaoQt::view_up() {
-
+    _move_async(NaoFSM.current_path() + "/..");
 }
 
 void NaoQt::view_refresh() {
-    
+    _move_async(NaoFSM.current_path(), true);
 }
 
 void NaoQt::open_folder() {
-    
+    QString target = QFileDialog::getExistingDirectory(this, "Open folder", NaoFSM.current_path());
+
+    if (!target.isNull() && !target.isEmpty()) {
+        _move_async(target);
+    }
 }
 
 void NaoQt::path_display_changed() {
-    
+    NaoString new_path = _m_path_display->text();
+
+    if (new_path.contains(N_PATHSEP)) {
+        bool success = true;
+
+        NaoString next_path;
+
+        while (!QDir(new_path).exists()) {
+            next_path = new_path.substr(0, new_path.last_index_of(N_PATHSEP));
+
+            if (new_path == next_path) {
+                success = false;
+                break;
+            }
+
+            new_path = next_path;
+        }
+
+        if (success) {
+            _move_async(new_path);
+            return;
+        }
+    }
+
+    _m_path_display->setText(NaoFSM.current_path());
 }
 
 void NaoQt::fsm_object_changed() {
     NaoObject* current_object = NaoFSM.current_object();
 
+    _m_tree_widget->clear();
+
     _m_path_display->setText(current_object->name());
 
     static QFileIconProvider ficonprovider;
 
-    const NaoString base_path = current_object->name().copy().append('/').normalize_path();
+    const NaoString base_path = current_object->name().copy().append(N_PATHSEP).normalize_path();
 
     for (NaoObject* child : current_object->children()) {
         QTreeWidgetItem* item = new QTreeWidgetItem(_m_tree_widget);
+
+        item->setData(0, ObjectRole, QVariant::fromValue(child));
 
         NaoString name = child->name().copy().normalize_path();
 
@@ -304,7 +489,9 @@ void NaoQt::fsm_object_changed() {
 
         item->setText(0, name);
 
-        item->setText(2, child->description());
+        item->setText(2, NaoFSM.description(child));
+
+        item->setData(0, IsDirectoryRole, child->is_dir());
 
         if (child->is_dir()) {
             item->setIcon(0, ficonprovider.icon(QFileIconProvider::Folder));
@@ -315,6 +502,7 @@ void NaoQt::fsm_object_changed() {
 
             item->setIcon(0, ficonprovider.icon(QFileInfo(child->name())));
 
+            item->setText(1, NaoString::bytes(file.real_size));
             item->setData(1, ItemSizeRole, file.real_size);
 
             if (item->text(2).isEmpty()) {
@@ -324,7 +512,9 @@ void NaoQt::fsm_object_changed() {
 
             double ratio = file.binary_size / double(file.real_size);
             item->setData(3, CompressionRatioRole, ratio);
-            item->setText(3, QString("%0%").arg(qRound(100. * ratio)));
+            if (!QFile(child->name()).exists()) {
+                item->setText(3, QString("%0%").arg(qRound(100. * ratio)));
+            }
         }
         
         _m_tree_widget->addTopLevelItem(item);
@@ -333,8 +523,9 @@ void NaoQt::fsm_object_changed() {
     for (int i = 0; i < _m_tree_widget->columnCount(); ++i) {
         _m_tree_widget->resizeColumnToContents(i);
     }
-}
 
+    view_sort_column(_m_tree_widget->header()->sortIndicatorSection(), _m_tree_widget->header()->sortIndicatorOrder());
+}
 
 #pragma region About
 

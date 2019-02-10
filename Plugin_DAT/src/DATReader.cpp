@@ -15,4 +15,29 @@
     along with libnao.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "Plugin/NaoPlugin.h"
+#include "DATReader.h"
+
+#include <IO/NaoIO.h>
+
+DATReader* DATReader::create(NaoIO* in) {
+    if (!in->is_open() && !in->open() && !in->is_open()) {
+        return nullptr;
+    }
+
+    return new DATReader(in);
+}
+
+
+DATReader::DATReader(NaoIO* in)
+    : _m_io(in) {
+    _read();
+}
+
+const NaoVector<DATReader::FileEntry>& DATReader::files() const {
+    return _m_files;
+}
+
+void DATReader::_read() {
+    
+}
+

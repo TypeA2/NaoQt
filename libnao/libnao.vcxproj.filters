@@ -99,6 +99,9 @@
     <ClInclude Include="include\Utils\vdf_parser.hpp">
       <Filter>Headers\Utils</Filter>
     </ClInclude>
+    <ClInclude Include="include\Utils\DesktopUtils.h">
+      <Filter>Headers\Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\libnao.cpp">
@@ -136,6 +139,9 @@
     </ClCompile>
     <ClCompile Include="src\Containers\NaoString.cpp">
       <Filter>Sources\Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Utils\DesktopUtils.cpp">
+      <Filter>Sources\Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

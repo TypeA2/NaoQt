@@ -46,13 +46,13 @@ void NaoPluginDialog::list(QWidget* parent) {
     for (const NaoPlugin& plugin : plugins) {
         QTreeWidgetItem* item = new QTreeWidgetItem(tree_widget);
 
-        item->setText(0, plugin.plugin_name().c_str());
-        item->setText(1, QString::number(plugin.plugin_version()));
-        item->setText(2, plugin.author_name().c_str());
-        item->setText(3, plugin.plugin_desc().c_str());
+        item->setText(0, plugin.plugin_info.name().c_str());
+        item->setText(1, QString::number(plugin.plugin_info.version()));
+        item->setText(2, plugin.author_info.name().c_str());
+        item->setText(3, plugin.plugin_info.desc().c_str());
 
-        item->setData(0, AuthorText, plugin.author_text_plain().c_str());
-        item->setData(0, AutorTextRich, plugin.author_text_rich().c_str());
+        item->setData(0, AuthorText, plugin.author_info.text_plain().c_str());
+        item->setData(0, AutorTextRich, plugin.author_info.text_rich().c_str());
     }
 
     tree_widget->resizeColumnToContents(0);

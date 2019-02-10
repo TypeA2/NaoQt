@@ -1,76 +1,101 @@
 /*
-    This file is part of NaoQt.
+    This file is part of libnao.
 
-    NaoQt is free software: you can redistribute it and/or modify
+    libnao is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    NaoQt is distributed in the hope that it will be useful,
+    libnao is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with NaoQt.  If not, see <https://www.gnu.org/licenses/>.
+    along with libnao.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "Plugin_DiskDirectory.h"
 
 #include <Filesystem/Filesystem.h>
+#include <Filesystem/NaoFileSystemManager.h>
 #include <IO/NaoFileIO.h>
 #include <Logging/NaoLogging.h>
 #include <Plugin/NaoPluginManager.h>
 #include <NaoObject.h>
 
 NaoPlugin GetNaoPlugin() {
-    return {
+    using namespace Plugin;
+    return NaoPlugin {
         GetNaoPlugin,
-        Plugin::About::plugin_name,
-        Plugin::About::plugin_desc,
-        Plugin::About::plugin_version,
-        Plugin::Author::author_name,
-        Plugin::Author::author_text_plain,
-        Plugin::Author::author_text_rich,
-        Plugin::Error::get_error,
-        Plugin::Capabilities::supports,
-        Plugin::Capabilities::populatable,
-        Plugin::Capabilities::decodable,
-        Plugin::Function::description,
-        Plugin::Function::populate,
-        Plugin::Function::decode
+        Error::get_error,
+
+        NaoPlugin::PluginInfo {
+            PluginInfo::name,
+            PluginInfo::description,
+            PluginInfo::version
+            },
+
+        NaoPlugin::AuthorInfo {
+            AuthorInfo::name,
+            AuthorInfo::text_plain,
+            AuthorInfo::text_rich
+            },
+
+        NaoPlugin::Description {
+            Description::prioritise_description,
+            Description::description
+            },
+
+        NaoPlugin::Capabilities {
+            Capabilities::supports,
+            Capabilities::populatable,
+            Capabilities::decodable,
+            Capabilities::can_move
+            },
+
+        NaoPlugin::Functionality {
+            Function::populate,
+            Function::decode,
+            Function::move
+            },
+
+        NaoPlugin::ContextMenu {
+            ContextMenu::has_context_menu,
+            ContextMenu::context_menu
+            }
     };
 }
 
 namespace Plugin {
-    namespace About {
-        NaoString plugin_name() {
-            return "NaoQt directory plugin";
+    namespace PluginInfo {
+        NaoString name() {
+            return "libnao directory plugin";
         }
 
-        NaoString plugin_desc() {
+        NaoString description() {
             return "Adds support for existing directories";
         }
 
-        uint64_t plugin_version() {
+        uint64_t version() {
             return 1;
         }
 
     }
 
-    namespace Author {
-        NaoString author_name() {
+    namespace AuthorInfo {
+        NaoString name() {
             return "TypeA2/I_Copy_Jokes";
         }
 
-        NaoString author_text_plain() {
+        NaoString text_plain() {
             return "License: LGPLv3 or later\n"
                    "Github: https://github.com/TypeA2\n"
                    "Steam: https://steamcommunity.com/id/TypeA2/";
 
         }
 
-        NaoString author_text_rich() {
+        NaoString text_rich() {
             return "License: LGPLv3 or later<br>"
                    "<a href=\"https://github.com/TypeA2\">Github</a><br>"
                    "<a href=\"https://steamcommunity.com/id/TypeA2/\">Steam</a>";
@@ -87,6 +112,16 @@ namespace Plugin {
             static NaoString err;
 
             return err;
+        }
+    }
+
+    namespace Description {
+        bool prioritise_description() {
+            return false;
+        }
+
+        NaoString description() {
+            return "Directory";
         }
     }
 
@@ -116,23 +151,33 @@ namespace Plugin {
         bool decodable(N_UNUSED NaoObject* object) {
             return false;
         }
+
+        bool can_move(NaoObject* from, NaoObject* to) {
+            for (NaoObject* child : from->children()) {
+                if (child->name() == to->name()) {
+                    return true;
+                }
+            }
+
+            Error::error() = "Target is not a child of source object";
+
+            return false;
+        }
     }
 
     namespace Function {
-        NaoString description() {
-            return "Directory";
-        }
-
         bool populate(NaoObject* object) {
             if (!Capabilities::supports(object)) {
                 return false;
             }
 
-            object->set_description(description());
+            object->set_description(Description::description());
 
             NaoVector<NaoObject*> children;
 
             NaoString path_str;
+
+            int64_t subsequent_errors = 0;
 
             for (const fs::directory_entry& entry : fs::directory_iterator(object->name().c_str())) {
 
@@ -140,19 +185,9 @@ namespace Plugin {
 
                 if (is_directory(entry.path())) {
                     children.push_back(new NaoObject({ path_str }));
-                    children.back()->set_description(description());
+                    children.back()->set_description(Description::description());
                 } else if (is_regular_file(entry.path())) {
                     NaoFileIO* io = new NaoFileIO(path_str);
-
-                    if (!io->open()) {
-                        Error::error() = NaoString("Could not open ") + path_str;
-
-                        for (NaoObject* child : children) {
-                            delete child;
-                        }
-
-                        return false;
-                    }
 
                     children.push_back(new NaoObject({
                         io,
@@ -162,16 +197,30 @@ namespace Plugin {
                         path_str
                         }));
 
+                    
                     if (!PluginManager.set_description(children.back())) {
-                        nerr << "Plugin_DiskDirectory::populate - failed to set description for"
-                             << children.back()->name();
-                    }
+                        if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
+                            nerr << "Plugin_DiskDirectory::populate - failed to set description for"
+                                << children.back()->name();
+                        }
 
+                        ++subsequent_errors;
+                    }
                 }
             }
 
-            if (object->add_child(children) != std::size(children)) {
-                Error::error() = "Could not add all children";
+            if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
+                nerr << "Plugin_DiskDirectory::populate -"
+                    << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
+                    << "messages suppressed.";
+            }
+
+            const int64_t added = object->add_child(children);
+
+            if (added != std::size(children)) {
+                Error::error() = "Could not add all children.\nAttempted: " + 
+                    NaoString::number(added) + ", succeeded: " + NaoString::number(std::size(children)) + ".\n"
+                    + "Path: " + object->name();
 
                 return false;
             }
@@ -181,6 +230,28 @@ namespace Plugin {
 
         bool decode(N_UNUSED NaoObject* object, N_UNUSED NaoIO* out) {
             return false;
+        }
+
+        bool move(NaoObject*& from, NaoObject* to) {
+            if (!Capabilities::can_move(from, to)) {
+                return false;
+            }
+
+            delete from;
+
+            from = to;
+
+            return true;
+        }
+    }
+
+    namespace ContextMenu {
+        bool has_context_menu() {
+            return false;
+        }
+
+        NaoVector<NaoPlugin::ContextMenu::ContextMenuEntry> context_menu(N_UNUSED NaoObject* object) {
+            return NaoVector<NaoPlugin::ContextMenu::ContextMenuEntry>();
         }
     }
 }

@@ -22,6 +22,10 @@
 #include "Filesystem/Filesystem.h"
 #include "Plugin/NaoPluginManager.h"
 
+#ifdef N_WINDOWS
+#   include <shellapi.h>
+#endif
+
 //// D-pointer
 
 class NaoFileSystemManager::NFSMPrivate {
@@ -35,8 +39,13 @@ class NaoFileSystemManager::NFSMPrivate {
     // Move to the target directory (may be relative)
     bool move(const NaoString& target);
 
+    NaoString description_for_object(NaoObject* object) const;
+
     // Current object
     NaoObject* m_current_object = nullptr;
+
+    // Currently used plugin
+    NaoPlugin* m_current_plugin = nullptr;
 
     // Latest error code
     NaoString m_last_error;
@@ -65,8 +74,16 @@ NaoObject* NaoFileSystemManager::current_object() const {
     return d_ptr->m_current_object;
 }
 
+const NaoString& NaoFileSystemManager::current_path() const {
+    return d_ptr->m_current_object->name();
+}
+
 const NaoString& NaoFileSystemManager::last_error() const {
     return d_ptr->m_last_error;
+}
+
+NaoString NaoFileSystemManager::description(NaoObject* object) const {
+    return d_ptr->description_for_object(object);
 }
 
 //// Private
@@ -109,53 +126,62 @@ bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
 
     fs::path target_path = fs::absolute(target);
 
-#if 0
+    NaoObject* new_object = nullptr;
+
+    // Assign a child object if possible, else create a new one
     if (m_current_object) {
-        const NaoVector<NaoObject*>& children = m_current_object->children();
-
-        auto pos = std::find_if(std::begin(children), std::end(children),
-            [&target_path](NaoObject* object) -> bool {
-            return object->name() == target_path.string().c_str();
-        });
-
-        if (pos == std::end(children)) {
-            delete m_current_object;
-            m_current_object = nullptr;
-        } else {
-            NaoObject* child_object = *pos;
-
-            m_current_object->remove_child(child_object);
-
-            delete m_current_object;
-
-            m_current_object = child_object;
+        for (NaoObject* child : m_current_object->children()) {
+            if (child->name() == target) {
+                new_object = child;
+                break;
+            }
         }
     }
-#endif
 
-    delete m_current_object;
+    if (!new_object) {
+        new_object = new NaoObject(NaoObject::Dir { target_path });
+    }
 
-    m_current_object = new NaoObject(NaoObject::Dir { target });
-
-    const NaoPlugin* plugin = PluginManager.plugin_for_object(m_current_object);
-
-    if (!plugin || !plugin->populatable(m_current_object)) {
-
-        delete m_current_object;
-        m_current_object = nullptr;
-
-        m_last_error = plugin ? "NaoFSM::move - path is not populatable by any plugin" : 
-                                "NaoFSM::move - path is not supported";
+    // Checks if any plugin supports this object
+    if (!m_current_plugin
+        && !((m_current_plugin = PluginManager.plugin_for_object(new_object)))) {
+        delete new_object;
+        m_last_error = "NaoFSM::move - could not find plugin for object with name " + target_path;
 
         return false;
     }
 
-    if (!plugin->populate(m_current_object)) {
+    // Move from the current to the new object, else just replace the current object
+    if (m_current_object
+        && m_current_plugin->capabilities.can_move(m_current_object, new_object)) {
+        if (!m_current_plugin->functionality.move(m_current_object, new_object)) {
+            delete new_object;
+            m_last_error = "NaoFSM::move - could not move from "
+                + m_current_object->name() + " to " + target_path;
+            
+            return false;
+        }
+    } else {
+        delete m_current_object;
+        m_current_object = new_object;
+    }
+
+    if (!m_current_plugin->capabilities.populatable(m_current_object)) {
 
         delete m_current_object;
         m_current_object = nullptr;
 
-        m_last_error = NaoString("NaoFSM::init - failed to populate, plugin error:\n") + plugin->error();
+        m_last_error = "NaoFSM::move - path is not supported";
+
+        return false;
+    }
+
+    if (!m_current_plugin->functionality.populate(m_current_object)) {
+
+        delete m_current_object;
+        m_current_object = nullptr;
+
+        m_last_error = "NaoFSM::move - failed to populate, plugin error:\n" + m_current_plugin->error();
 
         return false;
     }
@@ -163,8 +189,28 @@ bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
     return true;
 }
 
+NaoString NaoFileSystemManager::NFSMPrivate::description_for_object(NaoObject* object) const {
 
-//// Private
+    NaoPlugin* plugin = PluginManager.plugin_for_object(object);
 
+    if (plugin && plugin->description.prioritise()) {
+        return plugin->description.get();
+    }
+
+#ifdef N_WINDOWS
+
+    SHFILEINFOA finfo;;
+    SHGetFileInfoA(object->name(),
+        object->is_dir() ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL,
+        &finfo,
+        sizeof(finfo),
+        SHGFI_USEFILEATTRIBUTES | SHGFI_TYPENAME);
+
+    return finfo.szTypeName;
+
+#else
+    return NaoString();
+#endif
+}
 
 #pragma endregion

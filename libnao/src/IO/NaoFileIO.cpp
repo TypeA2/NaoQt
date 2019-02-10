@@ -18,6 +18,7 @@
 #include "IO/NaoFileIO.h"
 
 #include "Filesystem/Filesystem.h"
+#include "Logging/NaoLogging.h"
 
 NaoFileIO::NaoFileIO(const NaoString& path)
     : _m_file_ptr(nullptr) {
@@ -45,6 +46,11 @@ int64_t NaoFileIO::pos() const {
 
 
 bool NaoFileIO::seek(int64_t pos, SeekDir dir) {
+    if (open_mode() == Closed) {
+        nerr << "NaoFileIO::seek - file is not open";
+        return false;
+    }
+
    switch (dir) {
        case set:
            _fseeki64(_m_file_ptr, pos, SEEK_SET);
@@ -73,6 +79,11 @@ bool NaoFileIO::seek(int64_t pos, SeekDir dir) {
 }
 
 int64_t NaoFileIO::read(char* buf, int64_t size) {
+    if (open_mode() == Closed) {
+        nerr << "NaoFileIO::read - file is not open";
+        return 0;
+    }
+
     if (!buf) {
         return 0i64;
     }
@@ -81,6 +92,11 @@ int64_t NaoFileIO::read(char* buf, int64_t size) {
 }
 
 int64_t NaoFileIO::write(const char* buf, int64_t size) {
+    if (open_mode() == Closed) {
+        nerr << "NaoFileIO::write - file is not open";
+        return 0;
+    }
+
     if (!buf) {
         return 0i64;
     }

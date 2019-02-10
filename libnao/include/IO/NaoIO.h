@@ -47,6 +47,7 @@ class LIBNAO_API NaoIO {
     // Returns the number of bytes actually read, or -1 on error
     virtual int64_t read(char* buf, int64_t size) = 0;
     virtual NaoBytes read(size_t size);
+    virtual NaoBytes read_singleshot(size_t size);
 
     // Writes size bytes from buf to the underlying device
     // Returns the number of bytes actually written, or -1 on error

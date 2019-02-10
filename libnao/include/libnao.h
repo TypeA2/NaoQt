@@ -55,3 +55,11 @@
 
 // For dllexport'ed classes with members we don't want to import
 #define N_ESCAPE_DLLSPEC template <class ____T = void>
+
+#ifdef N_WINDOWS
+#   define N_PATHSEP '\\'
+#else
+#   define N_PATHSEP '/'
+#endif
+
+#define N_SUBSEQUENT_ERRMSG_LIMIT_HINT 1

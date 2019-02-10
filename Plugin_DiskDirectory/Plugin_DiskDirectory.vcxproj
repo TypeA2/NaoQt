@@ -25,7 +25,7 @@
     <ClInclude Include="include\Plugin_DiskDirectory.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\NaoQt\NaoQt.licenseheader" />
+    <None Include="..\libnao\libnao.licenseheader" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

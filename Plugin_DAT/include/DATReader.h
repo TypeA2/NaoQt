@@ -15,4 +15,34 @@
     along with libnao.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "Plugin/NaoPlugin.h"
+#pragma once
+
+#include <Containers/NaoVector.h>
+#include <Containers/NaoString.h>
+
+class NaoIO;
+
+class DATReader {
+    public:
+
+    static DATReader* create(NaoIO* in);
+
+    DATReader(NaoIO* in);
+
+    struct FileEntry {
+        NaoString name;
+        uint32_t size;
+        uint32_t offset;
+    };
+
+    ~DATReader() = default;
+
+    const NaoVector<FileEntry>& files() const;
+
+    private:
+
+    void _read();
+
+    NaoIO* _m_io;
+    NaoVector<FileEntry> _m_files;
+};
