@@ -46,7 +46,7 @@ int64_t NaoFileIO::pos() const {
 
 
 bool NaoFileIO::seek(int64_t pos, SeekDir dir) {
-    if (open_mode() == Closed) {
+    if (!is_open()) {
         nerr << "NaoFileIO::seek - file is not open";
         return false;
     }

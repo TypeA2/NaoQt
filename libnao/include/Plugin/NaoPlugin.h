@@ -70,7 +70,7 @@ struct LIBNAO_API NaoPlugin {
     struct ContextMenu {
         using ContextMenuEntry = NaoPair<NaoString, bool(*)(NaoObject* object)>;
         
-        bool(*has_context_menu)();
+        bool(*has_context_menu)(NaoObject* object);
         NaoVector<ContextMenuEntry>(*get)(NaoObject* object);
     } context_menu;
 };

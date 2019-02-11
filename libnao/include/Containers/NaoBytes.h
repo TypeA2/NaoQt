@@ -55,6 +55,13 @@ class LIBNAO_API NaoBytes {
     // Returns the total size
     size_t size() const;
 
+    inline operator const char*() const noexcept;
+
+    char& at(size_t index);
+    const char& at(size_t index) const;
+
+    char& operator[](size_t index);
+
     private:
 
     // Holds the data

@@ -102,6 +102,9 @@
     <ClInclude Include="include\Utils\DesktopUtils.h">
       <Filter>Headers\Utils</Filter>
     </ClInclude>
+    <ClInclude Include="include\IO\NaoChunkIO.h">
+      <Filter>Headers\IO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\libnao.cpp">
@@ -142,6 +145,9 @@
     </ClCompile>
     <ClCompile Include="src\Utils\DesktopUtils.cpp">
       <Filter>Sources\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\IO\NaoChunkIO.cpp">
+      <Filter>Sources\IO</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

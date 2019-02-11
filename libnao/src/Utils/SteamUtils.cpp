@@ -117,7 +117,7 @@ namespace SteamUtils {
         return result;
     }
 
-    NaoString game_path(const NaoString& game_dir, const NaoString& fallback) {
+    NaoString game_path(const NaoString& game_dir, const NaoString& subdir, const NaoString& fallback) {
 #ifdef N_WINDOWS
 
         for (const NaoString& folder : steam_install_folders()) {
@@ -126,7 +126,7 @@ namespace SteamUtils {
                 fs::directory_iterator((folder + NaoString("/SteamApps/common").normalize_path()).c_str())) {
 
                 if (is_directory(entry.path()) && entry.path().filename() == game_dir) {
-                    return entry.path();
+                    return (entry.path() + N_PATHSEP + subdir).normalize_path();
                 }
             }
         }

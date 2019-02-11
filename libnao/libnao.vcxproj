@@ -175,6 +175,7 @@
     <ClCompile Include="src\Containers\NaoBytes.cpp" />
     <ClCompile Include="src\Containers\NaoString.cpp" />
     <ClCompile Include="src\Filesystem\NaoFileSystemManager.cpp" />
+    <ClCompile Include="src\IO\NaoChunkIO.cpp" />
     <ClCompile Include="src\IO\NaoFileIO.cpp" />
     <ClCompile Include="src\IO\NaoIO.cpp" />
     <ClCompile Include="src\IO\NaoMemoryIO.cpp" />
@@ -194,6 +195,7 @@
     <ClInclude Include="include\Filesystem\Filesystem.h" />
     <ClInclude Include="include\Filesystem\NaoFileSystemManager.h" />
     <ClInclude Include="include\Functionality\NaoMath.h" />
+    <ClInclude Include="include\IO\NaoChunkIO.h" />
     <ClInclude Include="include\IO\NaoFileIO.h" />
     <ClInclude Include="include\IO\NaoIO.h" />
     <ClInclude Include="include\IO\NaoMemoryIO.h" />

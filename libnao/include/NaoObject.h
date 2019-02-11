@@ -75,6 +75,9 @@ class LIBNAO_API NaoObject {
 
     const NaoString& description() const;
 
+    uint64_t flags() const;
+    uint64_t set_flags(uint64_t flags);
+
     private:
     bool _m_is_dir;
 
@@ -84,4 +87,6 @@ class LIBNAO_API NaoObject {
     Dir _m_dir;
 
     NaoString _m_description;
+
+    uint64_t _m_flags;
 };

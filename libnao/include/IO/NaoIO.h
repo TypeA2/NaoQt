@@ -70,14 +70,30 @@ class LIBNAO_API NaoIO {
         AppendRead  = Append | ReadOnly
     };
 
+    // Inherited classes overriding this must call base function as well
     virtual bool open(OpenMode mode = ReadOnly);
     virtual OpenMode open_mode() const;
 
+    // Same as for open()
     virtual void close();
 
     // Returns if the device is opened in mode,
     // or if it's open at all if mode == Closed
     virtual bool is_open(OpenMode mode = Closed) const;
+
+#pragma region "Binary Reading"
+
+    enum ByteOrder {
+        LE,
+        BE
+    };
+
+    virtual uint8_t read_uchar();
+    virtual uint16_t read_ushort(ByteOrder order = LE);
+    virtual uint32_t read_uint(ByteOrder order = LE);
+    virtual uint64_t read_ulong(ByteOrder order = LE);
+
+#pragma endregion
 
     protected:
 

@@ -20,6 +20,7 @@
 #include <cstring>
 #include <cmath>
 #include <algorithm>
+#include <stdexcept>
 
 //// Public
 
@@ -109,3 +110,33 @@ const char* NaoBytes::const_data() const {
 size_t NaoBytes::size() const {
     return _m_size;
 }
+
+NaoBytes::operator const char*() const noexcept {
+    return _m_data;
+}
+
+
+char& NaoBytes::at(size_t index) {
+    if (index >= _m_size) {
+        throw std::out_of_range("index out of range");
+    }
+
+    return _m_data[index];
+}
+
+const char& NaoBytes::at(size_t index) const {
+    if (index >= _m_size) {
+        throw std::out_of_range("index out of range");
+    }
+
+    return _m_data[index];
+}
+
+char& NaoBytes::operator[](size_t index) {
+    if (index >= _m_size) {
+        throw std::out_of_range("index out of range");
+    }
+
+    return _m_data[index];
+}
+

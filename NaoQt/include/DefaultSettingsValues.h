@@ -22,5 +22,6 @@
 static std::map<const char*, const char*> DefaultSettings({
     { "plugins/plugins_directory", "./Plugins" },
     { "filesystem/default_game", "NieRAutomata" },
-    { "filesystem/default_fallback", "C:/" }
+    { "filesystem/subdir", "data" },
+    { "filesystem/fallback", "C:/" }
     });

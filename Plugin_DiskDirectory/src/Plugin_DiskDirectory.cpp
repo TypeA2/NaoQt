@@ -222,6 +222,8 @@ namespace Plugin {
                     NaoString::number(added) + ", succeeded: " + NaoString::number(std::size(children)) + ".\n"
                     + "Path: " + object->name();
 
+                nerr << "Plugin_DiskDirectory::populate - failed to add all children to parent";
+
                 return false;
             }
 
@@ -246,7 +248,7 @@ namespace Plugin {
     }
 
     namespace ContextMenu {
-        bool has_context_menu() {
+        bool has_context_menu(N_UNUSED NaoObject* object) {
             return false;
         }
 

@@ -60,6 +60,10 @@ NaoQt::NaoQt(QWidget *parent)
     _load_plugins();
 
     _init_filesystem();
+
+    OutputDebugStringA("Result path: ");
+    OutputDebugStringA(fs::absolute("D:\\Games\\Steam\\SteamApps\\common\\NieRAutomata\\data\\g1234.dtt\\Poi.wtp\\..").string().c_str());
+    OutputDebugStringA("\n");
 }
 
 QString NaoQt::get_config_path() {
@@ -238,7 +242,8 @@ void NaoQt::_load_plugins() {
 void NaoQt::_init_filesystem() {
 
     const NaoString default_path = SteamUtils::game_path(_m_settings.at("filesystem/default_game"),
-        _m_settings.at("filesystem/default_fallback"));
+        _m_settings.at("filesystem/subdir"),
+        _m_settings.at("filesystem/fallback"));
 
     auto future_watcher = new QFutureWatcher<bool>(this);
 
@@ -306,7 +311,7 @@ void NaoQt::view_double_click(QTreeWidgetItem* item, int col) {
     if (!plugin && QFile(object->name()).exists()) {
         DesktopUtils::open_file(object->name());
     } else if (plugin) {
-        
+        _move_async(object->name());
     }
 }
 
@@ -325,7 +330,30 @@ void NaoQt::view_context_menu(const QPoint& pos) {
     if (!item) {
         ADDOPT("Refresh view", this, &NaoQt::view_refresh);
         ADDOPT("Show in explorer", this, [this] {
-            DesktopUtils::open_in_explorer(_m_path_display->text() + N_PATHSEP);
+            
+            NaoString current_path = _m_path_display->text();
+
+            if (QFile(current_path).exists()) {
+                DesktopUtils::show_in_explorer(_m_path_display->text() + N_PATHSEP);
+            } else {
+                NaoString archive_path = current_path;
+                bool success = true;
+
+                NaoString next_path;
+
+                while (!QDir(archive_path).exists()) {
+                    next_path = archive_path.substr(0, archive_path.last_index_of(N_PATHSEP));
+
+                    if (archive_path == next_path) {
+                        success = false;
+                        break;
+                    }
+
+                    archive_path = next_path;
+                }
+
+                DesktopUtils::show_in_explorer(archive_path);
+            }
         });
     } else {
         NaoObject* object = item->data(0, ObjectRole).value<NaoObject*>();

@@ -38,6 +38,42 @@ const NaoVector<DATReader::FileEntry>& DATReader::files() const {
 }
 
 void DATReader::_read() {
+    _m_io->seek(4);
+
+    const uint32_t file_count = _m_io->read_uint();
+
+    _m_files.reserve(file_count);
     
+    for (uint32_t i = 0; i < file_count; ++i) {
+        _m_files.push_back({ "", 0, 0 });
+    }
+
+    uint32_t file_table_offset = _m_io->read_uint();
+
+    _m_io->seekc(4);
+
+    uint32_t name_table_offset = _m_io->read_uint();
+    uint32_t size_table_offset = _m_io->read_uint();
+
+    _m_io->seek(file_table_offset);
+
+    for (uint32_t i = 0; i < file_count; ++i) {
+        _m_files[i].offset = _m_io->read_uint();
+    }
+
+    _m_io->seek(name_table_offset);
+
+    const uint32_t alignment = _m_io->read_uint();
+
+    for (uint32_t i = 0; i < file_count; ++i) {
+        _m_files[i].name = _m_io->read(alignment);
+    }
+
+    _m_io->seek(size_table_offset);
+
+    for (uint32_t i = 0; i < file_count; ++i) {
+        _m_files[i].size = _m_io->read_uint();
+    }
+
 }
 

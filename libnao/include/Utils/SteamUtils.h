@@ -27,6 +27,6 @@ namespace SteamUtils {
 
     LIBNAO_API NaoVector<NaoString> steam_install_folders();
 
-    LIBNAO_API NaoString game_path(const NaoString& game_dir, const NaoString& fallback);
+    LIBNAO_API NaoString game_path(const NaoString& game_dir, const NaoString& subdir, const NaoString& fallback);
 }
 

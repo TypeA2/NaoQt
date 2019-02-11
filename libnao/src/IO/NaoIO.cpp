@@ -47,11 +47,13 @@ NaoBytes NaoIO::read(size_t size) {
 }
 
 NaoBytes NaoIO::read_singleshot(size_t size) {
-    bool was_open = open_mode() != Closed;
+    bool was_open = is_open();
 
     if (!was_open) {
         open(ReadOnly);
     }
+
+    seek(0);
 
     NaoBytes bytes = read(size);
 
@@ -96,6 +98,52 @@ bool NaoIO::is_open(OpenMode mode) const {
 
     return open_mode() & mode;
 }
+
+#pragma region "Binary reading"
+
+uint8_t NaoIO::read_uchar() {
+    char val = 0;
+
+    read(&val, 1);
+
+    return val;
+}
+
+uint16_t NaoIO::read_ushort(ByteOrder order) {
+    char val[2] { };
+
+    read(val, 2);
+
+    return (order == LE)
+        ? (*reinterpret_cast<uint16_t*>(val))
+        : (uint16_t(val[0]) | (uint16_t(val[1]) << 8));
+}
+
+uint32_t NaoIO::read_uint(ByteOrder order) {
+    char val[4];
+
+    read(val, 4);
+
+    return (order == LE)
+        ? (*reinterpret_cast<uint32_t*>(val))
+        : (uint32_t(val[0]) | (uint32_t(val[1]) << 8)
+            | (uint32_t(val[2]) << 16) | (uint32_t(val[3]) << 24));
+}
+
+uint64_t NaoIO::read_ulong(ByteOrder order) {
+    char val[8];
+
+    read(val, 8);
+
+    return (order == LE)
+        ? (*reinterpret_cast<uint64_t*>(val))
+        : (uint64_t(val[0]) | (uint64_t(val[1]) << 8)
+            | (uint64_t(val[2]) << 16) | (uint64_t(val[3]) << 24)
+            | (uint64_t(val[4]) << 32) | (uint64_t(val[5]) << 40)
+            | (uint64_t(val[6]) << 48) | (uint64_t(val[7]) << 56));
+}
+
+#pragma endregion
 
 //// Protected
 

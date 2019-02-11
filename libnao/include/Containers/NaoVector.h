@@ -30,6 +30,8 @@ template <typename T>
 class NaoVector {
     public:
 
+#pragma region Required STL stuff
+
     using value_type = T;
     using size_type = size_t;
     using difference_type = ptrdiff_t;
@@ -338,6 +340,18 @@ class NaoVector {
         _m_size -= std::distance(first, last);
 
         return _m_end;
+    }
+
+#pragma endregion
+
+    size_type index_of(const T& val) const {
+        for (size_type i = 0; i < _m_size; ++i) {
+            if (_m_data[i] == val) {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     private:

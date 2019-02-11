@@ -17,8 +17,12 @@
 
 #include "Plugin_DAT.h"
 
+#include "DATReader.h"
+
 #include <NaoObject.h>
-#include <IO/NaoIO.h>
+#include <IO/NaoChunkIO.h>
+#include <Plugin/NaoPluginManager.h>
+#include <Logging/NaoLogging.h>
 
 NaoPlugin GetNaoPlugin() {
     using namespace Plugin;
@@ -113,7 +117,7 @@ namespace Plugin {
 
     namespace Description {
         bool prioritise_description() {
-            return false;
+            return true;
         }
 
         NaoString description() {
@@ -136,8 +140,13 @@ namespace Plugin {
         }
 
         bool can_move(NaoObject* from, NaoObject* to) {
-            (void) from;
-            (void) to;
+            for (NaoObject* child : from->children()) {
+                if (child->name() == to->name()) {
+                    return true;
+                }
+            }
+
+            Error::error() = "Target is not a child of source object";
 
             return false;
         }
@@ -145,7 +154,67 @@ namespace Plugin {
 
     namespace Function {
         bool populate(NaoObject* object) {
+            if (!Capabilities::populatable(object)) {
+                return false;
+            }
 
+            NaoIO* io = object->file_ref().io;
+
+            if (DATReader* reader = DATReader::create(io)) {
+                
+                object->set_description("DAT archive");
+
+                NaoVector<NaoObject*> children;
+
+                children.reserve(std::size(reader->files()));
+
+                int64_t subsequent_errors = 0;
+
+                for (const DATReader::FileEntry& file : reader->files()) {
+                    NaoChunkIO* file_io = new NaoChunkIO(io, { file.offset, file.size, 0 });
+
+                    children.push_back(new NaoObject(NaoObject::File {
+                        file_io,
+                        file.size,
+                        file.size,
+                        false,
+                        file.name
+                        }));
+
+                    if (!PluginManager.set_description(children.back())) {
+                        if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
+                            nerr << "Plugin_DAT::populate - failed to set description for"
+                                << children.back()->name();
+                        }
+
+                        ++subsequent_errors;
+                    }
+                }
+
+                if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
+                    nerr << "Plugin_DAT::populate -"
+                        << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
+                        << "messages suppressed.";
+                }
+
+                const int64_t added = object->add_child(children);
+
+                if (added != std::size(children)) {
+                    Error::error() = "Could not add all children.\nAttempted: " +
+                        NaoString::number(added) + ", succeeded: " + NaoString::number(std::size(children)) + ".\n"
+                        + "Path: " + object->name();
+
+                    nerr << "Plugin_DAT::populate - failed to add all children to parent";
+
+                    return false;
+                }
+
+                delete reader;
+
+                return true;
+            }
+
+            return false;
         }
 
         bool decode(N_UNUSED NaoObject* object, N_UNUSED NaoIO* out) {
@@ -153,14 +222,21 @@ namespace Plugin {
         }
 
         bool move(NaoObject*& from, NaoObject* to) {
-            (void) from;
-            (void) to;
-            return false;
+            if (!Capabilities::can_move(from, to)) {
+                return false;
+            }
+
+            delete from;
+
+            from = to;
+
+            return true;
         }
     }
 
     namespace ContextMenu {
-        bool has_context_menu() {
+        bool has_context_menu(NaoObject* object) {
+            (void) object;
             return false;
         }
 

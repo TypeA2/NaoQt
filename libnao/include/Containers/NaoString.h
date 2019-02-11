@@ -21,6 +21,9 @@
 
 #include "Filesystem/Filesystem.h"
 
+#include "Functionality/NaoMath.h"
+
+
 #include <sstream>
 
 #ifdef QT_VERSION

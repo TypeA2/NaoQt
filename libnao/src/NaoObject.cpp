@@ -25,13 +25,15 @@
 
 NaoObject::NaoObject(const File& file) 
     : _m_is_dir(false)
-    , _m_file(file) {
+    , _m_file(file)
+    , _m_flags(0ui64) {
     _m_dir = { };
 }
 
 NaoObject::NaoObject(const Dir& dir) 
     : _m_is_dir(true)
-    , _m_dir(dir) {
+    , _m_dir(dir)
+    , _m_flags(0ui64) {
     _m_file = { nullptr, 0, 0, false };
 }
 
@@ -106,3 +108,10 @@ const NaoString& NaoObject::description() const {
     return _m_description;
 }
 
+uint64_t NaoObject::flags() const {
+    return _m_flags;
+}
+
+uint64_t NaoObject::set_flags(uint64_t flags) {
+    return (_m_flags = flags);
+}

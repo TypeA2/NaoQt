@@ -143,8 +143,7 @@ bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
     }
 
     // Checks if any plugin supports this object
-    if (!m_current_plugin
-        && !((m_current_plugin = PluginManager.plugin_for_object(new_object)))) {
+    if (!((m_current_plugin = PluginManager.plugin_for_object(new_object)))) {
         delete new_object;
         m_last_error = "NaoFSM::move - could not find plugin for object with name " + target_path;
 

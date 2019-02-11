@@ -417,13 +417,21 @@ NaoString::operator std::string() const {
 #pragma region "Filesystem compatibility"
 
 NaoString::NaoString(const fs::path& path) {
+
+
+
     std::string str = path.string();
+
+    OutputDebugStringA("constructing from ");
+    OutputDebugStringA(str.c_str());
+    OutputDebugStringA("\n");
 
     _m_size = std::size(str);
     _m_allocated = NaoMath::round_up(_m_size, data_alignment);
     _m_data = new char[_m_allocated]();
     _m_end = std::copy(std::begin(str), std::end(str), _m_data);
 }
+
 
 NaoString& NaoString::operator=(const fs::path& path) {
     if (_m_allocated) {
