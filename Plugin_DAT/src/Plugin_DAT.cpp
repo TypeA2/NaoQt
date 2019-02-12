@@ -23,6 +23,7 @@
 #include <IO/NaoChunkIO.h>
 #include <Plugin/NaoPluginManager.h>
 #include <Logging/NaoLogging.h>
+#include <Utils/DesktopUtils.h>
 
 NaoPlugin GetNaoPlugin() {
     using namespace Plugin;
@@ -70,7 +71,7 @@ NaoPlugin GetNaoPlugin() {
 namespace Plugin {
     namespace PluginInfo {
         NaoString name() {
-            return "libnao DAT archive plugin";
+            return "libnao DAT";
         }
 
         NaoString description() {
@@ -178,7 +179,7 @@ namespace Plugin {
                         file.size,
                         file.size,
                         false,
-                        file.name
+                        object->name() + N_PATHSEP + file.name
                         }));
 
                     if (!PluginManager.set_description(children.back())) {
@@ -236,12 +237,26 @@ namespace Plugin {
 
     namespace ContextMenu {
         bool has_context_menu(NaoObject* object) {
-            (void) object;
-            return false;
+            return exists(fs::absolute(object->name() + N_PATHSEP + ".."));
         }
 
-        NaoVector<NaoPlugin::ContextMenu::ContextMenuEntry> context_menu(N_UNUSED NaoObject* object) {
-            return NaoVector<NaoPlugin::ContextMenu::ContextMenuEntry>();
+        NaoPlugin::ContextMenu::type context_menu(NaoObject* object) {
+            if (has_context_menu(object)) {
+                return { { "Extract", Extraction::extract_single_file } };
+            }
+
+            return NaoPlugin::ContextMenu::type();
         }
+    }
+
+    namespace Extraction {
+        bool extract_single_file(NaoObject* object) {
+            ndebug << "extracting" << object->name();
+
+            NaoString target = DesktopUtils::save_as(object->name(), "DAT archive\0*.*\0");
+
+            return true;
+        }
+
     }
 }

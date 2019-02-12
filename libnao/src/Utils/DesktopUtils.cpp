@@ -24,6 +24,7 @@
 #ifdef N_WINDOWS
 #   include <ShlObj_core.h>
 #   include <shellapi.h>
+#   include <commdlg.h>
 #endif
 
 namespace DesktopUtils {
@@ -88,5 +89,36 @@ namespace DesktopUtils {
 #endif
 
     }
+
+    NaoString save_as(const NaoString& default_path, const char* filters, uint32_t current_filter) {
+
+        NaoString result;
+        result.reserve(1024);
+
+        ndebug << "allocated" << result.capacity();
+
+        OPENFILENAMEA ofn { 0 };
+        ofn.lStructSize = sizeof(ofn);
+        ofn.hwndOwner = nullptr;
+        ofn.lpstrTitle = nullptr;
+        ofn.lpstrFile = std::data(result);
+        ofn.nMaxFile = DWORD(result.capacity());
+        ofn.lpstrFilter = filters;
+        ofn.nFilterIndex = current_filter;
+        ofn.lpstrFileTitle = nullptr;
+        ofn.nMaxFileTitle = 0;
+        ofn.lpstrInitialDir = default_path.substr(0, default_path.last_index_of(N_PATHSEP));
+        ofn.lpstrDefExt = default_path.substr(default_path.last_index_of('.') + 1);
+        ofn.Flags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
+
+        bool success = GetSaveFileNameA(&ofn);
+
+        ndebug << "success:" << success;
+        ndebug << "selected file:" << result;// TODO empty return value
+
+        return result;
+
+    }
+
 
 }

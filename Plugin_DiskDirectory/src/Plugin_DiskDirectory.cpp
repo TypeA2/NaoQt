@@ -70,7 +70,7 @@ NaoPlugin GetNaoPlugin() {
 namespace Plugin {
     namespace PluginInfo {
         NaoString name() {
-            return "libnao directory plugin";
+            return "libnao directory";
         }
 
         NaoString description() {
@@ -252,8 +252,8 @@ namespace Plugin {
             return false;
         }
 
-        NaoVector<NaoPlugin::ContextMenu::ContextMenuEntry> context_menu(N_UNUSED NaoObject* object) {
-            return NaoVector<NaoPlugin::ContextMenu::ContextMenuEntry>();
+        NaoPlugin::ContextMenu::type context_menu(N_UNUSED NaoObject* object) {
+            return NaoPlugin::ContextMenu::type();
         }
     }
 }

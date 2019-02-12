@@ -62,7 +62,11 @@ namespace Plugin {
 
     namespace ContextMenu {
         LIBNAO_PLUGIN_DECL bool has_context_menu(NaoObject* object);
-        LIBNAO_PLUGIN_DECL NaoVector<NaoPlugin::ContextMenu::ContextMenuEntry> context_menu(N_UNUSED NaoObject* object);
+        LIBNAO_PLUGIN_DECL NaoPlugin::ContextMenu::type context_menu(NaoObject* object);
+    }
+
+    namespace Extraction {
+        LIBNAO_PLUGIN_DECL bool extract_single_file(NaoObject* object);
     }
 }
 

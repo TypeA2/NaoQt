@@ -60,10 +60,6 @@ NaoQt::NaoQt(QWidget *parent)
     _load_plugins();
 
     _init_filesystem();
-
-    OutputDebugStringA("Result path: ");
-    OutputDebugStringA(fs::absolute("D:\\Games\\Steam\\SteamApps\\common\\NieRAutomata\\data\\g1234.dtt\\Poi.wtp\\..").string().c_str());
-    OutputDebugStringA("\n");
 }
 
 QString NaoQt::get_config_path() {
@@ -241,7 +237,7 @@ void NaoQt::_load_plugins() {
 
 void NaoQt::_init_filesystem() {
 
-    const NaoString default_path = SteamUtils::game_path(_m_settings.at("filesystem/default_game"),
+    const NaoString default_path = SteamUtils::game_path(_m_settings.at("filesystem/game"),
         _m_settings.at("filesystem/subdir"),
         _m_settings.at("filesystem/fallback"));
 
@@ -277,9 +273,12 @@ void NaoQt::_move_async(const QString& to, bool _refresh) {
 
     _is_moving = true;
 
+    ndebug << "moving to" << NaoString(to);
+
     auto future_watcher = new QFutureWatcher<bool>(this);
 
     connect(future_watcher, &QFutureWatcher<bool>::finished, this, [future_watcher, this] {
+        ndebug << "moved:" << future_watcher->result();
         if (!future_watcher->result()) {
             QMessageBox::critical(this, "NaoFSM::move", NaoFSM.last_error());
         } else {
@@ -320,49 +319,38 @@ void NaoQt::view_context_menu(const QPoint& pos) {
 #define ADDOPT(text, target, handler) { \
     QAction* act = new QAction(text, menu); \
     connect(act, &QAction::triggered, target, handler); \
-    connect(act, &QAction::triggered, menu, &QMenu::deleteLater); \
     menu->addAction(act); \
 }
     QMenu* menu = new QMenu(this);
+    connect(menu, &QMenu::triggered, menu, &QMenu::deleteLater);
 
     QTreeWidgetItem* item = _m_tree_widget->itemAt(pos);
     
     if (!item) {
-        ADDOPT("Refresh view", this, &NaoQt::view_refresh);
-        ADDOPT("Show in explorer", this, [this] {
-            
-            NaoString current_path = _m_path_display->text();
+        if (QDir(_m_path_display->text()).exists()) {
+            ADDOPT("Refresh view", this, &NaoQt::view_refresh);
 
-            if (QFile(current_path).exists()) {
-                DesktopUtils::show_in_explorer(_m_path_display->text() + N_PATHSEP);
-            } else {
-                NaoString archive_path = current_path;
-                bool success = true;
-
-                NaoString next_path;
-
-                while (!QDir(archive_path).exists()) {
-                    next_path = archive_path.substr(0, archive_path.last_index_of(N_PATHSEP));
-
-                    if (archive_path == next_path) {
-                        success = false;
-                        break;
-                    }
-
-                    archive_path = next_path;
+            ADDOPT("Show in explorer", this, [this] {
+                if (QDir(_m_path_display->text()).exists()) {
+                    DesktopUtils::open_in_explorer(_m_path_display->text() + N_PATHSEP);
                 }
-
-                DesktopUtils::show_in_explorer(archive_path);
-            }
-        });
+            });
+        }
+        
     } else {
         NaoObject* object = item->data(0, ObjectRole).value<NaoObject*>();
 
+        bool append_show = false;
+
         if (PluginManager.plugin_for_object(object)) {
+            append_show = true;
+
             ADDOPT("Open", this, ([this, object] {
                 _move_async(object->name());
             }));
-        } else {
+        } else if (QFile(object->name()).exists()) {
+            append_show = true;
+
             ADDOPT("Open", this, [object] {
                 DesktopUtils::open_file(object->name());
             });
@@ -371,12 +359,40 @@ void NaoQt::view_context_menu(const QPoint& pos) {
             });
         }
 
-        menu->addSeparator();
+        if (NaoFSM.current_plugin()->context_menu.has_context_menu(object)) {
+            //menu->addSection(NaoFSM.current_plugin()->plugin_info.name());
+            //QAction* submenu_action = menu->addAction(NaoFSM.current_plugin()->plugin_info.name());
 
-        ADDOPT("Show in explorer", this, [object] {
-            DesktopUtils::show_in_explorer(object->name());
-        });
+            //QMenu* submenu = new QMenu(menu);
+            QMenu* submenu = menu->addMenu(NaoFSM.current_plugin()->plugin_info.name());
 
+            for (const NaoPlugin::ContextMenu::Entry& entry :
+                    NaoFSM.current_plugin()->context_menu.get(object)) {
+                
+                QAction* act = new QAction(entry.first, menu);
+                connect(act, &QAction::triggered, this, [this, entry, object] {
+                    if (!entry.second(object)) {
+                        QMessageBox::warning(this, "Action failed",
+                            "Failed executing action with name: " + entry.first);
+                    }
+                });
+
+                //menu->addAction(act);
+                submenu->addAction(act);
+            }
+        }
+
+        if (append_show) {
+            menu->addSeparator();
+
+            ADDOPT("Show in explorer", this, [object] {
+                DesktopUtils::show_in_explorer(object->name());
+            });
+        }
+    }
+
+    if (menu->isEmpty()) {
+        menu->addAction("No available actions")->setDisabled(true);
     }
 
     menu->popup(_m_tree_widget->viewport()->mapToGlobal(pos));

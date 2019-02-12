@@ -78,6 +78,10 @@ const NaoString& NaoFileSystemManager::current_path() const {
     return d_ptr->m_current_object->name();
 }
 
+const NaoPlugin* NaoFileSystemManager::current_plugin() const {
+    return d_ptr->m_current_plugin;
+}
+
 const NaoString& NaoFileSystemManager::last_error() const {
     return d_ptr->m_last_error;
 }

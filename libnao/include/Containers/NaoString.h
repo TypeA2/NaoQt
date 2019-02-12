@@ -119,6 +119,9 @@ class LIBNAO_API NaoString {
     void clear() noexcept;
 
     void reserve(size_t size);
+    size_t capacity() const;
+
+    char* data();
 
     iterator begin();
     const_iterator begin() const;

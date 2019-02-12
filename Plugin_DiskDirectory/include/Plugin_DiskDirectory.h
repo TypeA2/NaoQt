@@ -62,6 +62,6 @@ namespace Plugin {
 
     namespace ContextMenu {
         LIBNAO_PLUGIN_DECL bool has_context_menu(N_UNUSED NaoObject* object);
-        LIBNAO_PLUGIN_DECL NaoVector<NaoPlugin::ContextMenu::ContextMenuEntry> context_menu(N_UNUSED NaoObject* object);
+        LIBNAO_PLUGIN_DECL NaoPlugin::ContextMenu::type context_menu(N_UNUSED NaoObject* object);
     }
 }

@@ -207,6 +207,14 @@ void NaoString::reserve(size_t size) {
     _reallocate_to(size);
 }
 
+size_t NaoString::capacity() const {
+    return _m_allocated;
+}
+
+char* NaoString::data() {
+    return _m_data;
+}
+
 NaoString::iterator NaoString::begin() {
     return _m_data;
 }

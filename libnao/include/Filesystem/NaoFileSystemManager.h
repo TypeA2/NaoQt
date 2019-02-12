@@ -24,6 +24,8 @@
 
 #define NaoFSM NaoFileSystemManager::global_instance()
 
+struct NaoPlugin;
+
 class NaoFileSystemManager {
     public:
     // Global instance
@@ -34,6 +36,7 @@ class NaoFileSystemManager {
 
     LIBNAO_API NaoObject* current_object() const;
     LIBNAO_API const NaoString& current_path() const;
+    LIBNAO_API const NaoPlugin* current_plugin() const;
 
     LIBNAO_API const NaoString& last_error() const;
 

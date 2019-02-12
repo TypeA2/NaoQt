@@ -68,9 +68,10 @@ struct LIBNAO_API NaoPlugin {
     } functionality;
     
     struct ContextMenu {
-        using ContextMenuEntry = NaoPair<NaoString, bool(*)(NaoObject* object)>;
+        using Entry = NaoPair<NaoString, bool(*)(NaoObject* object)>;
+        using type = NaoVector<Entry>;
         
         bool(*has_context_menu)(NaoObject* object);
-        NaoVector<ContextMenuEntry>(*get)(NaoObject* object);
+        type(*get)(NaoObject* object);
     } context_menu;
 };
