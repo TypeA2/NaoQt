@@ -64,6 +64,10 @@ NaoBytes NaoIO::read_singleshot(size_t size) {
     return bytes;
 }
 
+NaoBytes NaoIO::read_all() {
+    return read(size());
+}
+
 
 int64_t NaoIO::write(const char* buf, int64_t size) {
     return -1i64;

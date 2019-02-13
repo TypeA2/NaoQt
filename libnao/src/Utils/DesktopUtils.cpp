@@ -91,18 +91,17 @@ namespace DesktopUtils {
     }
 
     NaoString save_as(const NaoString& default_path, const char* filters, uint32_t current_filter) {
+        char result[1024]{ 0 };
+        NaoString fname = default_path.substr(default_path.last_index_of(N_PATHSEP) + 1);
 
-        NaoString result;
-        result.reserve(1024);
-
-        ndebug << "allocated" << result.capacity();
+        std::copy(std::begin(fname), std::end(fname), result);
 
         OPENFILENAMEA ofn { 0 };
         ofn.lStructSize = sizeof(ofn);
         ofn.hwndOwner = nullptr;
         ofn.lpstrTitle = nullptr;
-        ofn.lpstrFile = std::data(result);
-        ofn.nMaxFile = DWORD(result.capacity());
+        ofn.lpstrFile = &result[0];
+        ofn.nMaxFile = DWORD(sizeof(result));
         ofn.lpstrFilter = filters;
         ofn.nFilterIndex = current_filter;
         ofn.lpstrFileTitle = nullptr;
@@ -111,12 +110,7 @@ namespace DesktopUtils {
         ofn.lpstrDefExt = default_path.substr(default_path.last_index_of('.') + 1);
         ofn.Flags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
 
-        bool success = GetSaveFileNameA(&ofn);
-
-        ndebug << "success:" << success;
-        ndebug << "selected file:" << result;// TODO empty return value
-
-        return result;
+        return GetSaveFileNameA(&ofn) ? result : NaoString();
 
     }
 

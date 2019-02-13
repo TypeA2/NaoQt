@@ -164,7 +164,7 @@ int64_t NaoChunkIO::write(const char* buf, int64_t size) {
 
 bool NaoChunkIO::open(OpenMode mode) {
     if (mode != ReadOnly) {
-        nerr << "NaoChunkIO::ope - only reading supported";
+        nerr << "NaoChunkIO::open - only reading supported";
         return false;
     }
 

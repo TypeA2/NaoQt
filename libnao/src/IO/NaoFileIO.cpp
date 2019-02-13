@@ -113,7 +113,7 @@ bool NaoFileIO::open(OpenMode mode) {
 
     NaoIO::open(mode);
 
-#define OPEN(mode) return fopen_s(&_m_file_ptr, _m_path.c_str(), mode) == 0
+#define OPEN(_mode) return fopen_s(&_m_file_ptr, _m_path.c_str(), _mode) == 0
 
     switch (mode) {
         case Closed:
@@ -147,10 +147,14 @@ bool NaoFileIO::open(OpenMode mode) {
 }
 
 void NaoFileIO::close() {
-    NaoIO::open(Closed);
-
-    if (_m_file_ptr && NaoIO::open_mode()) {
-        fclose(_m_file_ptr);
+    
+    if (_m_file_ptr && open_mode() != Closed) {
+        int err = 0;
+        if ((err = fclose(_m_file_ptr)) != 0) {
+            nerr << "NaoFileIO::close - failed closing with error" << err;
+        }
     }
+
+    NaoIO::close();
 }
 

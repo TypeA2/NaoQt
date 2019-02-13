@@ -21,9 +21,10 @@
 
 #include <NaoObject.h>
 #include <IO/NaoChunkIO.h>
+#include <IO/NaoFileIO.h>
 #include <Plugin/NaoPluginManager.h>
-#include <Logging/NaoLogging.h>
 #include <Utils/DesktopUtils.h>
+#include <Logging/NaoLogging.h>
 
 NaoPlugin GetNaoPlugin() {
     using namespace Plugin;
@@ -33,6 +34,7 @@ NaoPlugin GetNaoPlugin() {
 
         NaoPlugin::PluginInfo {
             PluginInfo::name,
+            PluginInfo::display_name,
             PluginInfo::description,
             PluginInfo::version
             },
@@ -71,6 +73,10 @@ NaoPlugin GetNaoPlugin() {
 namespace Plugin {
     namespace PluginInfo {
         NaoString name() {
+            return "libnao DAT plugin";
+        }
+
+        NaoString display_name() {
             return "libnao DAT";
         }
 
@@ -251,9 +257,54 @@ namespace Plugin {
 
     namespace Extraction {
         bool extract_single_file(NaoObject* object) {
-            ndebug << "extracting" << object->name();
+            if (object->is_dir()) {
+                nerr << "Plugin_DAT::extract_single_file - shouldn't be possible to extract a directory";
+                return false;
+            }
 
-            NaoString target = DesktopUtils::save_as(object->name(), "DAT archive\0*.*\0");
+            NaoString ext = fs::path(object->name()).extension();
+
+            char* filters = new char[32]();
+            std::copy_n("\0\0\0\0 file\0*.\0\0\0\0All files\0*.*\0", 31, filters);
+            std::copy_n(std::begin(ext), 4, filters);
+            std::copy_n(std::begin(ext) + 1, 3, filters + 12);
+
+            NaoString target = DesktopUtils::save_as(object->name(), filters);
+
+            delete[] filters;
+
+            if (!std::empty(target)) {
+                NaoIO* source = object->file_ref().io;
+                if (!source->open()) {
+                    nerr << "Plugin_DAT::extract_single_file - failed opening source";
+                    Error::error() = "Failed opening source io";
+                    return false;
+                }
+
+                if (!source->seek(0)) {
+                    nerr << "Plugin_DAT::extract_single_file - failed seeking in source";
+                    Error::error() = "Failed seeking in source io";
+                    return false;
+                }
+                
+                NaoFileIO io(target);
+                if (!io.open(NaoIO::WriteOnly)) {
+                    nerr << "Plugin_DAT::extract_single_file - failed opening target";
+                    Error::error() = "Failed opening target file";
+                    return false;
+                }
+
+                int64_t written = 0;
+                if ((written = io.write(source->read_all())) != source->size()) {
+                    nerr << "Plugin_DAT::extract_single_file - could not write all data, missing" << (source->size() - written) << "bytes";
+                    source->close();
+                    io.close();
+                    return false;
+                }
+
+                source->close();
+                io.close();
+            }
 
             return true;
         }

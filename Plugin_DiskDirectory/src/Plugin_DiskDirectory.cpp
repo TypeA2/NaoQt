@@ -32,6 +32,7 @@ NaoPlugin GetNaoPlugin() {
 
         NaoPlugin::PluginInfo {
             PluginInfo::name,
+            PluginInfo::display_name,
             PluginInfo::description,
             PluginInfo::version
             },
@@ -70,6 +71,10 @@ NaoPlugin GetNaoPlugin() {
 namespace Plugin {
     namespace PluginInfo {
         NaoString name() {
+            return "libnao directory plugin";
+        }
+
+        NaoString display_name() {
             return "libnao directory";
         }
 

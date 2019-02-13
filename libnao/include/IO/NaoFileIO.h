@@ -35,12 +35,14 @@ class LIBNAO_API NaoFileIO : public NaoIO {
     // Seek to a position (relative or absolute)
     bool seek(int64_t pos, SeekDir dir = set) override;
 
+    using NaoIO::read;
     // Read size bytes into buf
     int64_t read(char* buf, int64_t size) override;
-
+    
+    using NaoIO::write;
     // Write size bytes from buf
     int64_t write(const char* buf, int64_t size) override;
-
+    
     bool open(OpenMode mode = ReadOnly) override;
     void close() override;
 

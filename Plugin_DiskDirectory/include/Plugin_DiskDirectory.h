@@ -26,6 +26,7 @@ LIBNAO_PLUGIN_CALL LIBNAO_PLUGIN_DECL NaoPlugin GetNaoPlugin();
 namespace Plugin {
     namespace PluginInfo {
         LIBNAO_PLUGIN_DECL NaoString name();
+        LIBNAO_PLUGIN_DECL NaoString display_name();
         LIBNAO_PLUGIN_DECL NaoString description();
         LIBNAO_PLUGIN_DECL uint64_t version();
     }

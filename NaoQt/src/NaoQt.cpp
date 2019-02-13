@@ -360,12 +360,7 @@ void NaoQt::view_context_menu(const QPoint& pos) {
         }
 
         if (NaoFSM.current_plugin()->context_menu.has_context_menu(object)) {
-            //menu->addSection(NaoFSM.current_plugin()->plugin_info.name());
-            //QAction* submenu_action = menu->addAction(NaoFSM.current_plugin()->plugin_info.name());
-
-            //QMenu* submenu = new QMenu(menu);
-            QMenu* submenu = menu->addMenu(NaoFSM.current_plugin()->plugin_info.name());
-
+            menu->addSection(NaoFSM.current_plugin()->plugin_info.display_name());
             for (const NaoPlugin::ContextMenu::Entry& entry :
                     NaoFSM.current_plugin()->context_menu.get(object)) {
                 
@@ -378,7 +373,7 @@ void NaoQt::view_context_menu(const QPoint& pos) {
                 });
 
                 //menu->addAction(act);
-                submenu->addAction(act);
+                menu->addAction(act);
             }
         }
 

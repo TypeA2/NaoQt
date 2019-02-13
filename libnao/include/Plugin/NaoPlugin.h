@@ -39,6 +39,7 @@ struct LIBNAO_API NaoPlugin {
 
     struct PluginInfo {
         NaoString(*name)();
+        NaoString(*display_name)();
         NaoString(*desc)();
         uint64_t(*version)();
     } plugin_info;
