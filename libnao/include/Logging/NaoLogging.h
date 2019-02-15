@@ -31,9 +31,14 @@
 
 #if defined(N_WINDOWS) && defined(NAO_DEBUG)
 #   define nerr NaoLogger(NaoLogger::DEBUG_WIN, true, true, true)
+#   define nwarn NaoLogger(NaoLogger::DEBUG_WIN, true, true, true)
+#   define nlog NaoLogger(NaoLogger::DEBUG_WIN, true, true, true)
 #else
 #   define nerr NaoLogger(NaoLogger::STDERR, true, true, true)
+#   define nwarn NaoLogger(NaoLogger::STDERR, true, true, true)
+#   define nlog NaoLogger(NaoLogger::STDOUT, true, true, true)
 #endif
+
 
 class LIBNAO_API NaoLogger {
     public:

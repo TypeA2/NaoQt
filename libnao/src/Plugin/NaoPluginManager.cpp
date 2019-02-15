@@ -131,27 +131,45 @@ NaoPluginManager::NaoPluginManagerPrivate::~NaoPluginManagerPrivate() {
 }
 
 bool NaoPluginManager::NaoPluginManagerPrivate::init(const NaoString& plugins_dir) {
+    
+    nlog << "[NPM] Loading plugins from" << plugins_dir;
+    
     m_plugins_dir = fs::absolute(plugins_dir);
 
     for (const fs::directory_entry& file : fs::directory_iterator(m_plugins_dir)) {
+        NaoString target_lib;
         if (!is_directory(file.path()) &&
             !is_empty(file.path()) &&
             file.path().extension() == LIBNAO_PLUGIN_EXTENSION) {
 
-            if (!load(file.path())) {
-                m_errored_list.push_back({
-                    file.path().filename(),
-                    m_error
-                    });
+            target_lib = file.path();
+        } else if (is_directory(file.path())) {
+            
+            NaoString target = file.path() + N_PATHSEP + file.path().filename() + LIBNAO_PLUGIN_EXTENSION;
+            if (fs::exists(target)) {
+                target_lib = target;
             } else {
-                if (!std::empty(m_error)) {
-                    m_error.clear();
-                }
+                continue;
+            }
+        } else {
+            continue;
+        }
+
+        if (!load(target_lib)) {
+            m_errored_list.push_back({
+                file.path().filename(),
+                m_error
+                });
+        } else {
+            if (!std::empty(m_error)) {
+                m_error.clear();
             }
         }
     }
 
     m_initialised = true;
+
+    nlog << "[NPM] Finished loading plugins";
 
     return std::empty(m_errored_list);
 }
@@ -176,6 +194,9 @@ bool NaoPluginManager::NaoPluginManagerPrivate::load(const NaoString& plugin_nam
 
         m_plugins.push_back(plugin);
         m_plugins_raw.push_back(plugin.plugin);
+
+        nlog << "[NPM] Loaded plugin" << NaoString(fs::path(plugin_name).filename())
+            << ("(\"" + plugin.plugin.plugin_info.display_name() + "\")");
 
         return true;
     }

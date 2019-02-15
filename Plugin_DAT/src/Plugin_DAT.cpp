@@ -147,10 +147,11 @@ namespace Plugin {
         }
 
         bool can_move(NaoObject* from, NaoObject* to) {
-            for (NaoObject* child : from->children()) {
-                if (child->name() == to->name()) {
-                    return true;
-                }
+            if (to->parent() == from
+                || (supports(from)
+                    && from->name().starts_with(to->name())
+                    && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP))) {
+                return true;
             }
 
             Error::error() = "Target is not a child of source object";
@@ -169,29 +170,23 @@ namespace Plugin {
 
             if (DATReader* reader = DATReader::create(io)) {
                 
-                object->set_description("DAT archive");
-
-                NaoVector<NaoObject*> children;
-
-                children.reserve(std::size(reader->files()));
-
                 int64_t subsequent_errors = 0;
 
                 for (const DATReader::FileEntry& file : reader->files()) {
                     NaoChunkIO* file_io = new NaoChunkIO(io, { file.offset, file.size, 0 });
 
-                    children.push_back(new NaoObject(NaoObject::File {
+                    NaoObject* new_object = new NaoObject(NaoObject::File {
                         file_io,
                         file.size,
                         file.size,
                         false,
                         object->name() + N_PATHSEP + file.name
-                        }));
+                        }, object);
 
-                    if (!PluginManager.set_description(children.back())) {
+                    if (!PluginManager.set_description(new_object)) {
                         if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-                            nerr << "Plugin_DAT::populate - failed to set description for"
-                                << children.back()->name();
+                            nwarn << "[Plugin_DAT] failed to set description for"
+                                << new_object->name();
                         }
 
                         ++subsequent_errors;
@@ -199,22 +194,11 @@ namespace Plugin {
                 }
 
                 if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-                    nerr << "Plugin_DAT::populate -"
+                    nwarn << "[Plugin_DAT]"
                         << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
                         << "messages suppressed.";
                 }
 
-                const int64_t added = object->add_child(children);
-
-                if (added != std::size(children)) {
-                    Error::error() = "Could not add all children.\nAttempted: " +
-                        NaoString::number(added) + ", succeeded: " + NaoString::number(std::size(children)) + ".\n"
-                        + "Path: " + object->name();
-
-                    nerr << "Plugin_DAT::populate - failed to add all children to parent";
-
-                    return false;
-                }
 
                 delete reader;
 
@@ -233,9 +217,26 @@ namespace Plugin {
                 return false;
             }
 
-            delete from;
+            if (to->parent() == from) {
+                from->remove_child(to);
 
-            from = to;
+                to->set_parent(nullptr);
+
+                delete from;
+
+                from = to;
+            } else if (Capabilities::supports(from)
+                && from->name().starts_with(to->name())
+                && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP)) {
+
+                for (NaoObject* child : from->take_children()) {
+                    delete child;
+                }
+
+                from->set_parent(to);
+
+                from = to;
+            }
 
             return true;
         }
@@ -243,11 +244,16 @@ namespace Plugin {
 
     namespace ContextMenu {
         bool has_context_menu(NaoObject* object) {
-            return exists(fs::absolute(object->name() + N_PATHSEP + ".."));
+            return Capabilities::supports(object)
+                || exists(fs::absolute(object->parent()->name()));
         }
 
         NaoPlugin::ContextMenu::type context_menu(NaoObject* object) {
-            if (has_context_menu(object)) {
+            if (Capabilities::supports(object)) {
+                return { { "Extract", Extraction::extract_all_files } };
+            }
+
+            if (exists(fs::absolute(object->parent()->name()))) {
                 return { { "Extract", Extraction::extract_single_file } };
             }
 
@@ -258,9 +264,11 @@ namespace Plugin {
     namespace Extraction {
         bool extract_single_file(NaoObject* object) {
             if (object->is_dir()) {
-                nerr << "Plugin_DAT::extract_single_file - shouldn't be possible to extract a directory";
+                nerr << "[Plugin_DAT] shouldn't be possible to extract a directory";
                 return false;
             }
+
+            nlog << "[Plugin_DAT] saving file" << object->name();
 
             NaoString ext = fs::path(object->name()).extension();
 
@@ -269,38 +277,42 @@ namespace Plugin {
             std::copy_n(std::begin(ext), 4, filters);
             std::copy_n(std::begin(ext) + 1, 3, filters + 12);
 
-            NaoString target = DesktopUtils::save_as(object->name(), filters);
+            NaoString target = DesktopUtils::save_as_file(object->name(), filters);
 
             delete[] filters;
 
             if (!std::empty(target)) {
+                nlog << "[Plugin_DAT] writing to " << target;
+
                 NaoIO* source = object->file_ref().io;
                 if (!source->open()) {
-                    nerr << "Plugin_DAT::extract_single_file - failed opening source";
+                    nerr << "[Plugin_DAT] failed opening source";
                     Error::error() = "Failed opening source io";
                     return false;
                 }
 
                 if (!source->seek(0)) {
-                    nerr << "Plugin_DAT::extract_single_file - failed seeking in source";
+                    nerr << "[Plugin_DAT] failed seeking in source";
                     Error::error() = "Failed seeking in source io";
                     return false;
                 }
                 
                 NaoFileIO io(target);
                 if (!io.open(NaoIO::WriteOnly)) {
-                    nerr << "Plugin_DAT::extract_single_file - failed opening target";
+                    nerr << "[Plugin_DAT] failed opening target";
                     Error::error() = "Failed opening target file";
                     return false;
                 }
 
                 int64_t written = 0;
                 if ((written = io.write(source->read_all())) != source->size()) {
-                    nerr << "Plugin_DAT::extract_single_file - could not write all data, missing" << (source->size() - written) << "bytes";
+                    nerr << "[Plugin_DAT] could not write all data, missing" << (source->size() - written) << "bytes";
                     source->close();
                     io.close();
                     return false;
                 }
+
+                nlog << "[Plugin_DAT] wrote" << NaoString::bytes(written) << ('(' + NaoString::number(written) + ") bytes");
 
                 source->close();
                 io.close();
@@ -308,6 +320,16 @@ namespace Plugin {
 
             return true;
         }
+
+
+        bool extract_all_files(NaoObject* object) {
+            NaoString target = DesktopUtils::save_as_dir("C:/Users/Nuan/Downloads", nullptr);
+
+            ndebug << target;
+
+            return !!object;
+        }
+
 
     }
 }

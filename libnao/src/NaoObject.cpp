@@ -18,38 +18,78 @@
 #include "NaoObject.h"
 
 #include "IO/NaoIO.h"
+#include "Logging/NaoLogging.h"
 
 #include <algorithm>
 
 //// Public
 
-NaoObject::NaoObject(const File& file) 
+NaoObject::NaoObject(const File& file, NaoObject* parent)
     : _m_is_dir(false)
     , _m_file(file)
-    , _m_flags(0ui64) {
-    _m_dir = { };
+    , _m_dir({ })
+    , _m_flags(0ui64)
+    , _m_parent(parent) {
+
+    if (parent && !parent->children().contains(parent)) {
+        if (!parent->add_child(this)) {
+            nerr << "NaoObject::NaoObject - failed adding child file with name " << file.name;
+        }
+    }
 }
 
-NaoObject::NaoObject(const Dir& dir) 
+NaoObject::NaoObject(const Dir& dir, NaoObject* parent)
     : _m_is_dir(true)
+    , _m_file({ nullptr, 0, 0, false, NaoString() })
     , _m_dir(dir)
-    , _m_flags(0ui64) {
-    _m_file = { nullptr, 0, 0, false };
+    , _m_flags(0ui64)
+    , _m_parent(parent) {
+    if (parent
+        && !parent->children().contains(parent)
+        && !parent->add_child(this)) {
+        nerr << "NaoObject::NaoObject - failed adding child dir with name " << dir.name;
+    }
 }
 
 NaoObject::~NaoObject() {
+    //ndebug << "=== Deleting" << name();
+    for (NaoObject* child : _m_children) {
+        delete child;
+    }
+
     if (!_m_is_dir) {
         delete _m_file.io;
     }
 }
 
 bool NaoObject::add_child(NaoObject* child) {
+    if (child->parent() != this
+        && !child->set_parent(this)) {
+        nerr << "NaoObject::add_child - failed setting parent for single object with name" << child->name();
+        return false;
+    }
     _m_children.push_back(child);
 
     return true;
 }
 
 int64_t NaoObject::add_child(const NaoVector<NaoObject*>& children) {
+    int64_t subsequent_errors = 0;
+    for (NaoObject* child : children) {
+        if (child->parent() != this && !child->set_parent(this)) {
+            if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
+                nerr << "NaoObject::add_child - failed setting parent for multiple object, current name" << child->name();
+            }
+
+            ++subsequent_errors;
+        }
+    }
+
+    if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
+        nerr << "NaoObject::add_child - " << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
+            << "messages suppressed.";
+    }
+
     return std::end(_m_children) - _m_children.insert(
         std::end(_m_children), std::begin(children), std::end(children));
 }
@@ -67,6 +107,15 @@ void NaoObject::remove_child(const NaoVector<NaoObject*>& children) {
         return std::find(std::begin(children), std::end(children), obj) != std::end(children);
     }), std::end(_m_children));
 }
+
+NaoVector<NaoObject*> NaoObject::take_children() {
+    NaoVector<NaoObject*> children;
+
+    _m_children.swap(children);
+
+    return children;
+}
+
 
 bool NaoObject::has_children() const {
     return !std::empty(_m_children);
@@ -114,4 +163,17 @@ uint64_t NaoObject::flags() const {
 
 uint64_t NaoObject::set_flags(uint64_t flags) {
     return (_m_flags = flags);
+}
+
+bool NaoObject::set_parent(NaoObject* parent) {
+    if (!parent || name().starts_with(parent->name())) {
+        _m_parent = parent;
+        return true;
+    }
+
+    return false;
+}
+
+NaoObject* NaoObject::parent() const {
+    return _m_parent;
 }

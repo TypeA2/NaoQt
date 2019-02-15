@@ -239,6 +239,16 @@ NaoString::const_iterator NaoString::cend() const {
     return _m_end;
 }
 
+NaoString::iterator NaoString::erase(const_iterator first, const_iterator last) {
+    _m_end = std::copy(last, cend(), 
+        begin() + std::distance(cbegin(), first));
+    _m_size -= std::distance(first, last);
+
+    std::fill_n(_m_end, _m_allocated - std::distance(_m_data, _m_end), null_value);
+
+    return (last < _m_end) ? _m_data + std::distance(cbegin(), last) : _m_end;
+}
+
 #pragma endregion
 
 void NaoString::_reallocate_to(size_t size) {
@@ -425,14 +435,7 @@ NaoString::operator std::string() const {
 #pragma region "Filesystem compatibility"
 
 NaoString::NaoString(const fs::path& path) {
-
-
-
     std::string str = path.string();
-
-    OutputDebugStringA("constructing from ");
-    OutputDebugStringA(str.c_str());
-    OutputDebugStringA("\n");
 
     _m_size = std::size(str);
     _m_allocated = NaoMath::round_up(_m_size, data_alignment);

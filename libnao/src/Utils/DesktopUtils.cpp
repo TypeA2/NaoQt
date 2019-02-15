@@ -90,7 +90,9 @@ namespace DesktopUtils {
 
     }
 
-    NaoString save_as(const NaoString& default_path, const char* filters, uint32_t current_filter) {
+    NaoString save_as_file(const NaoString& default_path, const char* filters, uint32_t current_filter) {
+
+#ifdef N_WINDOWS
         char result[1024]{ 0 };
         NaoString fname = default_path.substr(default_path.last_index_of(N_PATHSEP) + 1);
 
@@ -112,6 +114,40 @@ namespace DesktopUtils {
 
         return GetSaveFileNameA(&ofn) ? result : NaoString();
 
+#endif
+
+    }
+
+#ifdef N_WINDOWS
+    NaoString save_as_dir(const NaoString& default_path, HWND hwnd) {
+
+        char result[1024]{ 0 };
+
+        char display_name[MAX_PATH] { 0 };
+
+        BROWSEINFOA info;
+        info.hwndOwner = hwnd; // TODO CANNOT BE NULL
+        info.pidlRoot = ILCreateFromPathA(default_path);
+        info.pszDisplayName = display_name;
+        info.lpszTitle = "Select folder";
+        info.ulFlags = BIF_USENEWUI;
+        /*info.lpfn = [](N_UNUSED HWND hwnd, N_UNUSED UINT uMsg,
+            N_UNUSED LPARAM lParam, N_UNUSED LPARAM lpData) -> int {
+            nlog << "callback";
+            return 0;
+        };*/
+
+
+        if (PIDLIST_ABSOLUTE pidl = SHBrowseForFolderA(&info)) {
+            nlog << "called" << uintptr_t(pidl);
+            return NaoString();
+        } else {
+            return NaoString();
+        }
+
+        return result;
+
+#endif
     }
 
 

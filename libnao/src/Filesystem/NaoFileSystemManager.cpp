@@ -21,6 +21,7 @@
 
 #include "Filesystem/Filesystem.h"
 #include "Plugin/NaoPluginManager.h"
+#include "Logging/NaoLogging.h"
 
 #ifdef N_WINDOWS
 #   include <shellapi.h>
@@ -137,6 +138,7 @@ bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
         for (NaoObject* child : m_current_object->children()) {
             if (child->name() == target) {
                 new_object = child;
+
                 break;
             }
         }
@@ -146,25 +148,46 @@ bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
         new_object = new NaoObject(NaoObject::Dir { target_path });
     }
 
+    NaoPlugin* previous_plugin = m_current_plugin;
+    
     // Checks if any plugin supports this object
     if (!((m_current_plugin = PluginManager.plugin_for_object(new_object)))) {
         delete new_object;
+        nerr << "NaoFSM::move - could not find plugin";
         m_last_error = "NaoFSM::move - could not find plugin for object with name " + target_path;
 
         return false;
     }
 
     // Move from the current to the new object, else just replace the current object
-    if (m_current_object
-        && m_current_plugin->capabilities.can_move(m_current_object, new_object)) {
-        if (!m_current_plugin->functionality.move(m_current_object, new_object)) {
-            delete new_object;
-            m_last_error = "NaoFSM::move - could not move from "
-                + m_current_object->name() + " to " + target_path;
+    if (m_current_object) {
+        NaoPlugin* move_plugin = nullptr;
+        if (previous_plugin
+            && previous_plugin->capabilities.can_move(m_current_object, new_object)) {
+            move_plugin = previous_plugin;
+
+        } else if (m_current_plugin->capabilities.can_move(m_current_object, new_object)) {
+            move_plugin = m_current_plugin;
             
-            return false;
+        }
+
+        if (move_plugin) {
+            nlog << "[NaoFSM] Moving using" << ('"' + move_plugin->plugin_info.display_name() + '"');
+            if (!move_plugin->functionality.move(m_current_object, new_object)) {
+                delete new_object;
+                m_last_error = "NaoFSM::move - could not move from "
+                    + m_current_object->name() + " to " + target_path;
+
+                nerr << "NaoFSM::move - could not move";
+
+                return false;
+            }
+        } else {
+            nerr << "NaoFSM::move - no plugin could move, this needs to be fixed.";
         }
     } else {
+        nwarn << "[NaoFSM] no current object";
+
         delete m_current_object;
         m_current_object = new_object;
     }

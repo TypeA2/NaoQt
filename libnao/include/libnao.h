@@ -62,4 +62,4 @@
 #   define N_PATHSEP '/'
 #endif
 
-#define N_SUBSEQUENT_ERRMSG_LIMIT_HINT 1
+#define N_SUBSEQUENT_ERRMSG_LIMIT_HINT 0

@@ -131,6 +131,8 @@ class LIBNAO_API NaoString {
     const_iterator end() const;
     const_iterator cend() const;
 
+    iterator erase(const_iterator first, const_iterator last);
+
 #pragma endregion
 
     private:

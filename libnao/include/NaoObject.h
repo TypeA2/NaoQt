@@ -47,9 +47,8 @@ class LIBNAO_API NaoObject {
         NaoString name;
     };
 
-
-    NaoObject(const File& file);
-    NaoObject(const Dir& dir);
+    NaoObject(const File& file, NaoObject* parent = nullptr);
+    NaoObject(const Dir& dir, NaoObject* parent = nullptr);
 
     ~NaoObject();
 
@@ -57,6 +56,7 @@ class LIBNAO_API NaoObject {
     int64_t add_child(const NaoVector<NaoObject*>& children);
     void remove_child(NaoObject* child);
     void remove_child(const NaoVector<NaoObject*>& children);
+    NaoVector<NaoObject*> take_children();
 
     bool has_children() const;
     bool is_dir() const;
@@ -78,6 +78,10 @@ class LIBNAO_API NaoObject {
     uint64_t flags() const;
     uint64_t set_flags(uint64_t flags);
 
+    bool set_parent(NaoObject* parent);
+    NaoObject* parent() const;
+
+
     private:
     bool _m_is_dir;
 
@@ -89,4 +93,6 @@ class LIBNAO_API NaoObject {
     NaoString _m_description;
 
     uint64_t _m_flags;
+
+    NaoObject* _m_parent;
 };

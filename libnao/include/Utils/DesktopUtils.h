@@ -21,10 +21,19 @@
 
 class NaoString;
 
+#ifdef N_WINDOWS
+struct HWND__;
+typedef HWND__* HWND;
+#endif
+
 namespace DesktopUtils {
     LIBNAO_API void show_in_explorer(const NaoString& target);
     LIBNAO_API void open_in_explorer(const NaoString& target);
     LIBNAO_API void open_file(const NaoString& target, bool choose = false);
-    LIBNAO_API NaoString save_as(const NaoString& default_path,
+    LIBNAO_API NaoString save_as_file(const NaoString& default_path,
         const char* filters = "All files\0*.*\0", uint32_t current_filter = 0);
+
+#ifdef N_WINDOWS
+    LIBNAO_API NaoString save_as_dir(const NaoString& default_path, HWND hwnd);
+#endif
 }

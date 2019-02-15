@@ -68,6 +68,7 @@ namespace Plugin {
 
     namespace Extraction {
         LIBNAO_PLUGIN_DECL bool extract_single_file(NaoObject* object);
+        LIBNAO_PLUGIN_DECL bool extract_all_files(NaoObject* object);
     }
 }
 

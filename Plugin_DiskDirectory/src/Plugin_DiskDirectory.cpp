@@ -142,9 +142,7 @@ namespace Plugin {
                 return false;
             }
 
-            fs::path dir_path = object->name().c_str();
-
-            if (!exists(dir_path)) {
+            if (!fs::exists(object->name())) {
                 Error::error() = "Object does not exist";
 
                 return false;
@@ -158,10 +156,15 @@ namespace Plugin {
         }
 
         bool can_move(NaoObject* from, NaoObject* to) {
-            for (NaoObject* child : from->children()) {
-                if (child->name() == to->name()) {
-                    return true;
-                }
+            if (!populatable(from) || !populatable(to)) {
+                return false;
+            }
+
+            if (to->parent() == from
+                || (supports(from)
+                    && from->name().starts_with(to->name())
+                    && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP))) {
+                return true;
             }
 
             Error::error() = "Target is not a child of source object";
@@ -177,9 +180,6 @@ namespace Plugin {
             }
 
             object->set_description(Description::description());
-
-            NaoVector<NaoObject*> children;
-
             NaoString path_str;
 
             int64_t subsequent_errors = 0;
@@ -188,25 +188,27 @@ namespace Plugin {
 
                 path_str = entry.path().string().c_str();
 
+                NaoObject* new_object = nullptr;
+
                 if (is_directory(entry.path())) {
-                    children.push_back(new NaoObject({ path_str }));
-                    children.back()->set_description(Description::description());
+                    new_object = new NaoObject({ path_str }, object);
+                    new_object->set_description(Description::description());
                 } else if (is_regular_file(entry.path())) {
                     NaoFileIO* io = new NaoFileIO(path_str);
 
-                    children.push_back(new NaoObject({
+                    new_object = new NaoObject({
                         io,
                         io->size(),
                         io->size(),
                         false,
                         path_str
-                        }));
+                        }, object);
 
                     
-                    if (!PluginManager.set_description(children.back())) {
+                    if (!PluginManager.set_description(new_object)) {
                         if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-                            nerr << "Plugin_DiskDirectory::populate - failed to set description for"
-                                << children.back()->name();
+                            nwarn << "[Plugin_DiskDirectory] failed to set description for"
+                                << new_object->name();
                         }
 
                         ++subsequent_errors;
@@ -215,21 +217,9 @@ namespace Plugin {
             }
 
             if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-                nerr << "Plugin_DiskDirectory::populate -"
+                nwarn << "[Plugin_DiskDirectory]"
                     << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
                     << "messages suppressed.";
-            }
-
-            const int64_t added = object->add_child(children);
-
-            if (added != std::size(children)) {
-                Error::error() = "Could not add all children.\nAttempted: " + 
-                    NaoString::number(added) + ", succeeded: " + NaoString::number(std::size(children)) + ".\n"
-                    + "Path: " + object->name();
-
-                nerr << "Plugin_DiskDirectory::populate - failed to add all children to parent";
-
-                return false;
             }
 
             return true;
@@ -244,9 +234,27 @@ namespace Plugin {
                 return false;
             }
 
-            delete from;
+            if (to->parent() == from) {
+                
+                from->remove_child(to);
 
-            from = to;
+                to->set_parent(nullptr);
+
+                delete from;
+
+                from = to;
+            } else if (Capabilities::supports(from)
+                && from->name().starts_with(to->name())
+                && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP)) {
+                
+                for (NaoObject* child : from->take_children()) {
+                    delete child;
+                }
+
+                from->set_parent(to);
+
+                from = to;
+            }
 
             return true;
         }

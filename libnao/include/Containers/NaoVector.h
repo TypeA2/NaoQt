@@ -77,7 +77,9 @@ class NaoVector {
     }
 
     ~NaoVector() {
-        delete[] _m_data;
+        if (_m_allocated) {
+            delete[] _m_data;
+        }
     }
 
     NaoVector& operator=(const NaoVector& other) {
@@ -336,10 +338,10 @@ class NaoVector {
     }
 
     iterator erase(const_iterator first, const_iterator last) {
-        _m_end = std::copy(last, const_cast<const_iterator>(_m_end), const_cast<iterator>(first));
+        _m_end = std::copy(last, cend(), begin() + std::distance(cbegin(), first));
         _m_size -= std::distance(first, last);
 
-        return _m_end;
+        return (last < _m_end) ? _m_data + std::distance(cbegin(), last) : _m_end;
     }
 
 #pragma endregion
@@ -352,6 +354,16 @@ class NaoVector {
         }
 
         return -1;
+    }
+
+    bool contains(const T& val) const {
+        for (size_type i = 0; i < _m_size; ++i) {
+            if (_m_data[i] == val) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private:
