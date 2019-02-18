@@ -18,8 +18,47 @@
 #include "Containers/NaoString.h"
 
 #include "Functionality/NaoMath.h"
+#include "Logging/NaoLogging.h"
 
-#pragma region "Constructors"
+#ifdef N_WINDOWS
+#   define WIN32_LEAN_AND_MEAN
+#   define VC_EXTRALEAN
+#   include <Windows.h>
+#   undef VC_EXTRALEAN
+#   undef WIN32_LEAN_AND_MEAN
+#endif
+
+#pragma region NaoWString
+
+NaoWStringConst::NaoWStringConst(wchar_t* str) 
+    : _m_data(str) {
+
+}
+
+NaoWStringConst::~NaoWStringConst() {
+    delete[] _m_data;
+}
+
+NaoWStringConst::operator wchar_t*() const {
+    return _m_data;
+}
+
+wchar_t* NaoWStringConst::data() const {
+    return _m_data;
+}
+
+const wchar_t* NaoWStringConst::utf16() const {
+    return _m_data;
+}
+
+const wchar_t* NaoWStringConst::c_str() const {
+    return _m_data;
+}
+
+
+#pragma endregion
+
+#pragma region Constructors
 
 NaoString::NaoString() {
     _m_size = 0;
@@ -67,7 +106,7 @@ NaoString::NaoString(NaoString&& other) noexcept {
 
 #pragma endregion
 
-#pragma region "Assignment operators"
+#pragma region Assignment operators
 
 NaoString& NaoString::operator=(const char* str) {
     if (_m_allocated) {
@@ -97,7 +136,7 @@ NaoString& NaoString::operator=(const NaoString& other) {
 
 #pragma endregion
 
-#pragma region "Conversion operators"
+#pragma region Conversion operators
 
 NaoString::operator const char*() const {
     return _m_data;
@@ -105,15 +144,30 @@ NaoString::operator const char*() const {
 
 #pragma endregion 
 
-#pragma region "Conversion functions"
+#pragma region Conversion functions
 
 const char* NaoString::c_str() const {
     return _m_data;
 }
 
+NaoWStringConst NaoString::utf16() const {
+
+#ifdef N_WINDOWS
+    const int target_size = MultiByteToWideChar(CP_UTF8, MB_COMPOSITE, _m_data, -1, nullptr, 0);
+    wchar_t* wstring = new wchar_t[target_size]();
+
+    if (!MultiByteToWideChar(CP_UTF8, MB_COMPOSITE, _m_data, -1, wstring, target_size)) {
+        return NaoWStringConst(nullptr);
+    }
+
+    return wstring;
+#endif
+
+}
+
 #pragma endregion 
 
-#pragma region "Comparison functions and operators"
+#pragma region Comparison functions and operators
 
 bool NaoString::operator==(const NaoString& other) const {
     return (_m_size == std::size(other))
@@ -132,7 +186,7 @@ bool NaoString::operator==(char other) const {
 
 #pragma endregion 
 
-#pragma region "Append functions"
+#pragma region Append functions
 
 NaoString& NaoString::append(const NaoString& other) {
     _reallocate_to(_m_size + other._m_size);
@@ -186,7 +240,7 @@ NaoString& NaoString::append(char other) {
 
 #pragma endregion
 
-#pragma region "General functions"
+#pragma region General functions
 
 size_t NaoString::size() const noexcept {
     return _m_size;
@@ -263,7 +317,7 @@ void NaoString::_reallocate_to(size_t size) {
     }
 }
 
-#pragma region "Quality of life improvements"
+#pragma region Quality of life improvements
 
 NaoString NaoString::copy() const {
     return NaoString(*this);
@@ -370,9 +424,72 @@ bool NaoString::contains(char ch) const noexcept {
     return false;
 }
 
+size_t NaoString::replace(char target, char replace) {
+    size_t count = 0;
+    for (iterator it = _m_data; it != _m_end; ++it) {
+        if (*it == target) {
+            *it = replace;
+            ++count;
+        }
+    }
+
+    return count;
+}
+
+
 #pragma endregion 
 
-#pragma region "Static functions"
+#pragma region Static functions
+
+NaoString NaoString::number(int n, int radix) {
+    return number(long long(n), radix);
+}
+
+NaoString NaoString::number(unsigned int n, int radix) {
+    return number(unsigned long long(n), radix);
+}
+
+NaoString NaoString::number(long n, int radix) {
+    return number(long long(n), radix);
+}
+
+NaoString NaoString::number(unsigned long n, int radix) {
+    return number(unsigned long long(n), radix);
+}
+
+NaoString NaoString::number(long long n, int radix) {
+    char buf[8 * sizeof(n)];
+
+    if (_i64toa_s(n, buf, sizeof(buf), radix) != 0 ) {
+        nerr << "[NaoString] _i64toa_s failed";
+        return NaoString();
+    }
+
+    return buf;
+}
+
+NaoString NaoString::number(unsigned long long n, int radix) {
+    char buf[8 * sizeof(n)];
+
+    if (_i64toa_s(n, buf, sizeof(buf), radix) != 0) {
+        nerr << "[NaoString] _i64toa_s failed";
+        return NaoString();
+    }
+
+    return buf;
+}
+
+NaoString NaoString::number(double n, int precision) {
+    return number(long double(n), precision);
+}
+
+NaoString NaoString::number(long double n, int precision) {
+    std::ostringstream out;
+    out.precision(precision);
+    out << n;
+
+    return out.str();
+}
 
 NaoString NaoString::bytes(uint64_t n) {
     if (n > 0x1000000000000000) {
@@ -402,9 +519,41 @@ NaoString NaoString::bytes(uint64_t n) {
     return number(n) + " bytes";
 }
 
+NaoString NaoString::fromWide(const wchar_t* str) {
+#ifdef N_WINDOWS
+
+    int size = WideCharToMultiByte(CP_UTF8,
+        WC_COMPOSITECHECK,
+        str, 
+        -1, 
+        nullptr, 
+        0, 
+        nullptr, 
+        nullptr);
+
+    char* utf8 = new char[size]();
+
+    if (WideCharToMultiByte(CP_UTF8,
+        WC_COMPOSITECHECK,
+        str,
+        -1,
+        utf8,
+        size,
+        nullptr,
+        nullptr) == 0) {
+        nerr << "[NaoString] WideCharToMultiByte failed with error " << GetLastError();
+    }
+
+    NaoString result = utf8;
+    delete[] utf8;
+    return result;
+
+#endif
+}
+
 #pragma endregion
 
-#pragma region "STL container compatibility"
+#pragma region STL container compatibility
 
 NaoString::NaoString(const std::string& other) {
     _m_size = std::size(other);
@@ -432,7 +581,7 @@ NaoString::operator std::string() const {
 
 #pragma endregion
 
-#pragma region "Filesystem compatibility"
+#pragma region Filesystem compatibility
 
 NaoString::NaoString(const fs::path& path) {
     std::string str = path.string();
@@ -442,7 +591,6 @@ NaoString::NaoString(const fs::path& path) {
     _m_data = new char[_m_allocated]();
     _m_end = std::copy(std::begin(str), std::end(str), _m_data);
 }
-
 
 NaoString& NaoString::operator=(const fs::path& path) {
     if (_m_allocated) {
@@ -468,9 +616,23 @@ NaoString& NaoString::normalize_path() {
     return *this;
 }
 
+NaoString& NaoString::clean_path(char replacement) {
+
+    static NaoString illegal_chars = R"(\\/:?"'<>|)";
+
+    for (iterator it = begin(); it != end(); ++it) {
+        if (illegal_chars.contains(*it)) {
+            *it = replacement;
+        }
+    }
+
+    return *this;
+}
+
+
 #pragma endregion
 
-#pragma region "Global operators"
+#pragma region Global operators
 
 NaoString operator+(const NaoString& lhs, const NaoString& rhs) {
     return lhs.copy().append(rhs);

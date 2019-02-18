@@ -24,19 +24,19 @@
 #include <string>
 
 #ifdef N_WINDOWS
-#   define ndebug NaoLogger(NaoLogger::DEBUG_WIN, true, true, false)
+#   define ndebug NaoLogger(NaoLogger::DEBUG_WIN, true, true)
 #else
-#   define ndebug NaoLogger(NaoLogger::STDERR, true, true, false)
+#   define ndebug NaoLogger(NaoLogger::STDERR, true, true)
 #endif
 
 #if defined(N_WINDOWS) && defined(NAO_DEBUG)
-#   define nerr NaoLogger(NaoLogger::DEBUG_WIN, true, true, true)
-#   define nwarn NaoLogger(NaoLogger::DEBUG_WIN, true, true, true)
-#   define nlog NaoLogger(NaoLogger::DEBUG_WIN, true, true, true)
+#   define nerr NaoLogger(NaoLogger::DEBUG_WIN, true, true)
+#   define nwarn NaoLogger(NaoLogger::DEBUG_WIN, true, true)
+#   define nlog NaoLogger(NaoLogger::DEBUG_WIN, true, true)
 #else
-#   define nerr NaoLogger(NaoLogger::STDERR, true, true, true)
-#   define nwarn NaoLogger(NaoLogger::STDERR, true, true, true)
-#   define nlog NaoLogger(NaoLogger::STDOUT, true, true, true)
+#   define nerr NaoLogger(NaoLogger::STDERR, true, true)
+#   define nwarn NaoLogger(NaoLogger::STDERR, true, true)
+#   define nlog NaoLogger(NaoLogger::STDOUT, true, true)
 #endif
 
 
@@ -51,21 +51,52 @@ class LIBNAO_API NaoLogger {
 
     // Constructors
     explicit NaoLogger(Destination dest = STDOUT,
-        bool trailing_spaces = true, bool newline_on_destruct = false, bool disable_quote = false);
+        bool trailing_spaces = true, bool newline_on_destruct = false);
 
-    // ReSharper disable once bugprone-exception-escape
     // Destructor
+    // ReSharper disable once bugprone-exception-escape
     ~NaoLogger();
 
     // Logging functions
-    template <typename T>
-    void print(T msg, N_UNUSED bool quote = true) const {
-        std::string str = std::to_string(msg);
 
-        print(str.c_str(), false);
+    void putchar(char c) const;
+    void putchar(wchar_t c) const;
+    void puts(const char* msg, bool disable_space = false) const;
+    void puts(const wchar_t* msg, bool disable_space = false) const;
+
+    void print(const char* msg) const;
+    void print(const wchar_t* msg) const;
+    void print(char msg) const;
+    void print(wchar_t msg) const;
+    void print(const NaoString& msg) const;
+
+    void print(signed char n) const;
+    void print(unsigned char n) const;
+    void print(signed short n) const;
+    void print(unsigned short n) const;
+    void print(signed int n) const;
+    void print(unsigned int n) const;
+    void print(signed long n) const;
+    void print(unsigned long n) const;
+    void print(signed long long n) const;
+    void print(unsigned long long n) const;
+
+    void print(double n) const;
+    void print(long double n) const;
+
+    void print(bool v) const;
+
+    template <typename T,
+        typename = std::enable_if_t<
+            !std::is_same_v<T, char>
+            && !std::is_same_v<T, wchar_t>>>
+    void print(T* msg) const {
+        puts(typeid(T).name(), true);
+        puts("(0x", true);
+        puts(NaoString::number(uintptr_t(msg), 16), true);
+        puts(")");
     }
 
-    // Operator overloads
     template <typename T>
     NaoLogger& operator<<(T val) {
         print(val);
@@ -73,92 +104,15 @@ class LIBNAO_API NaoLogger {
         return *this;
     }
 
+    NaoLogger& operator<<(const NaoString& val) {
+        print(val);
+
+        return *this;
+    }
+
     private:
-
-    void _putchar(char c) const;
-    void _putchar(wchar_t c) const;
-
-    // Private member variables
     Destination _m_destination;
     bool _m_trailing_spaces;
     bool _m_newline_on_destruct;
-    bool _m_disable_quote;
+
 };
-
-template <>
-inline void NaoLogger::print(const char* msg, bool quote) const {
-
-    if (!_m_disable_quote && quote) {
-        _putchar('"');
-    }
-
-    while (*msg != '\0') {
-        _putchar(*msg++);
-    }
-
-    if (!_m_disable_quote && quote) {
-        _putchar('"');
-    }
-
-    if (_m_trailing_spaces) {
-        _putchar(' ');
-    }
-}
-
-template <>
-inline void NaoLogger::print(const wchar_t* msg, bool quote) const {
-    if (!_m_disable_quote && quote) {
-        _putchar(L'"');
-    }
-
-    while (*msg != L'\0') {
-        _putchar(*msg++);
-    }
-
-    if (!_m_disable_quote && quote) {
-        _putchar(L'"');
-    }
-
-    if (_m_trailing_spaces) {
-        _putchar(L'\0');
-    }
-}
-
-// ReSharper disable performance-unnecessary-value-param
-
-template <>
-inline void NaoLogger::print(std::string msg, N_UNUSED bool quote) const {
-    print(msg.c_str());
-}
-
-template <>
-inline void NaoLogger::print(std::wstring msg, N_UNUSED bool quote) const {
-    print(msg.c_str());
-}
-
-template <>
-inline void NaoLogger::print(const std::string& msg, N_UNUSED bool quote) const {
-    print(msg.c_str());
-}
-
-template <>
-inline void NaoLogger::print(const std::wstring& msg, N_UNUSED bool quote) const {
-    print(msg.c_str());
-}
-
-template <>
-inline void NaoLogger::print(NaoString msg, N_UNUSED bool quote) const {
-    print(msg.c_str());
-}
-
-template <>
-inline void NaoLogger::print(const NaoString& msg, N_UNUSED bool quote) const {
-    print(msg.c_str());
-}
-
-template <>
-inline void NaoLogger::print(bool msg, N_UNUSED bool quote) const {
-    print(msg ? "true" : "false", false);
-}
-
-// ReSharper restore performance-unnecessary-value-param

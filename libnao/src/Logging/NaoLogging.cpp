@@ -23,35 +23,31 @@
 #include <iostream>
 
 #ifdef N_WINDOWS
-#define WIN32_LEAN_AND_MEAN
-#define VC_EXTRALEAN
-#include <Windows.h>
-#undef VC_EXTRALEAN
-#undef WIN32_LEAN_AND_MEAN
+#   define WIN32_LEAN_AND_MEAN
+#   define VC_EXTRALEAN
+#   include <Windows.h>
+#   undef VC_EXTRALEAN
+#   undef WIN32_LEAN_AND_MEAN
 #endif
 
 //// Public
 
 // Constructors
-NaoLogger::NaoLogger(Destination dest, bool trailing_spaces, bool newline_on_destruct, bool disable_quote)
+NaoLogger::NaoLogger(Destination dest, bool trailing_spaces, bool newline_on_destruct)
     : _m_destination(dest)
     , _m_trailing_spaces(trailing_spaces)
-    , _m_newline_on_destruct(newline_on_destruct)
-    , _m_disable_quote(disable_quote) {
+    , _m_newline_on_destruct(newline_on_destruct) {
     
 }
 
-// Destructor
-// ReSharper disable bugprone-exception-escape
+// ReSharper disable once bugprone-exception-escape
 NaoLogger::~NaoLogger() {
     if (_m_newline_on_destruct) {
-        _putchar('\n');
+        putchar('\n');
     }
 }
 
-//// Private
-
-void NaoLogger::_putchar(char c) const {
+void NaoLogger::putchar(char c) const {
     switch (_m_destination) {
         case STDOUT:
             std::cout.put(c);
@@ -59,21 +55,15 @@ void NaoLogger::_putchar(char c) const {
 
         case STDERR:
             std::cerr.put(c);
+            break;
 
-        case DEBUG_WIN: {
-            std::vector<char> vec({ c, '\0' });
-            std::string str(vec.data());
-#ifdef UNICODE
-            std::wstring wstr(std::begin(str), std::end(str));
-            OutputDebugStringW(wstr.data());
-#else
-            OutputDebugStringA(str.data());
-#endif
-        }
+        case DEBUG_WIN:
+            OutputDebugStringA(std::vector<char> { c, '\0' }.data());
+            break;
     }
 }
 
-void NaoLogger::_putchar(wchar_t c) const {
+void NaoLogger::putchar(wchar_t c) const {
     switch (_m_destination) {
         case STDOUT:
             std::wcout.put(c);
@@ -81,12 +71,155 @@ void NaoLogger::_putchar(wchar_t c) const {
 
         case STDERR:
             std::wcerr.put(c);
+            break;
 
-        case DEBUG_WIN: {
-            std::vector<wchar_t> vec({ c, L'\0' });
-            std::wstring str(vec.data());
+        case DEBUG_WIN:
+            OutputDebugStringW(std::vector<wchar_t> { c, L'\0' }.data());
+            break;
+    }
+}
 
-            OutputDebugStringW(str.data());
+void NaoLogger::puts(const char* msg, bool disable_space) const {
+    switch (_m_destination) {
+        case STDOUT:
+            std::cout << msg;
+            break;
+
+        case STDERR:
+            std::cerr << msg;
+            break;
+
+        case DEBUG_WIN:
+            OutputDebugStringA(msg);
+            break;
+    }
+
+    if (!disable_space && _m_trailing_spaces) {
+        switch (_m_destination) {
+            case STDOUT:
+                std::cout.put(' ');
+                break;
+
+            case STDERR:
+                std::cerr.put(' ');
+                break;
+
+            case DEBUG_WIN:
+                OutputDebugStringA(" ");
+                break;
         }
     }
+}
+
+void NaoLogger::puts(const wchar_t* msg, bool disable_space) const {
+    switch (_m_destination) {
+        case STDOUT:
+            std::wcout << msg;
+            break;
+
+        case STDERR:
+            std::wcerr << msg;
+            break;
+
+        case DEBUG_WIN:
+            OutputDebugStringW(msg);
+            break;
+    }
+
+    if (!disable_space && _m_trailing_spaces) {
+        switch (_m_destination) {
+            case STDOUT:
+                std::wcout.put(L' ');
+                break;
+
+            case STDERR:
+                std::wcerr.put(L' ');
+                break;
+
+            case DEBUG_WIN:
+                OutputDebugStringW(L" ");
+                break;
+        }
+    }
+}
+
+#pragma region Text types
+
+inline void NaoLogger::print(const char* msg) const {
+    puts(msg);
+}
+
+inline void NaoLogger::print(const wchar_t* msg) const {
+    puts(msg);
+}
+
+inline void NaoLogger::print(char msg) const {
+    putchar(msg);
+}
+
+inline void NaoLogger::print(wchar_t msg) const {
+    putchar(msg);
+}
+
+inline void NaoLogger::print(const NaoString& msg) const {
+    puts(msg);
+}
+
+
+#pragma endregion
+
+#pragma region Numeric types
+
+inline void NaoLogger::print(signed char n) const {
+    puts(NaoString::number(n));
+}
+
+inline void NaoLogger::print(unsigned char n) const {
+    puts(NaoString::number(n));
+}
+
+inline void NaoLogger::print(signed short n) const {
+    puts(NaoString::number(n));
+}
+
+inline void NaoLogger::print(unsigned short n) const {
+    puts(NaoString::number(n));
+}
+
+inline void NaoLogger::print(signed int n) const {
+    puts(NaoString::number(n));
+}
+
+inline void NaoLogger::print(unsigned int n) const {
+    puts(NaoString::number(n));
+}
+
+inline void NaoLogger::print(signed long n) const {
+    puts(NaoString::number(n));
+}
+
+inline void NaoLogger::print(unsigned long n) const {
+    puts(NaoString::number(n));
+}
+
+inline void NaoLogger::print(signed long long n) const {
+    puts(NaoString::number(n));
+}
+
+inline void NaoLogger::print(unsigned long long n) const {
+    puts(NaoString::number(n));
+}
+
+inline void NaoLogger::print(double n) const {
+    puts(NaoString::number(n));
+}
+
+inline void NaoLogger::print(long double n) const {
+    puts(NaoString::number(n));
+}
+
+#pragma endregion
+
+void NaoLogger::print(bool v) const {
+    puts(v ? "true" : "false");
 }

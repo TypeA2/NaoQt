@@ -32,18 +32,24 @@
 #   include "Functionality/NaoMath.h"
 #endif
 
-#ifdef N_WINDOWS
-#define WIN32_LEAN_AND_MEAN
-#define VC_EXTRALEAN
-#include <Windows.h>
-#undef VC_EXTRALEAN
-#undef WIN32_LEAN_AND_MEAN
-#endif
+class LIBNAO_API NaoWStringConst {
+    public:
+    NaoWStringConst(wchar_t* str);
+    ~NaoWStringConst();
+
+    operator wchar_t*() const;
+    wchar_t* data() const;
+    const wchar_t* utf16() const;
+    const wchar_t* c_str() const;
+
+    private:
+    wchar_t* _m_data;
+};
 
 class LIBNAO_API NaoString {
     public:
 
-#pragma region "Types"
+#pragma region Types
 
     using reference = char & ;
     using const_reference = const char &;
@@ -59,7 +65,7 @@ class LIBNAO_API NaoString {
 
 #pragma endregion 
 
-#pragma region "Constructors"
+#pragma region Constructors
     NaoString();
 
     NaoString(const char* str);
@@ -72,7 +78,7 @@ class LIBNAO_API NaoString {
 
 #pragma endregion 
 
-#pragma region "Assignment operators"
+#pragma region Assignment operators
 
     NaoString& operator=(const char* str);
 
@@ -80,19 +86,20 @@ class LIBNAO_API NaoString {
 
 #pragma endregion
 
-#pragma region "Conversion operators"
+#pragma region Conversion operators
 
     operator const char*() const;
 
 #pragma endregion
 
-#pragma region "Conversion functions"
+#pragma region Conversion functions
 
     const char* c_str() const;
+    NaoWStringConst utf16() const;
 
 #pragma endregion 
 
-#pragma region "Comparison functions and operators"
+#pragma region Comparison functions and operators
 
     bool operator==(const NaoString& other) const;
     bool operator==(const char* other) const;
@@ -100,7 +107,7 @@ class LIBNAO_API NaoString {
 
 #pragma endregion 
 
-#pragma region "Append functions"
+#pragma region Append functions
 
     NaoString& append(const NaoString& other);
     NaoString& append(const NaoString& other, size_t n);
@@ -110,7 +117,7 @@ class LIBNAO_API NaoString {
 
 #pragma endregion
 
-#pragma region "General functions"
+#pragma region General functions
 
     size_t size() const noexcept;
 
@@ -147,7 +154,7 @@ class LIBNAO_API NaoString {
 
     public:
 
-#pragma region "Quality of life improvements"
+#pragma region Quality of life improvements
 
     NaoString copy() const;
 
@@ -167,25 +174,27 @@ class LIBNAO_API NaoString {
     size_t last_index_of(char ch) const noexcept;
     bool contains(char ch) const noexcept;
 
+    size_t replace(char target, char replace);
+
 #pragma endregion
 
-#pragma region "Static functions"
+#pragma region Static functions
 
-    template <typename T>
-    static std::enable_if_t<std::is_arithmetic_v<T>, NaoString>
-        number(T n, uint64_t precision = 2) {
-        std::ostringstream out;
-        out.precision(precision);
-        out << std::fixed << n;
-
-        return out.str();
-    }
+    static NaoString number(int n, int radix = 10);
+    static NaoString number(unsigned int n, int radix = 10);
+    static NaoString number(long n, int radix = 10);
+    static NaoString number(unsigned long n, int radix = 10);
+    static NaoString number(long long n, int radix = 10);
+    static NaoString number(unsigned long long n, int radix = 10);
+    static NaoString number(double n, int precision = 6);
+    static NaoString number(long double n, int precision = 6);
 
     static NaoString bytes(uint64_t n);
+    static NaoString fromWide(const wchar_t* str);
 
 #pragma endregion
 
-#pragma region "STL container compatibility"
+#pragma region STL container compatibility
 
     NaoString(const std::string& other);
 
@@ -195,7 +204,7 @@ class LIBNAO_API NaoString {
 
 #pragma endregion
 
-#pragma region "Filesystem compatibility"
+#pragma region Filesystem compatibility
 
     NaoString(const fs::path& path);
 
@@ -205,9 +214,11 @@ class LIBNAO_API NaoString {
 
     NaoString& normalize_path();
 
+    NaoString& clean_path(char replacement = '_');
+
 #pragma endregion
 
-#pragma region "Qt compatibility"
+#pragma region Qt compatibility
 
 #ifdef NAOSTRING_QT_EXTENSIONS
     N_ESCAPE_DLLSPEC
@@ -250,7 +261,7 @@ class LIBNAO_API NaoString {
 #pragma endregion
 };
 
-#pragma region "Global operators"
+#pragma region Global operators
 
 LIBNAO_API NaoString operator+(const NaoString& lhs, const NaoString& rhs);
 LIBNAO_API NaoString operator+(const NaoString& lhs, const char* rhs);
