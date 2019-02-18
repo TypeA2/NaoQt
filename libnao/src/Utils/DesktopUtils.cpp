@@ -17,8 +17,8 @@
 
 #include "Utils/DesktopUtils.h"
 
-#include "Containers/NaoString.h"
 #include "Filesystem/Filesystem.h"
+#include "Filesystem/NaoFileSystemManager.h"
 #include "Logging/NaoLogging.h"
 
 #ifdef N_WINDOWS
@@ -118,37 +118,115 @@ namespace DesktopUtils {
 
     }
 
+    NaoString save_as_dir(const NaoString& default_path, const NaoString& default_name, const NaoString& title) {
 #ifdef N_WINDOWS
-    NaoString save_as_dir(const NaoString& default_path, HWND hwnd) {
 
-        char result[1024]{ 0 };
+#define CHECKERR(msg) if((hr) < 0) { \
+    nerr << "[DesktopUtils]" << (msg); \
+    dialog->Release(); \
+    return NaoString(); \
+}
 
-        char display_name[MAX_PATH] { 0 };
+        IFileOpenDialog* dialog = nullptr;
 
-        BROWSEINFOA info;
-        info.hwndOwner = hwnd; // TODO CANNOT BE NULL
-        info.pidlRoot = ILCreateFromPathA(default_path);
-        info.pszDisplayName = display_name;
-        info.lpszTitle = "Select folder";
-        info.ulFlags = BIF_USENEWUI;
-        /*info.lpfn = [](N_UNUSED HWND hwnd, N_UNUSED UINT uMsg,
-            N_UNUSED LPARAM lParam, N_UNUSED LPARAM lpData) -> int {
-            nlog << "callback";
-            return 0;
-        };*/
+        HRESULT hr = CoCreateInstance(
+            CLSID_FileOpenDialog,
+            nullptr, 
+            CLSCTX_INPROC_SERVER, 
+            IID_IFileOpenDialog,
+             reinterpret_cast<void**>(&dialog));
 
-
-        if (PIDLIST_ABSOLUTE pidl = SHBrowseForFolderA(&info)) {
-            nlog << "called" << uintptr_t(pidl);
-            return NaoString();
-        } else {
+        if (FAILED(hr)) {
+            nerr << "[DesktopUtils] Could not create file dialog instance";
             return NaoString();
         }
 
-        return result;
+        IShellItem* default_dir_item = nullptr;
+
+        hr = SHCreateItemFromParsingName(default_path.utf16(), nullptr, 
+            IID_IShellItem, reinterpret_cast<void**>(&default_dir_item));
+
+
+        if (FAILED(hr)) {
+            nerr << "[DesktopUtils] SHCreateItemFromParsingName failed";
+        } else {
+
+            hr = dialog->SetFolder(default_dir_item);
+
+            if (FAILED(hr)) {
+                nerr << "[DesktopUtils] IFileOpenDialog::SetFolder failed";
+            }
+        }
+
+        hr = dialog->SetFileName(default_name.utf16());
+        if (FAILED(hr)) {
+            nerr << "[DesktopUtils] IFileOpenDialog::SetFileName failed";
+        }
+
+        hr = dialog->SetTitle(title.utf16());
+        if (FAILED(hr)) {
+            nerr << "[DesktopUtils] IFileOpenDialog::SetTitle failed";
+        }
+
+        DWORD opts;
+        hr = dialog->GetOptions(&opts);
+        CHECKERR("IFileOpenDialog::GetOptions failed");
+
+        opts |= (FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM);
+
+        hr = dialog->SetOptions(opts);
+        CHECKERR("IFileOpenDialog::SetOptions failed");
+
+        hr = dialog->Show(NaoFSM.get_hwnd());
+        CHECKERR("IFileOpenDialog::Show failed");
+
+        IShellItem* item = nullptr;
+        hr = dialog->GetResult(&item);
+        CHECKERR("IShellItemArray::GetItemAt failed");
+
+#undef CHECKERR
+
+        wchar_t* path = nullptr;
+        hr = item->GetDisplayName(SIGDN_FILESYSPATH, &path);
+
+        item->Release();
+        dialog->Release();
+
+        if (SUCCEEDED(hr)) {
+            NaoString str = NaoString::fromWide(path);
+            CoTaskMemFree(path);
+
+            return str;
+        }
+
+        nerr << "[DesktopUtils] IShellItem::GetDisplayName failed";
+        return NaoString();
 
 #endif
     }
 
+    bool confirm_overwrite(const NaoString& target, bool dir, const NaoString& msg, const NaoString& caption) {
+        if (!fs::exists(target)) {
+            return true;
+        }
+
+#ifdef N_WINDOWS
+
+        if (fs::is_directory(target) == dir) {
+            return MessageBoxA(NaoFSM.get_hwnd(),
+                !std::empty(msg) ? msg : (target + " already exists. Do you want to overwrite it?"),
+                !std::empty(caption) ? caption.c_str() : "Confirm overwrite",
+                MB_YESNO | MB_ICONWARNING | MB_APPLMODAL) == IDOK;
+        }
+
+        MessageBoxA(NaoFSM.get_hwnd(),
+            target + " exists, but is of the wrong type. Delete it before continuing.",
+            "Invalid target type",
+            MB_OK | MB_ICONERROR | MB_APPLMODAL);
+
+#endif
+
+        return false;
+    }
 
 }
