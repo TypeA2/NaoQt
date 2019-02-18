@@ -22,6 +22,14 @@
 #include "Containers/NaoString.h"
 #include "NaoObject.h"
 
+#ifdef N_WINDOWS
+#define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
+#include <Windows.h>
+#undef VC_EXTRALEAN
+#undef WIN32_LEAN_AND_MEAN
+#endif
+
 #define NaoFSM NaoFileSystemManager::global_instance()
 
 struct NaoPlugin;
@@ -41,6 +49,11 @@ class NaoFileSystemManager {
     LIBNAO_API const NaoString& last_error() const;
 
     LIBNAO_API NaoString description(NaoObject* object) const;
+
+#ifdef N_WINDOWS
+    LIBNAO_API void set_hwnd(HWND hwnd);
+    LIBNAO_API HWND get_hwnd() const;
+#endif
 
     private:
 
