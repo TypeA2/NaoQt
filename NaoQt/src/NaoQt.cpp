@@ -54,10 +54,13 @@ NaoQt::NaoQt(QWidget *parent)
     , _is_moving(false) {
 
     _load_settings();
+    nlog << "[NaoQt] Loaded settings";
 
     _init_window();
+    nlog << "[NaoQt] Initialised window";
 
     _load_plugins();
+    nlog << "[NaoQt] Loaded plugins";
 
     _init_filesystem();
 }
@@ -237,6 +240,8 @@ void NaoQt::_load_plugins() {
 
 void NaoQt::_init_filesystem() {
 
+    NaoFSM.set_hwnd(reinterpret_cast<HWND>(winId()));
+
     const NaoString default_path = SteamUtils::game_path(_m_settings.at("filesystem/game"),
         _m_settings.at("filesystem/subdir"),
         _m_settings.at("filesystem/fallback"));
@@ -250,7 +255,9 @@ void NaoQt::_init_filesystem() {
                 NaoFSM.last_error());
 
             throw std::exception(NaoFSM.last_error());
-        }
+        } 
+
+        nlog << "[NaoQt] Initialised filesystem";
 
         fsm_object_changed();
     });
@@ -261,7 +268,7 @@ void NaoQt::_init_filesystem() {
 
 void NaoQt::_move_async(const QString& to, bool _refresh) {
     if (_is_moving) {
-        nerr << "NaoQt::_move_async - Already moving";
+        nerr << "[NaoQt] Already moving";
         return;
     }
 

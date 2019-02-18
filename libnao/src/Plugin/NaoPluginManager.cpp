@@ -195,7 +195,7 @@ bool NaoPluginManager::NaoPluginManagerPrivate::load(const NaoString& plugin_nam
         m_plugins.push_back(plugin);
         m_plugins_raw.push_back(plugin.plugin);
 
-        nlog << "[NPM] Loaded plugin" << NaoString(fs::path(plugin_name).filename())
+        nlog << "[NPM] Loaded plugin" << fs::path(plugin_name).filename()
             << ("(\"" + plugin.plugin.plugin_info.display_name() + "\")");
 
         return true;
