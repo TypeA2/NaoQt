@@ -50,6 +50,10 @@ class NaoFileSystemManager::NFSMPrivate {
 
     // Latest error code
     NaoString m_last_error;
+
+#ifdef N_WINDOWS
+    HWND m_hwnd = nullptr;
+#endif
 };
 
 #pragma region NaoFileSystemManager
@@ -90,6 +94,17 @@ const NaoString& NaoFileSystemManager::last_error() const {
 NaoString NaoFileSystemManager::description(NaoObject* object) const {
     return d_ptr->description_for_object(object);
 }
+
+#ifdef N_WINDOWS
+void NaoFileSystemManager::set_hwnd(HWND hwnd) {
+    d_ptr->m_hwnd = hwnd;
+}
+
+HWND NaoFileSystemManager::get_hwnd() const {
+    return d_ptr->m_hwnd;
+}
+
+#endif
 
 //// Private
 
