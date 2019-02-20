@@ -137,9 +137,7 @@ uint16_t NaoIO::read_ushort(ByteOrder order) {
 
     read(val, 2);
 
-    if (order == Default) {
-        order = default_byte_order();
-    }
+    __default_order(order);
 
     return (order == LE)
         ? (*reinterpret_cast<uint16_t*>(val))
@@ -151,6 +149,8 @@ uint32_t NaoIO::read_uint(ByteOrder order) {
 
     read(val, 4);
 
+    __default_order(order);
+
     return (order == LE)
         ? (*reinterpret_cast<uint32_t*>(val))
         : (uint32_t(val[0]) | (uint32_t(val[1]) << 8)
@@ -161,6 +161,8 @@ uint64_t NaoIO::read_ulong(ByteOrder order) {
     char val[8];
 
     read(val, 8);
+
+    __default_order(order);
 
     return (order == LE)
         ? (*reinterpret_cast<uint64_t*>(val))
@@ -190,5 +192,13 @@ NaoIO::NaoIO()
     , __m_open_mode(Closed)
     , __m_default_byte_order(LE) {
     
+}
+
+//// Private
+
+void NaoIO::__default_order(ByteOrder& order) {
+    if (order == Default) {
+        order = __m_default_byte_order;
+    }
 }
 

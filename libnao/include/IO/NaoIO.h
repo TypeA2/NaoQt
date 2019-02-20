@@ -113,6 +113,8 @@ class LIBNAO_API NaoIO {
 
     private:
 
+    void __default_order(ByteOrder& order);
+
     int64_t __m_size;
     OpenMode __m_open_mode;
     NaoBytes __m_fourcc;
