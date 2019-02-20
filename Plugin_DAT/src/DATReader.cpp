@@ -18,6 +18,7 @@
 #include "DATReader.h"
 
 #include <IO/NaoIO.h>
+#include <Logging/NaoLogging.h>
 
 DATReader* DATReader::create(NaoIO* in) {
     if (!in->is_open() && !in->open() && !in->is_open()) {
@@ -38,7 +39,10 @@ const NaoVector<DATReader::FileEntry>& DATReader::files() const {
 }
 
 void DATReader::_read() {
-    _m_io->seek(4);
+    if (!_m_io->seek(4)) {
+        nerr << "[Plugin_DAT/DATReader] Failed to skip fourcc";
+        return;
+    }
 
     const uint32_t file_count = _m_io->read_uint();
 
@@ -50,18 +54,27 @@ void DATReader::_read() {
 
     uint32_t file_table_offset = _m_io->read_uint();
 
-    _m_io->seekc(4);
+    if (!_m_io->seekc(4)) {
+        nerr << "[Plugin_DAT/DATReader] Failed to skip extension table";
+        return;
+    }
 
     uint32_t name_table_offset = _m_io->read_uint();
     uint32_t size_table_offset = _m_io->read_uint();
 
-    _m_io->seek(file_table_offset);
+    if (!_m_io->seek(file_table_offset)) {
+        nerr << "[Plugin_DAT/DATReader] Failed seeking to file table with offset" << file_table_offset;
+        return;
+    }
 
     for (uint32_t i = 0; i < file_count; ++i) {
         _m_files[i].offset = _m_io->read_uint();
     }
 
-    _m_io->seek(name_table_offset);
+    if (!_m_io->seek(name_table_offset)) {
+        nerr << "[Plugin_DAT/DATReader] Failed seeking to name table with offset" << name_table_offset;
+        return;
+    }
 
     const uint32_t alignment = _m_io->read_uint();
 
@@ -69,7 +82,10 @@ void DATReader::_read() {
         _m_files[i].name = _m_io->read(alignment);
     }
 
-    _m_io->seek(size_table_offset);
+    if (!_m_io->seek(size_table_offset)) {
+        nerr << "[Plugin_DAT/DATReader] Failed seeking to size table with offset" << size_table_offset;
+        return;
+    }
 
     for (uint32_t i = 0; i < file_count; ++i) {
         _m_files[i].size = _m_io->read_uint();
