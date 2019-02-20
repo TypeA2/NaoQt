@@ -52,6 +52,13 @@ NaoBytes::NaoBytes(char c, size_t size) {
     std::fill_n(_m_data, _m_size, c);
 }
 
+NaoBytes::NaoBytes()
+    : _m_data(nullptr)
+    , _m_size(0) {
+    
+}
+
+
 NaoBytes::NaoBytes(const NaoBytes& other) {
     *this = other;
 }
