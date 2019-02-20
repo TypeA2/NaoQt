@@ -68,4 +68,7 @@
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="NaoQt.exe.manifest" />
+  </ItemGroup>
 </Project>

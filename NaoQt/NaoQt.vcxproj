@@ -86,6 +86,9 @@
       <ExecutionDescription>Rcc'ing %(Identity)...</ExecutionDescription>
       <OutputFile>.\GeneratedFiles\qrc_%(Filename).cpp</OutputFile>
     </QtRcc>
+    <Manifest>
+      <AdditionalManifestFiles>NaoQt.exe.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -121,6 +124,9 @@
       <ExecutionDescription>Rcc'ing %(Identity)...</ExecutionDescription>
       <OutputFile>.\GeneratedFiles\qrc_%(Filename).cpp</OutputFile>
     </QtRcc>
+    <Manifest>
+      <AdditionalManifestFiles>NaoQt.exe.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <QtRcc Include="NaoQt.qrc" />
@@ -142,6 +148,9 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="NaoQt.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="NaoQt.exe.manifest" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

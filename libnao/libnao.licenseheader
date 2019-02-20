@@ -1,4 +1,4 @@
-﻿extensions: .cpp .h
+﻿extensions: .cpp .h .rc
 /*
     This file is part of libnao.
 

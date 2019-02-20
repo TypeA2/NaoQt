@@ -46,6 +46,15 @@
     <Filter Include="Headers\Utils">
       <UniqueIdentifier>{30a892bf-da44-44d2-a5c2-bf833ee81f2e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Headers\UI">
+      <UniqueIdentifier>{78090f59-24c6-49fd-8861-c2a865da2623}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\UI">
+      <UniqueIdentifier>{c64aab52-af96-4ee0-b5c7-9fad343341e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource files">
+      <UniqueIdentifier>{0ca71169-36bb-4a69-8704-f10dc39283b4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\libnao.h">
@@ -105,6 +114,14 @@
     <ClInclude Include="include\IO\NaoChunkIO.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
+    <ClInclude Include="include\UI\NProgressDialog.h">
+      <Filter>Headers\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\libnao_resource.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="resource\resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\libnao.cpp">
@@ -149,8 +166,19 @@
     <ClCompile Include="src\IO\NaoChunkIO.cpp">
       <Filter>Sources\IO</Filter>
     </ClCompile>
+    <ClCompile Include="src\UI\NProgressDialog.cpp">
+      <Filter>Sources\UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="libnao.licenseheader" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resource\libnao.rc">
+      <Filter>Resource files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="libnao.dll.manifest" />
   </ItemGroup>
 </Project>
