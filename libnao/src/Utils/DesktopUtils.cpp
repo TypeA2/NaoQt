@@ -218,7 +218,8 @@ namespace DesktopUtils {
 
 #ifdef N_WINDOWS
 
-        if (fs::is_directory(target) == dir && fs::is_regular_file(target) == !dir) {
+        if (fs::is_directory(target) == dir
+            && fs::is_regular_file(target) == !dir) {
             return  MessageBoxA(NaoFSM.get_hwnd(),
                 !std::empty(msg) ? msg : (target + " already exists. Do you want to overwrite it?"),
                 !std::empty(caption) ? caption.c_str() : "Confirm overwrite",
