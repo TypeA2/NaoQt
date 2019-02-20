@@ -215,6 +215,7 @@ class LIBNAO_API NaoString {
     NaoString& normalize_path();
 
     NaoString& clean_path(char replacement = '_');
+    NaoString& clean_dir_name(char replacement = '_');
 
 #pragma endregion
 

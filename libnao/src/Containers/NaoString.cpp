@@ -629,6 +629,18 @@ NaoString& NaoString::clean_path(char replacement) {
     return *this;
 }
 
+NaoString& NaoString::clean_dir_name(char replacement) {
+    static NaoString illegal_chars = R"(\\/:?"'<>|.)";
+
+    for (iterator it = begin(); it != end(); ++it) {
+        if (illegal_chars.contains(*it)) {
+            *it = replacement;
+        }
+    }
+
+    return *this;
+}
+
 
 #pragma endregion
 
