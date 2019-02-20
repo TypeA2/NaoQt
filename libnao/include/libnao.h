@@ -63,3 +63,10 @@
 #endif
 
 #define N_SUBSEQUENT_ERRMSG_LIMIT_HINT 0
+
+#define N_ENUM_BITFLAGS(E, T) \
+    inline LIBNAO_API E operator~(E a) { return E(~T(a)); } \
+    inline LIBNAO_API E operator|(E a, E b) { return E(T(a) | T(b)); } \
+    inline LIBNAO_API E operator&(E a, E b) { return E(T(a) & T(b)); } \
+    inline LIBNAO_API E operator^(E a, E b) { return E(T(a) ^ T(b)); }
+
