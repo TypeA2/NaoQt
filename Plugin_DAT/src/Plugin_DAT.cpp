@@ -25,6 +25,10 @@
 #include <Plugin/NaoPluginManager.h>
 #include <Utils/DesktopUtils.h>
 #include <Logging/NaoLogging.h>
+#include <Filesystem/NaoFileSystemManager.h>
+#include <UI/NProgressDialog.h>
+
+#include <numeric>
 
 NaoPlugin GetNaoPlugin() {
     using namespace Plugin;
@@ -322,15 +326,15 @@ namespace Plugin {
         }
 
         bool extract_all_files(NaoObject* object) {
-            NaoString fname = NaoString(fs::path(object->name()).filename()).clean_dir_name();
+            NaoString fname = fs::path(object->name()).filename();
 
             NaoString target = DesktopUtils::save_as_dir(
                 fs::path(object->name()).parent_path(),
-                fname,
+                "",
                 "Select target folder");
 
             if (!std::empty(target)
-                && DesktopUtils::confirm_overwrite(target, true)) {
+                && DesktopUtils::confirm_overwrite(target + N_PATHSEP + fname.copy().clean_dir_name(), true)) {
                 
                 nlog << "[Plugin_DAT] Extracting to" << target;
 
@@ -341,7 +345,20 @@ namespace Plugin {
 
                 NaoVector<NaoObject*> children = object->take_children();
 
-                nlog << "[Plugin_DAT] Found" << children.size() << (children.size() > 1 ? "children" : "child");
+                uint64_t total = std::accumulate(children.cbegin(), children.cend(),
+                    0ui64,
+                    [](uint64_t i, NaoObject* object) -> uint64_t {
+                    return i + object->file_ref().real_size;
+                });
+
+                nlog << "[Plugin_DAT] Found" << children.size()
+                    << (children.size() > 1 ? "children" : "child")
+                    << "with a total size of" << NaoString::bytes(total);
+
+                NProgressDialog progress(NaoFSM.get_hwnd());
+
+                progress.set_title("Extracting" + fname);
+                progress.start();
 
                 for (NaoObject* child : children) {
                     // Shouldn't be possible
@@ -351,6 +368,8 @@ namespace Plugin {
                     }
 
                     const NaoObject::File& info = child->file_ref();
+
+                    progress.set_text("Extracting: " + fs::path(info.name).filename());
 
                     if (!info.io->open()) {
                         nerr << "[Plugin_DAT] Failed opening input io with name" << info.name;
@@ -376,9 +395,13 @@ namespace Plugin {
                         nlog << "[Plugin_DAT] Wrote" << NaoString::bytes(info.real_size) << "to" << output_file.path();
                     }
 
+                    progress.add_progress(200);
+
                     output_file.close();
                     delete child;
                 }
+
+                progress.close();
             }
 
             return true;
