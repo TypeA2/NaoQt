@@ -31,6 +31,9 @@ class LIBNAO_API NaoBytes {
     // Constructs filled with a single value
     explicit NaoBytes(char c, size_t size);
 
+    // Empty constructor
+    NaoBytes();
+
     // Copy constructor
     NaoBytes(const NaoBytes& other);
 
