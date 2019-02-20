@@ -47,6 +47,13 @@ NaoBytes NaoIO::read(size_t size) {
 }
 
 NaoBytes NaoIO::read_singleshot(size_t size) {
+    if (size == 4) {
+        // Return previously read fourcc if possible
+        if (__m_fourcc.size() == 4) {
+            return __m_fourcc;
+        }
+    }
+
     bool was_open = is_open();
 
     if (!was_open) {
@@ -59,6 +66,10 @@ NaoBytes NaoIO::read_singleshot(size_t size) {
 
     if (!was_open) {
         close();
+    }
+
+    if (size == 4) {
+        __m_fourcc = bytes;
     }
 
     return bytes;
@@ -103,7 +114,15 @@ bool NaoIO::is_open(OpenMode mode) const {
     return open_mode() & mode;
 }
 
-#pragma region "Binary reading"
+#pragma region Binary reading
+
+void NaoIO::set_default_byte_order(ByteOrder order) {
+    __m_default_byte_order = (order == Default) ? LE : order;
+}
+
+NaoIO::ByteOrder NaoIO::default_byte_order() const {
+    return __m_default_byte_order;
+}
 
 uint8_t NaoIO::read_uchar() {
     char val = 0;
@@ -117,6 +136,10 @@ uint16_t NaoIO::read_ushort(ByteOrder order) {
     char val[2] { };
 
     read(val, 2);
+
+    if (order == Default) {
+        order = default_byte_order();
+    }
 
     return (order == LE)
         ? (*reinterpret_cast<uint16_t*>(val))
@@ -157,13 +180,15 @@ void NaoIO::set_size(int64_t size) {
 
 NaoIO::NaoIO(int64_t size) 
     : __m_size(size)
-    , __m_open_mode(Closed) {
+    , __m_open_mode(Closed)
+    , __m_default_byte_order(LE) {
     
 }
 
 NaoIO::NaoIO() 
     : __m_size(-1i64)
-    , __m_open_mode(Closed) {
+    , __m_open_mode(Closed)
+    , __m_default_byte_order(LE) {
     
 }
 

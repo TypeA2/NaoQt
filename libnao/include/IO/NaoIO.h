@@ -47,7 +47,7 @@ class LIBNAO_API NaoIO {
     // Returns the number of bytes actually read, or -1 on error
     virtual int64_t read(char* buf, int64_t size) = 0;
     virtual NaoBytes read(size_t size);
-    virtual NaoBytes read_singleshot(size_t size);
+    NaoBytes read_singleshot(size_t size);
     virtual NaoBytes read_all();
 
     // Writes size bytes from buf to the underlying device
@@ -82,17 +82,24 @@ class LIBNAO_API NaoIO {
     // or if it's open at all if mode == Closed
     virtual bool is_open(OpenMode mode = Closed) const;
 
-#pragma region "Binary Reading"
+#pragma region Binary Reading
 
     enum ByteOrder {
+        Default,
         LE,
         BE
     };
 
-    virtual uint8_t read_uchar();
-    virtual uint16_t read_ushort(ByteOrder order = LE);
-    virtual uint32_t read_uint(ByteOrder order = LE);
-    virtual uint64_t read_ulong(ByteOrder order = LE);
+    void set_default_byte_order(ByteOrder order);
+    ByteOrder default_byte_order() const;
+
+    uint8_t read_uchar();
+    uint16_t read_ushort(ByteOrder order = Default);
+    uint32_t read_uint(ByteOrder order = Default);
+    uint64_t read_ulong(ByteOrder order = Default);
+
+    private:
+    ByteOrder __m_default_byte_order;
 
 #pragma endregion
 
@@ -108,4 +115,5 @@ class LIBNAO_API NaoIO {
 
     int64_t __m_size;
     OpenMode __m_open_mode;
+    NaoBytes __m_fourcc;
 };
