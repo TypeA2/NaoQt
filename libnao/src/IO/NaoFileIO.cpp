@@ -50,25 +50,20 @@ bool NaoFileIO::seek(int64_t pos, SeekDir dir) {
 
    switch (dir) {
        case set:
-           _fseeki64(_m_file_ptr, pos, SEEK_SET);
-
-           return pos == _ftelli64(_m_file_ptr);
+           return _fseeki64(_m_file_ptr, pos, SEEK_SET) == 0
+                && pos == _ftelli64(_m_file_ptr);
 
        case cur: {
            const int64_t prev = _ftelli64(_m_file_ptr);
 
-           _fseeki64(_m_file_ptr, pos, SEEK_CUR);
-
-           return (prev + pos) == _ftelli64(_m_file_ptr);
+           return _fseeki64(_m_file_ptr, pos, SEEK_CUR) == 0
+               && (prev + pos) == _ftelli64(_m_file_ptr);
        }
 
-       case end: {
-           const int64_t prev = _ftelli64(_m_file_ptr);
-
-           _fseeki64(_m_file_ptr, pos, SEEK_END);
-
-           return (size() - pos) == _ftelli64(_m_file_ptr);
-           }
+       case end: 
+           return _fseeki64(_m_file_ptr, pos, SEEK_END) == 0
+               && (size() - pos) == _ftelli64(_m_file_ptr);
+           
 
    }
 
