@@ -46,6 +46,8 @@ class LIBNAO_API NaoFileIO : public NaoIO {
     bool open(OpenMode mode = ReadOnly) override;
     void close() override;
 
+    const NaoString& path() const;
+
     private:
 
     NaoString _m_path;

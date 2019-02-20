@@ -23,15 +23,13 @@
 NaoFileIO::NaoFileIO(const NaoString& path)
     : _m_file_ptr(nullptr) {
 
-    fs::path target_path = fs::absolute(path);
+    _m_path = fs::absolute(path);
 
-    if (exists(target_path)) {
-        set_size(file_size(target_path));
+    if (fs::exists(_m_path)) {
+        set_size(fs::file_size(_m_path));
     } else {
         set_size(0i64);
     }
-
-    _m_path = target_path;
 }
 
 NaoFileIO::~NaoFileIO() {
@@ -43,7 +41,6 @@ NaoFileIO::~NaoFileIO() {
 int64_t NaoFileIO::pos() const {
     return _ftelli64(_m_file_ptr);
 }
-
 
 bool NaoFileIO::seek(int64_t pos, SeekDir dir) {
     if (!is_open()) {
@@ -156,5 +153,9 @@ void NaoFileIO::close() {
     }
 
     NaoIO::close();
+}
+
+const NaoString& NaoFileIO::path() const {
+    return _m_path;
 }
 
