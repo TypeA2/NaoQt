@@ -211,8 +211,11 @@ namespace DesktopUtils {
 
     bool confirm_overwrite(const NaoString& target, bool dir, const NaoString& msg, const NaoString& caption) {
         if (!fs::exists(target)) {
-            // What even
-            // ReSharper disable once readability-simplify-boolean-expr
+            if (!fs::create_directories(target) ) {
+                nerr << "[DesktopUtils] Failed creating directory with name" << target;
+                return false;
+            }
+
             return true;
         }
 
