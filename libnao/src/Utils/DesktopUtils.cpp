@@ -178,7 +178,11 @@ namespace DesktopUtils {
         CHECKERR("IFileOpenDialog::SetOptions failed");
 
         hr = dialog->Show(NaoFSM.get_hwnd());
-        CHECKERR("IFileOpenDialog::Show failed");
+
+        if (FAILED(hr)) {
+            dialog->Release();
+            return NaoString();
+        }
 
         IShellItem* item = nullptr;
         hr = dialog->GetResult(&item);
@@ -207,16 +211,18 @@ namespace DesktopUtils {
 
     bool confirm_overwrite(const NaoString& target, bool dir, const NaoString& msg, const NaoString& caption) {
         if (!fs::exists(target)) {
+            // What even
+            // ReSharper disable once readability-simplify-boolean-expr
             return true;
         }
 
 #ifdef N_WINDOWS
 
         if (fs::is_directory(target) == dir) {
-            return MessageBoxA(NaoFSM.get_hwnd(),
+            return  MessageBoxA(NaoFSM.get_hwnd(),
                 !std::empty(msg) ? msg : (target + " already exists. Do you want to overwrite it?"),
                 !std::empty(caption) ? caption.c_str() : "Confirm overwrite",
-                MB_YESNO | MB_ICONWARNING | MB_APPLMODAL) == IDOK;
+                MB_YESNO | MB_ICONWARNING | MB_APPLMODAL) == IDYES;
         }
 
         MessageBoxA(NaoFSM.get_hwnd(),
