@@ -50,11 +50,6 @@ class NaoFileSystemManager {
 
     LIBNAO_API NaoString description(NaoObject* object) const;
 
-#ifdef N_WINDOWS
-    LIBNAO_API void set_hwnd(HWND hwnd);
-    LIBNAO_API HWND get_hwnd() const;
-#endif
-
     private:
 
     NaoFileSystemManager();
