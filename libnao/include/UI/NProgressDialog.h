@@ -19,6 +19,8 @@
 
 #include "libnao.h"
 
+#include "UI/NaoWidget.h"
+
 #include "Containers/NaoString.h"
 
 #ifndef N_WINDOWS
@@ -39,10 +41,12 @@
 
 class NProgressDialogPrivate;
 
-class LIBNAO_API NProgressDialog {
+class LIBNAO_API NProgressDialog : public NaoWidget {
+    NAO_WIDGET
+
     public:
     NProgressDialog(HWND hwnd);
-    ~NProgressDialog();
+    ~NProgressDialog() override;
 
     void set_max(uint64_t max);
     uint64_t max() const;
