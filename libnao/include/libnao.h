@@ -70,3 +70,7 @@
     inline LIBNAO_API E operator&(E a, E b) { return E(T(a) & T(b)); } \
     inline LIBNAO_API E operator^(E a, E b) { return E(T(a) ^ T(b)); }
 
+#define NAO_WIDGET \
+    friend class NaoUIManager; \
+    friend class NaoUIManagerPrivate;
+    

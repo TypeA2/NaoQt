@@ -122,6 +122,12 @@
     </ClInclude>
     <ClInclude Include="resource.h" />
     <ClInclude Include="resource\resource.h" />
+    <ClInclude Include="include\UI\NaoUIManager.h">
+      <Filter>Headers\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\UI\NaoWidget.h">
+      <Filter>Headers\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\libnao.cpp">
@@ -167,6 +173,12 @@
       <Filter>Sources\IO</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\NProgressDialog.cpp">
+      <Filter>Sources\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\NaoWidget.cpp">
+      <Filter>Sources\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\NaoUIManager.cpp">
       <Filter>Sources\UI</Filter>
     </ClCompile>
   </ItemGroup>
