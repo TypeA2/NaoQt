@@ -17,7 +17,9 @@
 
 //#include "libnao.h"
 
+#define N_LOG_ID "NaoLogging"
 #include "Logging/NaoLogging.h"
+#include "IO/NaoFileIO.h"
 
 #include <vector>
 #include <iostream>
@@ -30,14 +32,32 @@
 #   undef WIN32_LEAN_AND_MEAN
 #endif
 
+#pragma region NaoLogger
+
 //// Public
 
 // Constructors
-NaoLogger::NaoLogger(Destination dest, bool trailing_spaces, bool newline_on_destruct)
+NaoLogger::NaoLogger(Destination dest, LogLevel level, 
+    bool trailing_spaces, bool newline_on_destruct)
     : _m_destination(dest)
+    , _m_level(level)
     , _m_trailing_spaces(trailing_spaces)
     , _m_newline_on_destruct(newline_on_destruct) {
     
+    switch (level) {
+        case Warning:
+            puts("[WARN]  ", true);
+            break;
+        case Error:
+            puts("[ERROR] ", true);
+            break;
+        case Log:
+            puts("[LOG]   ", true);
+            break;
+        case Debug:
+            puts("[Debug] ", true);
+            break;
+    }
 }
 
 // ReSharper disable once bugprone-exception-escape
@@ -48,6 +68,8 @@ NaoLogger::~NaoLogger() {
 }
 
 void NaoLogger::putchar(char c) const {
+    NaoLogging::instance().write(std::vector<char> { c, '\0' }.data());
+
     switch (_m_destination) {
         case STDOUT:
             std::cout.put(c);
@@ -64,6 +86,8 @@ void NaoLogger::putchar(char c) const {
 }
 
 void NaoLogger::putchar(wchar_t c) const {
+    NaoLogging::instance().write(std::vector<wchar_t> { c, L'\0' }.data())
+    ;
     switch (_m_destination) {
         case STDOUT:
             std::wcout.put(c);
@@ -80,6 +104,8 @@ void NaoLogger::putchar(wchar_t c) const {
 }
 
 void NaoLogger::puts(const char* msg, bool disable_space) const {
+    NaoLogging::instance().write(msg);
+
     switch (_m_destination) {
         case STDOUT:
             std::cout << msg;
@@ -95,6 +121,8 @@ void NaoLogger::puts(const char* msg, bool disable_space) const {
     }
 
     if (!disable_space && _m_trailing_spaces) {
+        NaoLogging::instance().write(" ");
+
         switch (_m_destination) {
             case STDOUT:
                 std::cout.put(' ');
@@ -112,6 +140,8 @@ void NaoLogger::puts(const char* msg, bool disable_space) const {
 }
 
 void NaoLogger::puts(const wchar_t* msg, bool disable_space) const {
+    NaoLogging::instance().write(msg);
+
     switch (_m_destination) {
         case STDOUT:
             std::wcout << msg;
@@ -127,6 +157,8 @@ void NaoLogger::puts(const wchar_t* msg, bool disable_space) const {
     }
 
     if (!disable_space && _m_trailing_spaces) {
+        NaoLogging::instance().write(L" ");
+
         switch (_m_destination) {
             case STDOUT:
                 std::wcout.put(L' ');
@@ -223,3 +255,103 @@ inline void NaoLogger::print(long double n) const {
 void NaoLogger::print(bool v) const {
     puts(v ? "true" : "false");
 }
+
+#pragma endregion
+
+#pragma region NaoLogging
+
+class NaoLoggingPrivate {
+    public:
+
+    NaoLoggingPrivate();
+    ~NaoLoggingPrivate();
+
+    void _attempt_open(const NaoString& target);
+
+    void _log_file(const NaoString& str);
+    void _log_file(const wchar_t* str);
+
+    bool _flush();
+
+    NaoFileIO* _m_file;
+};
+
+NaoLoggingPrivate::NaoLoggingPrivate()
+    : _m_file(nullptr) {
+    
+}
+
+NaoLoggingPrivate::~NaoLoggingPrivate() {
+    _m_file->close();
+
+    delete _m_file;
+}
+
+
+void NaoLoggingPrivate::_attempt_open(const NaoString& target) {
+    if (!target.empty()) {
+        _m_file = new NaoFileIO(target);
+        _m_file->open(NaoIO::WriteOnly);
+    }
+}
+
+void NaoLoggingPrivate::_log_file(const NaoString& str) {
+    if (_m_file
+        && _m_file->is_open(NaoIO::WriteOnly)) {
+            _m_file->write(str.c_str(), str.size());
+    }
+}
+
+void NaoLoggingPrivate::_log_file(const wchar_t* str) {
+    _log_file(NaoString::fromWide(str));
+}
+
+bool NaoLoggingPrivate::_flush() {
+    if (_m_file
+        && _m_file->is_open(NaoIO::WriteOnly)) {
+        return _m_file->flush();
+    }
+
+    return false;
+}
+
+
+
+
+
+void NaoLogging::set_log_file(const NaoString& target) {
+    NaoLogging& instance = NaoLogging::instance();
+    if (!instance.d_ptr->_m_file) {
+        instance.d_ptr->_attempt_open(target);
+    } else {
+        nerr << "Output file is already set";
+    }
+}
+
+NaoLogging::NaoLogging()
+    : d_ptr(new NaoLoggingPrivate()) {
+
+}
+
+NaoLogging::~NaoLogging() {
+    delete d_ptr;
+}
+
+NaoLogging& NaoLogging::instance() {
+    static NaoLogging inst;
+    return inst;
+}
+
+void NaoLogging::write(const char* str) {
+    d_ptr->_log_file(str);
+}
+
+void NaoLogging::write(const wchar_t* str) {
+    d_ptr->_log_file(str);
+}
+
+bool NaoLogging::flush() {
+    return d_ptr->_flush();
+}
+
+#pragma endregion

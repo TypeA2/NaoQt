@@ -21,24 +21,25 @@
 
 #include "Containers/NaoString.h"
 
-#include <string>
+#ifndef N_LOG_ID
+#define N_LOG_ID "Unknown"
+#endif
 
 #ifdef N_WINDOWS
-#   define ndebug NaoLogger(NaoLogger::DEBUG_WIN, true, true)
+#   define ndebug NaoLogger(NaoLogger::DEBUG_WIN, NaoLogger::Debug, true, true) << "[" N_LOG_ID "]"
 #else
-#   define ndebug NaoLogger(NaoLogger::STDERR, true, true)
+#   define ndebug NaoLogger(NaoLogger::STDERR, NaoLogger::Debug, true, true) << "[" N_LOG_ID "]"
 #endif
 
 #if defined(N_WINDOWS) && defined(NAO_DEBUG)
-#   define nerr NaoLogger(NaoLogger::DEBUG_WIN, true, true)
-#   define nwarn NaoLogger(NaoLogger::DEBUG_WIN, true, true)
-#   define nlog NaoLogger(NaoLogger::DEBUG_WIN, true, true)
+#   define nerr NaoLogger(NaoLogger::DEBUG_WIN, NaoLogger::Error, true, true) << "[" N_LOG_ID "]"
+#   define nwarn NaoLogger(NaoLogger::DEBUG_WIN, NaoLogger::Warning, true, true) << "[" N_LOG_ID "]"
+#   define nlog NaoLogger(NaoLogger::DEBUG_WIN, NaoLogger::Log, true, true) << "[" N_LOG_ID "]"
 #else
-#   define nerr NaoLogger(NaoLogger::STDERR, true, true)
-#   define nwarn NaoLogger(NaoLogger::STDERR, true, true)
-#   define nlog NaoLogger(NaoLogger::STDOUT, true, true)
+#   define nerr NaoLogger(NaoLogger::STDERR, NaoLogger::Error, true, true) << "[" N_LOG_ID "]"
+#   define nwarn NaoLogger(NaoLogger::STDERR, NaoLogger::Warning, true, true) << "[" N_LOG_ID "]"
+#   define nlog NaoLogger(NaoLogger::STDOUT, NaoLogger::Log, true, true) << N_LOG_ID
 #endif
-
 
 class LIBNAO_API NaoLogger {
     public:
@@ -49,8 +50,15 @@ class LIBNAO_API NaoLogger {
         DEBUG_WIN
     };
 
+    enum LogLevel {
+        Log,
+        Warning,
+        Error,
+        Debug
+    };
+
     // Constructors
-    explicit NaoLogger(Destination dest = STDOUT,
+    explicit NaoLogger(Destination dest = STDOUT, LogLevel level = Error,
         bool trailing_spaces = true, bool newline_on_destruct = false);
 
     // Destructor
@@ -112,7 +120,29 @@ class LIBNAO_API NaoLogger {
 
     private:
     Destination _m_destination;
+    LogLevel _m_level;
     bool _m_trailing_spaces;
     bool _m_newline_on_destruct;
+};
 
+class NaoLoggingPrivate;
+
+class LIBNAO_API NaoLogging {
+    public:
+    static void set_log_file(const NaoString& target = NaoString());
+
+    ~NaoLogging();
+
+    private:
+    friend class NaoLogger;
+
+    NaoLogging();
+
+    static NaoLogging& instance();
+
+    void write(const char* str);
+    void write(const wchar_t* str);
+    bool flush();
+
+    NaoLoggingPrivate* d_ptr;
 };
