@@ -46,6 +46,8 @@ class LIBNAO_API NaoChunkIO : public NaoIO {
 
     int64_t write(const char* buf, int64_t size) override;
 
+    bool flush() override;
+
     bool open(OpenMode mode = ReadOnly) override;
 
     void close() override;
