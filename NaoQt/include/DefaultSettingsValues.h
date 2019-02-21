@@ -20,6 +20,7 @@
 #include <map>
 
 static std::map<const char*, const char*> DefaultSettings({
+    { "logging/log_file", "./NaoQt.log" },
     { "plugins/plugins_directory", "./Plugins" },
     { "filesystem/game", "NieRAutomata" },
     { "filesystem/subdir", "data" },
