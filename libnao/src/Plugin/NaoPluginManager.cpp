@@ -17,17 +17,18 @@
 
 #include "Plugin/NaoPluginManager.h"
 
+#define N_LOG_ID "NPM"
+#include "Logging/NaoLogging.h"
 #include "NaoObject.h"
 #include "Plugin/NaoPlugin.h"
 #include "Filesystem/Filesystem.h"
-#include "Logging/NaoLogging.h"
 
 #ifdef N_WINDOWS
-#define WIN32_LEAN_AND_MEAN
-#define VC_EXTRALEAN
-#include <Windows.h>
-#undef VC_EXTRALEAN
-#undef WIN32_LEAN_AND_MEAN
+#   define WIN32_LEAN_AND_MEAN
+#   define VC_EXTRALEAN
+#   include <Windows.h>
+#   undef VC_EXTRALEAN
+#   undef WIN32_LEAN_AND_MEAN
 #endif
 
 //// D-pointer class
@@ -132,7 +133,7 @@ NaoPluginManager::NaoPluginManagerPrivate::~NaoPluginManagerPrivate() {
 
 bool NaoPluginManager::NaoPluginManagerPrivate::init(const NaoString& plugins_dir) {
     
-    nlog << "[NPM] Loading plugins from" << plugins_dir;
+    nlog << "Loading plugins from" << plugins_dir;
     
     m_plugins_dir = fs::absolute(plugins_dir);
 
@@ -169,7 +170,7 @@ bool NaoPluginManager::NaoPluginManagerPrivate::init(const NaoString& plugins_di
 
     m_initialised = true;
 
-    nlog << "[NPM] Finished loading plugins";
+    nlog << "Finished loading plugins";
 
     return std::empty(m_errored_list);
 }
@@ -195,7 +196,7 @@ bool NaoPluginManager::NaoPluginManagerPrivate::load(const NaoString& plugin_nam
         m_plugins.push_back(plugin);
         m_plugins_raw.push_back(plugin.plugin);
 
-        nlog << "[NPM] Loaded plugin" << fs::path(plugin_name).filename()
+        nlog << "Loaded plugin" << fs::path(plugin_name).filename()
             << ("(\"" + plugin.plugin.plugin_info.display_name() + "\")");
 
         return true;

@@ -17,8 +17,9 @@
 
 #include "Containers/NaoString.h"
 
-#include "Functionality/NaoMath.h"
+#define N_LOG_ID "NaoString"
 #include "Logging/NaoLogging.h"
+#include "Functionality/NaoMath.h"
 
 #ifdef N_WINDOWS
 #   define WIN32_LEAN_AND_MEAN
@@ -461,7 +462,7 @@ NaoString NaoString::number(long long n, int radix) {
     char buf[8 * sizeof(n)];
 
     if (_i64toa_s(n, buf, sizeof(buf), radix) != 0 ) {
-        nerr << "[NaoString] _i64toa_s failed";
+        nerr << "_i64toa_s failed";
         return NaoString();
     }
 
@@ -472,7 +473,7 @@ NaoString NaoString::number(unsigned long long n, int radix) {
     char buf[8 * sizeof(n)];
 
     if (_i64toa_s(n, buf, sizeof(buf), radix) != 0) {
-        nerr << "[NaoString] _i64toa_s failed";
+        nerr << "_i64toa_s failed";
         return NaoString();
     }
 
@@ -541,7 +542,7 @@ NaoString NaoString::fromWide(const wchar_t* str) {
         size,
         nullptr,
         nullptr) == 0) {
-        nerr << "[NaoString] WideCharToMultiByte failed with error " << GetLastError();
+        nerr << "WideCharToMultiByte failed with error " << GetLastError();
     }
 
     NaoString result = utf8;

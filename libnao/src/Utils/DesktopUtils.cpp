@@ -17,9 +17,10 @@
 
 #include "Utils/DesktopUtils.h"
 
-#include "Filesystem/Filesystem.h"
-#include "Filesystem/NaoFileSystemManager.h"
+#define N_LOG_ID "DesktopUtils"
 #include "Logging/NaoLogging.h"
+#include "Filesystem/Filesystem.h"
+#include "UI/NaoUIManager.h"
 
 #ifdef N_WINDOWS
 #   include <ShlObj_core.h>
@@ -122,7 +123,7 @@ namespace DesktopUtils {
 #ifdef N_WINDOWS
 
 #define CHECKERR(msg) if((hr) < 0) { \
-    nerr << "[DesktopUtils]" << (msg); \
+    nerr << (msg); \
     dialog->Release(); \
     return NaoString(); \
 }
@@ -137,7 +138,7 @@ namespace DesktopUtils {
              reinterpret_cast<void**>(&dialog));
 
         if (FAILED(hr)) {
-            nerr << "[DesktopUtils] Could not create file dialog instance";
+            nerr << "Could not create file dialog instance";
             return NaoString();
         }
 
@@ -148,24 +149,24 @@ namespace DesktopUtils {
 
 
         if (FAILED(hr)) {
-            nerr << "[DesktopUtils] SHCreateItemFromParsingName failed";
+            nerr << "SHCreateItemFromParsingName failed";
         } else {
 
             hr = dialog->SetFolder(default_dir_item);
 
             if (FAILED(hr)) {
-                nerr << "[DesktopUtils] IFileOpenDialog::SetFolder failed";
+                nerr << "IFileOpenDialog::SetFolder failed";
             }
         }
 
         hr = dialog->SetFileName(default_name.utf16());
         if (FAILED(hr)) {
-            nerr << "[DesktopUtils] IFileOpenDialog::SetFileName failed";
+            nerr << "IFileOpenDialog::SetFileName failed";
         }
 
         hr = dialog->SetTitle(title.utf16());
         if (FAILED(hr)) {
-            nerr << "[DesktopUtils] IFileOpenDialog::SetTitle failed";
+            nerr << "IFileOpenDialog::SetTitle failed";
         }
 
         DWORD opts;
@@ -177,7 +178,7 @@ namespace DesktopUtils {
         hr = dialog->SetOptions(opts);
         CHECKERR("IFileOpenDialog::SetOptions failed");
 
-        hr = dialog->Show(NaoFSM.get_hwnd());
+        hr = dialog->Show(UIWindow);
 
         if (FAILED(hr)) {
             dialog->Release();
@@ -203,16 +204,18 @@ namespace DesktopUtils {
             return str;
         }
 
-        nerr << "[DesktopUtils] IShellItem::GetDisplayName failed";
+        nerr << "IShellItem::GetDisplayName failed";
         return NaoString();
 
 #endif
     }
 
     bool confirm_overwrite(const NaoString& target, bool dir, const NaoString& msg, const NaoString& caption) {
+        
         if (!fs::exists(target)) {
+
             if (!fs::create_directories(target) ) {
-                nerr << "[DesktopUtils] Failed creating directory with name" << target;
+                nerr << "Failed creating directory with name" << target;
                 return false;
             }
 
@@ -223,13 +226,13 @@ namespace DesktopUtils {
 
         if (fs::is_directory(target) == dir
             && fs::is_regular_file(target) == !dir) {
-            return  MessageBoxA(NaoFSM.get_hwnd(),
+            return  MessageBoxA(UIWindow,
                 !std::empty(msg) ? msg : (target + " already exists. Do you want to overwrite it?"),
                 !std::empty(caption) ? caption.c_str() : "Confirm overwrite",
                 MB_YESNO | MB_ICONWARNING | MB_APPLMODAL) == IDYES;
         }
-
-        MessageBoxA(NaoFSM.get_hwnd(),
+        
+        MessageBoxA(UIWindow,
             target + " exists, but is of the wrong type. Delete it before continuing.",
             "Invalid target type",
             MB_OK | MB_ICONERROR | MB_APPLMODAL);

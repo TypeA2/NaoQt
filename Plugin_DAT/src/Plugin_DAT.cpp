@@ -19,13 +19,14 @@
 
 #include "DATReader.h"
 
+#define N_LOG_ID "Plugin_DAT"
+#include <Logging/NaoLogging.h>
 #include <NaoObject.h>
 #include <IO/NaoChunkIO.h>
 #include <IO/NaoFileIO.h>
 #include <Plugin/NaoPluginManager.h>
 #include <Utils/DesktopUtils.h>
-#include <Logging/NaoLogging.h>
-#include <Filesystem/NaoFileSystemManager.h>
+#include <UI/NaoUIManager.h>
 #include <UI/NProgressDialog.h>
 
 #include <numeric>
@@ -189,7 +190,7 @@ namespace Plugin {
 
                     if (!PluginManager.set_description(new_object)) {
                         if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-                            nwarn << "[Plugin_DAT] failed to set description for"
+                            nwarn << "Failed to set description for"
                                 << new_object->name();
                         }
 
@@ -198,8 +199,7 @@ namespace Plugin {
                 }
 
                 if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-                    nwarn << "[Plugin_DAT]"
-                        << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
+                    nwarn << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
                         << "messages suppressed.";
                 }
 
@@ -268,11 +268,11 @@ namespace Plugin {
     namespace Extraction {
         bool extract_single_file(NaoObject* object) {
             if (object->is_dir()) {
-                nerr << "[Plugin_DAT] Shouldn't be possible to extract a directory";
+                nerr << "Shouldn't be possible to extract a directory";
                 return false;
             }
 
-            nlog << "[Plugin_DAT] Saving file" << object->name();
+            nlog << "Saving file" << object->name();
 
             NaoString ext = fs::path(object->name()).extension();
 
@@ -286,37 +286,37 @@ namespace Plugin {
             delete[] filters;
 
             if (!std::empty(target)) {
-                nlog << "[Plugin_DAT] Writing to " << target;
+                nlog << "Writing to " << target;
 
                 NaoIO* source = object->file_ref().io;
                 if (!source->open()) {
-                    nerr << "[Plugin_DAT] Failed opening source";
+                    nerr << "Failed opening source";
                     Error::error() = "Failed opening source io";
                     return false;
                 }
 
                 if (!source->seek(0)) {
-                    nerr << "[Plugin_DAT] Failed seeking in source";
+                    nerr << "Failed seeking in source";
                     Error::error() = "Failed seeking in source io";
                     return false;
                 }
                 
                 NaoFileIO io(target);
                 if (!io.open(NaoIO::WriteOnly)) {
-                    nerr << "[Plugin_DAT] Failed opening target";
+                    nerr << "Failed opening target";
                     Error::error() = "Failed opening target file";
                     return false;
                 }
 
                 int64_t written = 0;
                 if ((written = io.write(source->read_all())) != source->size()) {
-                    nerr << "[Plugin_DAT] Could not write all data, missing" << (source->size() - written) << "bytes";
+                    nerr << "Could not write all data, missing" << (source->size() - written) << "bytes";
                     source->close();
                     io.close();
                     return false;
                 }
 
-                nlog << "[Plugin_DAT] Wrote" << NaoString::bytes(written) << ('(' + NaoString::number(written) + ") bytes");
+                nlog << "Wrote" << NaoString::bytes(written) << ('(' + NaoString::number(written) + ") bytes");
 
                 source->close();
                 io.close();
@@ -336,10 +336,10 @@ namespace Plugin {
             if (!std::empty(target)
                 && DesktopUtils::confirm_overwrite(target + N_PATHSEP + fname.copy().clean_dir_name(), true)) {
                 
-                nlog << "[Plugin_DAT] Extracting to" << target;
+                nlog << "Extracting to" << target;
 
                 if (!Function::populate(object)) {
-                    nerr << "[Plugin_DAT] Failed populating extraction target";
+                    nerr << "Failed populating extraction target";
                     return false;
                 }
 
@@ -351,13 +351,14 @@ namespace Plugin {
                     return i + object->file_ref().real_size;
                 });
 
-                nlog << "[Plugin_DAT] Found" << children.size()
+                nlog << "Found" << children.size()
                     << (children.size() > 1 ? "children" : "child")
                     << "with a total size of" << NaoString::bytes(total);
 
-                NProgressDialog progress(NaoFSM.get_hwnd());
+                NProgressDialog progress(UIWindow);
 
                 progress.set_title("Extracting" + fname);
+                progress.set_max(total);
                 progress.start();
 
                 for (NaoObject* child : children) {
@@ -372,30 +373,30 @@ namespace Plugin {
                     progress.set_text("Extracting: " + fs::path(info.name).filename());
 
                     if (!info.io->open()) {
-                        nerr << "[Plugin_DAT] Failed opening input io with name" << info.name;
+                        nerr << "Failed opening input io with name" << info.name;
                         delete child;
                         continue;
                     }
 
                     if (!info.io->seek(0)) {
-                        nerr << "[Plugin_DAT] Failed seeking to start in input io with name" << info.name;
+                        nerr << "Failed seeking to start in input io with name" << info.name;
                     }
 
                     NaoFileIO output_file(target + N_PATHSEP + fs::path(info.name).filename());
 
                     if (!output_file.open(NaoIO::WriteOnly)) {
-                        nerr << "[Plugin_DAT] Failed opening output io with name" << output_file.path();
+                        nerr << "Failed opening output io with name" << output_file.path();
                         delete child;
                         continue;
                     }
 
                     if (output_file.write(info.io->read_all()) != info.real_size) {
-                        nerr << "[Plugin_DAT] Failed writing all data from" << info.name;
+                        nerr << "Failed writing all data from" << info.name;
                     } else {
-                        nlog << "[Plugin_DAT] Wrote" << NaoString::bytes(info.real_size) << "to" << output_file.path();
+                        nlog << "Wrote" << NaoString::bytes(info.real_size) << "to" << output_file.path();
                     }
 
-                    progress.add_progress(200);
+                    progress.add_progress(info.real_size);
 
                     output_file.close();
                     delete child;

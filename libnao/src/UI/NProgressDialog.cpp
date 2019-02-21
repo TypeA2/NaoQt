@@ -17,6 +17,7 @@
 
 #include "UI/NProgressDialog.h"
 
+#define N_LOG_ID "NProgressDialog"
 #include "Logging/NaoLogging.h"
 
 #ifdef N_WINDOWS
@@ -135,12 +136,12 @@ bool NProgressDialogPrivate::start() {
             _apply_dialog_text();
 
         } else {
-            nerr << "[NProgressDialog] Failed creating dialog thread.";
+            nerr << "Failed creating dialog thread.";
         }
 
         CloseHandle(_m_init);
     } else {
-        nerr << "[NProgressDialog] Failed creating initialisation event";
+        nerr << "Failed creating initialisation event";
     }
 
     return _m_active;
@@ -199,7 +200,7 @@ DWORD WINAPI NProgressDialogPrivate::ThreadProc(PVOID param) {
 
     if (result == -1) {
         DWORD num = GetLastError();
-        ndebug << "[NProgressDialog} DialogBoxParam failed with error:"
+        ndebug << "DialogBoxParam failed with error:"
             << num << _com_error(num).ErrorMessage();
     }
 
