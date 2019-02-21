@@ -21,12 +21,14 @@
 
 #include "Dialog/NaoPluginDialog.h"
 
+#define N_LOG_ID "NaoQt"
 #include <Logging/NaoLogging.h>
 #include <Plugin/NaoPluginManager.h>
 #include <Filesystem/NaoFileSystemManager.h>
 #include <Filesystem/Filesystem.h>
 #include <Utils/SteamUtils.h>
 #include <Utils/DesktopUtils.h>
+#include <UI/NaoUIManager.h>
 
 #include <QMessageBox>
 #include <QVBoxLayout>
@@ -54,13 +56,16 @@ NaoQt::NaoQt(QWidget *parent)
     , _is_moving(false) {
 
     _load_settings();
-    nlog << "[NaoQt] Loaded settings";
+    
+    NaoLogging::set_log_file(_m_settings.at("logging/log_file"));
+
+    nlog << "Loaded settings";
 
     _init_window();
-    nlog << "[NaoQt] Initialised window";
+    nlog << "Initialised window";
 
     _load_plugins();
-    nlog << "[NaoQt] Loaded plugins";
+    nlog << "Loaded plugins";
 
     _init_filesystem();
 }
@@ -217,6 +222,7 @@ void NaoQt::_init_window() {
 
 #pragma endregion MenuBar
 
+    NaoUI.set_hwnd(reinterpret_cast<HWND>(winId()));
 }
 
 void NaoQt::_load_plugins() {
@@ -240,8 +246,6 @@ void NaoQt::_load_plugins() {
 
 void NaoQt::_init_filesystem() {
 
-    NaoFSM.set_hwnd(reinterpret_cast<HWND>(winId()));
-
     const NaoString default_path = SteamUtils::game_path(_m_settings.at("filesystem/game"),
         _m_settings.at("filesystem/subdir"),
         _m_settings.at("filesystem/fallback"));
@@ -257,7 +261,7 @@ void NaoQt::_init_filesystem() {
             throw std::exception(NaoFSM.last_error());
         } 
 
-        nlog << "[NaoQt] Initialised filesystem";
+        nlog << "Initialised filesystem";
 
         fsm_object_changed();
     });
@@ -268,7 +272,7 @@ void NaoQt::_init_filesystem() {
 
 void NaoQt::_move_async(const QString& to, bool _refresh) {
     if (_is_moving) {
-        nerr << "[NaoQt] Already moving";
+        nerr << "Already moving";
         return;
     }
 
@@ -280,12 +284,12 @@ void NaoQt::_move_async(const QString& to, bool _refresh) {
 
     _is_moving = true;
 
-    nlog << "[NaoQt] moving to" << NaoString(to);
+    nlog << "Moving to" << NaoString(to);
 
     auto future_watcher = new QFutureWatcher<bool>(this);
 
     connect(future_watcher, &QFutureWatcher<bool>::finished, this, [future_watcher, this] {
-        nlog << "[NaoQt] moved:" << future_watcher->result();
+        nlog << "Moved:" << future_watcher->result();
 
         if (!future_watcher->result()) {
             QMessageBox::critical(this, "NaoFSM::move", NaoFSM.last_error());
@@ -330,7 +334,7 @@ void NaoQt::view_context_menu(const QPoint& pos) {
     menu->addAction(act); \
 }
 
-    nlog << "[NaoQt] Constructing context menu";
+    nlog << "Constructing context menu";
 
     QMenu* menu = new QMenu(this);
     connect(menu, &QMenu::triggered, menu, &QMenu::deleteLater);
@@ -338,7 +342,7 @@ void NaoQt::view_context_menu(const QPoint& pos) {
     QTreeWidgetItem* item = _m_tree_widget->itemAt(pos);
     
     if (!item) {
-        nlog << "[NaoQt] No item";
+        nlog << "No item";
 
         if (QDir(_m_path_display->text()).exists()) {
             ADDOPT("Refresh view", this, &NaoQt::view_refresh);
@@ -353,7 +357,7 @@ void NaoQt::view_context_menu(const QPoint& pos) {
     } else {
         NaoObject* object = item->data(0, ObjectRole).value<NaoObject*>();
 
-        nlog << "[NaoQt] Object name:" << object->name();
+        nlog << "Object name:" << object->name();
 
         bool append_show = false;
         NaoPlugin* target_plugin = nullptr;
@@ -379,7 +383,7 @@ void NaoQt::view_context_menu(const QPoint& pos) {
             && target_plugin != current_plugin
             && target_plugin->context_menu.has_context_menu(object)) {
 
-            nlog << NaoString("[NaoQt] Using target plugin \"" + target_plugin->plugin_info.display_name() + '"');
+            nlog << NaoString("Using target plugin \"" + target_plugin->plugin_info.display_name() + '"');
 
             menu->addSection(target_plugin->plugin_info.display_name());
 
@@ -390,21 +394,28 @@ void NaoQt::view_context_menu(const QPoint& pos) {
 
                 QAction* act = new QAction(entry.first, menu);
                 connect(act, &QAction::triggered, this, [this, entry, object] {
-                    if (!entry.second(object)) {
-                        QMessageBox::warning(this, "Action failed",
-                            "Failed executing action with name: " + entry.first);
-                    }
+
+                    auto watcher = new QFutureWatcher<bool>(this);
+                    connect(watcher, &QFutureWatcher<bool>::finished, this, [this, entry, watcher] {
+                        if (!watcher->result()) {
+                            QMessageBox::warning(this, "Action failed",
+                                "Failed executing action with name: " + entry.first);
+                        }
+                    });
+                    connect(watcher, &QFutureWatcher<bool>::finished, &QFutureWatcher<bool>::deleteLater);
+
+                    watcher->setFuture(QtConcurrent::run(entry.second, object));
                 });
 
                 menu->addAction(act);
             }
 
-            nlog << "[NaoQt] Added" << (menu->actions().size() - count) << "action(s)";
+            nlog << "Added" << (menu->actions().size() - count) << "action(s)";
         }
 
         if (current_plugin->context_menu.has_context_menu(object)) {
 
-            nlog << NaoString("[NaoQt] Using source plugin \""
+            nlog << NaoString("Using source plugin \""
                 + current_plugin->plugin_info.display_name() + '"');
 
             menu->addSection(current_plugin->plugin_info.display_name());
@@ -425,12 +436,12 @@ void NaoQt::view_context_menu(const QPoint& pos) {
                 menu->addAction(act);
             }
 
-            nlog << "[NaoQt] Added" << (menu->actions().size() - count) << "action(s)";
+            nlog << "Added" << (menu->actions().size() - count) << "action(s)";
         }
 
         if (append_show) {
 
-            nlog << "[NaoQt] Appending \"Show in explorer\" action";
+            nlog << "Appending \"Show in explorer\" action";
 
             menu->addSeparator();
 
@@ -443,8 +454,6 @@ void NaoQt::view_context_menu(const QPoint& pos) {
     if (menu->isEmpty()) {
         menu->addAction("No available actions")->setDisabled(true);
     }
-
-    nlog << "[NaoQt] Finished constructing context menu, displaying.";
 
     menu->popup(_m_tree_widget->viewport()->mapToGlobal(pos));
 
@@ -517,7 +526,7 @@ void NaoQt::view_sort_column(int index, Qt::SortOrder order) {
 }
 
 void NaoQt::view_up() {
-    _move_async(NaoFSM.current_path() + "/..");
+    _move_async(NaoFSM.current_path() + N_PATHSEP + "..");
 }
 
 void NaoQt::view_refresh() {
