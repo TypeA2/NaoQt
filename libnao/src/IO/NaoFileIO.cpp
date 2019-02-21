@@ -17,8 +17,9 @@
 
 #include "IO/NaoFileIO.h"
 
-#include "Filesystem/Filesystem.h"
+#define N_LOG_ID "NaoFIleIO"
 #include "Logging/NaoLogging.h"
+#include "Filesystem/Filesystem.h"
 
 NaoFileIO::NaoFileIO(const NaoString& path)
     : _m_file_ptr(nullptr) {
@@ -44,7 +45,7 @@ int64_t NaoFileIO::pos() const {
 
 bool NaoFileIO::seek(int64_t pos, SeekDir dir) {
     if (!is_open()) {
-        nerr << "NaoFileIO::seek - file is not open";
+        nerr << "File is not open (seek)";
         return false;
     }
 
@@ -72,7 +73,7 @@ bool NaoFileIO::seek(int64_t pos, SeekDir dir) {
 
 int64_t NaoFileIO::read(char* buf, int64_t size) {
     if (open_mode() == Closed) {
-        nerr << "NaoFileIO::read - file is not open";
+        nerr << "File is not open (read)";
         return 0;
     }
 
@@ -85,7 +86,7 @@ int64_t NaoFileIO::read(char* buf, int64_t size) {
 
 int64_t NaoFileIO::write(const char* buf, int64_t size) {
     if (open_mode() == Closed) {
-        nerr << "NaoFileIO::write - file is not open";
+        nerr << "File is not open (write)";
         return 0;
     }
 
@@ -94,6 +95,15 @@ int64_t NaoFileIO::write(const char* buf, int64_t size) {
     }
 
     return fwrite(buf, 1, size, _m_file_ptr);
+}
+
+bool NaoFileIO::flush() {
+    if (open_mode() == Closed) {
+        nerr << "File is not open (flush)";
+        return false;
+    }
+
+    return fflush(_m_file_ptr) == 0;
 }
 
 bool NaoFileIO::open(OpenMode mode) {

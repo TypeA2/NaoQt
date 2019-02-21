@@ -55,6 +55,8 @@ class LIBNAO_API NaoIO {
     virtual int64_t write(const char* buf, int64_t size) = 0;
     virtual int64_t write(const NaoBytes& bytes);
 
+    virtual bool flush() = 0;
+
     // Returns the total size of the underlying device
     virtual int64_t size() const;
 

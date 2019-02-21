@@ -17,6 +17,7 @@
 
 #include "IO/NaoChunkIO.h"
 
+#define N_LOG_ID "NaoChunkIO"
 #include "Logging/NaoLogging.h"
 
 struct NaoChunkIO::NCIChunksWrapper {
@@ -72,7 +73,7 @@ int64_t NaoChunkIO::pos() const {
 
 bool NaoChunkIO::seek(int64_t pos, SeekDir dir) {
     if (!is_open()) {
-        nerr << "NaoChunkIO::seek - not open";
+        nerr << "Not open";
         return false;
     }
 
@@ -97,7 +98,7 @@ bool NaoChunkIO::seek(int64_t pos, SeekDir dir) {
     }
 
     if (target_pos >= size()) {
-        nerr << "NaoChunkIO::seek - position out of range";
+        nerr << "Position out of range";
         return false;
     }
 
@@ -111,7 +112,7 @@ bool NaoChunkIO::seek(int64_t pos, SeekDir dir) {
     _m_bytes_left = _m_current_chunk->size - (target_pos - _m_current_chunk->pos);
 
     if (!_m_io->seek(_m_current_chunk->start + (target_pos - _m_current_chunk->pos))) {
-        nerr << "NaoChunkIO::seek - internal io seek failed";
+        nerr << "Internal io seek failed";
         return false;
     }
 
@@ -128,7 +129,7 @@ int64_t NaoChunkIO::read(char* buf, int64_t size) {
     }
 
     if (_m_pos == -1) {
-        nerr << "NaoChunkIO::read - perform a seek before reading";
+        nerr << "Perform a seek before reading";
         return -1;
     }
 
@@ -157,14 +158,21 @@ int64_t NaoChunkIO::write(const char* buf, int64_t size) {
     (void) buf;
     (void) size;
 
-    nerr << "NaoChunkIO::write - writing not supported";
+    nerr << "Writing not supported";
 
     return -1;
 }
 
+bool NaoChunkIO::flush() {
+    nerr << "Flushing not supported";
+
+    return false;
+}
+
+
 bool NaoChunkIO::open(OpenMode mode) {
     if (mode != ReadOnly) {
-        nerr << "NaoChunkIO::open - only reading supported";
+        nerr << "Only reading supported";
         return false;
     }
 
