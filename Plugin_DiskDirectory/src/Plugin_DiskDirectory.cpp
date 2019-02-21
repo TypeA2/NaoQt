@@ -17,10 +17,11 @@
 
 #include "Plugin_DiskDirectory.h"
 
+#define N_LOG_ID "Plugin_DiskDirectory"
+#include <Logging/NaoLogging.h>
 #include <Filesystem/Filesystem.h>
 #include <Filesystem/NaoFileSystemManager.h>
 #include <IO/NaoFileIO.h>
-#include <Logging/NaoLogging.h>
 #include <Plugin/NaoPluginManager.h>
 #include <NaoObject.h>
 
@@ -194,6 +195,27 @@ namespace Plugin {
                     new_object = new NaoObject({ path_str }, object);
                     new_object->set_description(Description::description());
                 } else if (is_regular_file(entry.path())) {
+
+#ifdef N_WINDOWS
+                    DWORD attrs = GetFileAttributesA(entry.path().string().c_str());
+                    if (attrs & FILE_ATTRIBUTE_SYSTEM) {
+                        nlog << "Skipping system file" << entry.path();
+                        continue;
+                    }
+
+                    if (attrs & FILE_ATTRIBUTE_SPARSE_FILE) {
+                        nlog << "Skipping sparse file" << entry.path();
+                        continue;
+                    }
+
+                    if (attrs & FILE_ATTRIBUTE_HIDDEN) {
+                        nlog << "Skipping hidden file" << entry.path();
+                        continue;
+                    }
+
+                    // TODO Crashes on C:/
+#endif
+
                     NaoFileIO* io = new NaoFileIO(path_str);
 
                     new_object = new NaoObject({
@@ -207,8 +229,7 @@ namespace Plugin {
                     
                     if (!PluginManager.set_description(new_object)) {
                         if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-                            nwarn << "[Plugin_DiskDirectory] failed to set description for"
-                                << new_object->name();
+                            nwarn << "Failed to set description for" << new_object->name();
                         }
 
                         ++subsequent_errors;
@@ -217,9 +238,7 @@ namespace Plugin {
             }
 
             if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-                nwarn << "[Plugin_DiskDirectory]"
-                    << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
-                    << "messages suppressed.";
+                nwarn << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT) << "messages suppressed.";
             }
 
             return true;
