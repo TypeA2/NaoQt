@@ -17,8 +17,10 @@
 
 #include "Plugin_CPK.h"
 
-#define N_LOG_ID "Plugin_DAT"
+#define N_LOG_ID "Plugin_CPK"
 #include <Logging/NaoLogging.h>
+#include <NaoObject.h>
+#include <IO/NaoIO.h>
 
 /* TODO: THEORY
  *  - Global state management class
@@ -137,8 +139,9 @@ namespace Plugin {
             return populatable(object);
         }
 
-        bool populatable(N_UNUSED NaoObject* object) {
-            return false;
+        bool populatable(NaoObject* object) {
+            return !object->is_dir()
+                && object->file_ref().io->read_singleshot(4) == NaoBytes("CPK\0", 4);
         }
 
         bool decodable(N_UNUSED NaoObject* object) {
