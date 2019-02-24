@@ -11,18 +11,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Plugin_DAT.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\DATReader.cpp">
+    <ClCompile Include="src\Plugin_CPK.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\Plugin_DAT.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="include\DATReader.h">
+    <None Include="..\libnao\libnao.licenseheader" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\Plugin_CPK.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
