@@ -21,7 +21,7 @@
 #include "Logging/NaoLogging.h"
 
 #ifdef N_WINDOWS
-#   include "libnao_resource.h"
+#   include "resource.h"
 #   include <comdef.h>
 #endif
 

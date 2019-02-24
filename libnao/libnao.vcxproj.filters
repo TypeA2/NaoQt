@@ -120,7 +120,6 @@
     <ClInclude Include="include\libnao_resource.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h" />
     <ClInclude Include="resource\resource.h" />
     <ClInclude Include="include\UI\NaoUIManager.h">
       <Filter>Headers\UI</Filter>
