@@ -20,6 +20,12 @@
 #define N_LOG_ID "Plugin_DAT"
 #include <Logging/NaoLogging.h>
 
+/* TODO: THEORY
+ *  - Global state management class
+ *  - Release memory when leaving cpk
+ *  - Keep information about file in memory as long as needed
+ */
+
 NaoPlugin GetNaoPlugin() {
     using namespace Plugin;
     return NaoPlugin {
