@@ -17,6 +17,8 @@
 
 #include "Plugin_CPK.h"
 
+#include "CPKManager.h"
+
 #define N_LOG_ID "Plugin_CPK"
 #include <Logging/NaoLogging.h>
 #include <NaoObject.h>
@@ -148,15 +150,18 @@ namespace Plugin {
             return false;
         }
 
-        bool can_move(N_UNUSED NaoObject* from, N_UNUSED NaoObject* to) {
-            return false;
+        bool can_move(NaoObject* from, NaoObject* to) {
+            return CPK.can_move(from, to);
         }
     }
 
     namespace Function {
         bool populate(N_UNUSED NaoObject* object) {
+            if (!Capabilities::populatable(object)) {
+                return false;
+            }
 
-            return false;
+            return CPK.populate(object);
         }
 
         bool decode(N_UNUSED NaoObject* object, N_UNUSED NaoIO* out) {
