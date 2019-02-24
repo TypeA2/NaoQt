@@ -191,29 +191,41 @@ namespace Plugin {
 
                 NaoObject* new_object = nullptr;
 
+#ifdef N_WINDOWS
+                DWORD attrs = GetFileAttributesA(path_str);
+
+                if (attrs == INVALID_FILE_ATTRIBUTES) {
+                    nlog << "Invalid attributes, skipping" << path_str;
+                    continue;
+                }
+
+                if (attrs & FILE_ATTRIBUTE_SYSTEM) {
+                    nlog << "Skipping hidden"
+                        << (attrs & FILE_ATTRIBUTE_DIRECTORY ? "directory" : "file")
+                        << path_str;
+                    continue;
+                }
+
+                if (attrs & FILE_ATTRIBUTE_HIDDEN) {
+                    nlog << "Skipping hidden"
+                        << (attrs & FILE_ATTRIBUTE_DIRECTORY ? "directory" : "file")
+                        << path_str;
+                    continue;
+                }
+
+#endif
+
                 if (is_directory(entry.path())) {
                     new_object = new NaoObject({ path_str }, object);
                     new_object->set_description(Description::description());
                 } else if (is_regular_file(entry.path())) {
 
 #ifdef N_WINDOWS
-                    DWORD attrs = GetFileAttributesA(entry.path().string().c_str());
-                    if (attrs & FILE_ATTRIBUTE_SYSTEM) {
-                        nlog << "Skipping system file" << entry.path();
-                        continue;
-                    }
-
+                    
                     if (attrs & FILE_ATTRIBUTE_SPARSE_FILE) {
-                        nlog << "Skipping sparse file" << entry.path();
+                        nlog << "Skipping sparse file" << path_str;
                         continue;
                     }
-
-                    if (attrs & FILE_ATTRIBUTE_HIDDEN) {
-                        nlog << "Skipping hidden file" << entry.path();
-                        continue;
-                    }
-
-                    // TODO Crashes on C:/
 #endif
 
                     NaoFileIO* io = new NaoFileIO(path_str);
