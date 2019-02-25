@@ -16,3 +16,35 @@
 */
 
 #pragma once
+
+#include "libnao.h"
+
+#include "IO/NaoIO.h"
+#include "Containers/NaoBytes.h"
+
+class LIBNAO_API NaoMemoryIO : public NaoIO {
+    public:
+
+    NaoMemoryIO(const NaoBytes& data);
+    ~NaoMemoryIO() override = default;
+
+    int64_t pos() const override;
+
+    bool seek(int64_t pos, SeekDir dir = set) override;
+
+    using NaoIO::read;
+    int64_t read(char* buf, int64_t size) override;
+
+    using NaoIO::write;
+    int64_t write(const char* buf, int64_t size) override;
+
+    bool flush() override;
+
+    bool open(OpenMode mode = ReadOnly) override;
+    void close() override;
+
+    private:
+
+    NaoBytes _m_data;
+    int64_t _m_pos;
+};

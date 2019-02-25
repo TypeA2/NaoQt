@@ -17,3 +17,75 @@
 
 #include "IO/NaoMemoryIO.h"
 
+#define N_LOG_ID "NaoMemoryIO"
+#include "Logging/NaoLogging.h"
+
+NaoMemoryIO::NaoMemoryIO(const NaoBytes& data)
+    : NaoIO(data.size())
+    , _m_data(data)
+    , _m_pos(0) {
+
+}
+
+int64_t NaoMemoryIO::pos() const {
+    return _m_pos;
+}
+
+bool NaoMemoryIO::seek(int64_t pos, SeekDir dir) {
+    if (!is_open()) {
+        nerr << "Device is not open (seek)";
+        return false;
+    }
+
+    switch (dir) {
+        case set:
+            return !!((_m_pos = pos));
+
+        case cur:
+            return !!((_m_pos += pos));
+
+        case end:
+            return !!((_m_pos = (size() - pos)));
+    }
+
+    return false;
+}
+
+int64_t NaoMemoryIO::read(char* buf, int64_t size) {
+    if (!is_open(ReadOnly)) {
+        nerr << "Device is not open (read)";
+        return 0i64;
+    }
+
+    if (!buf) {
+        return 0i64;
+    }
+
+    return std::distance(std::copy_n(_m_data.data() + _m_pos,
+        std::clamp(size, 0i64, this->size() - _m_pos), buf),
+        _m_data.data() + _m_pos);
+}
+
+int64_t NaoMemoryIO::write(const char* buf, int64_t size) {
+    (void) buf;
+    (void) size;
+    return -1;
+}
+
+bool NaoMemoryIO::flush() {
+    return true;
+}
+
+bool NaoMemoryIO::open(OpenMode mode) {
+    if (mode != ReadOnly) {
+        nerr << "Only ReadOnly supported";
+        return false;
+    }
+
+    return NaoIO::open(mode);
+}
+
+void NaoMemoryIO::close() {
+    NaoIO::close();
+}
+

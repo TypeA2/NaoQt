@@ -52,7 +52,7 @@ class LIBNAO_API NaoBytes {
     bool equals(const NaoBytes& other) const;
 
     // Returns a pointer to the contained data
-    char* data() const;
+    char* data();
     const char* const_data() const;
 
     // Returns the total size
