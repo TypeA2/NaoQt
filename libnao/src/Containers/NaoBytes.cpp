@@ -106,7 +106,7 @@ bool NaoBytes::equals(const NaoBytes& other) const {
     return operator==(other);
 }
 
-char* NaoBytes::data() const {
+char* NaoBytes::data() {
     return _m_data;
 }
 
