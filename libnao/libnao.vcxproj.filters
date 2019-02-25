@@ -127,6 +127,9 @@
     <ClInclude Include="include\UI\NaoWidget.h">
       <Filter>Headers\UI</Filter>
     </ClInclude>
+    <ClInclude Include="include\Containers\NaoVariant.h">
+      <Filter>Headers\Containers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\libnao.cpp">
@@ -179,6 +182,9 @@
     </ClCompile>
     <ClCompile Include="src\UI\NaoUIManager.cpp">
       <Filter>Sources\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Containers\NaoVariant.cpp">
+      <Filter>Sources\Containers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

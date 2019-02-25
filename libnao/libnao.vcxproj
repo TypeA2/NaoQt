@@ -186,6 +186,7 @@
   <ItemGroup>
     <ClCompile Include="src\Containers\NaoBytes.cpp" />
     <ClCompile Include="src\Containers\NaoString.cpp" />
+    <ClCompile Include="src\Containers\NaoVariant.cpp" />
     <ClCompile Include="src\Filesystem\NaoFileSystemManager.cpp" />
     <ClCompile Include="src\IO\NaoChunkIO.cpp" />
     <ClCompile Include="src\IO\NaoFileIO.cpp" />
@@ -206,6 +207,7 @@
     <ClInclude Include="include\Containers\NaoBytes.h" />
     <ClInclude Include="include\Containers\NaoPair.h" />
     <ClInclude Include="include\Containers\NaoString.h" />
+    <ClInclude Include="include\Containers\NaoVariant.h" />
     <ClInclude Include="include\Containers\NaoVector.h" />
     <ClInclude Include="include\Filesystem\Filesystem.h" />
     <ClInclude Include="include\Filesystem\NaoFileSystemManager.h" />
