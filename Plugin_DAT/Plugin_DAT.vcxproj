@@ -26,6 +26,9 @@
     <ClInclude Include="include\DATReader.h" />
     <ClInclude Include="include\Plugin_DAT.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\libnao\libnao.licenseheader" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{42A15C74-8F7D-48BB-94F9-6F283E533903}</ProjectGuid>

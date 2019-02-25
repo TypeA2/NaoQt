@@ -19,13 +19,19 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\CPKManager.cpp" />
     <ClCompile Include="src\Plugin_CPK.cpp" />
+    <ClCompile Include="src\Readers\CPKReader.cpp" />
+    <ClCompile Include="src\Readers\UTFReader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\libnao\libnao.licenseheader" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\CPKManager.h" />
     <ClInclude Include="include\Plugin_CPK.h" />
+    <ClInclude Include="include\Readers\CPKReader.h" />
+    <ClInclude Include="include\Readers\UTFReader.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

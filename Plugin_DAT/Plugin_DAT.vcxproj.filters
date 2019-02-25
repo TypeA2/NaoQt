@@ -26,4 +26,7 @@
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\libnao\libnao.licenseheader" />
+  </ItemGroup>
 </Project>

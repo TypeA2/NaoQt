@@ -16,3 +16,62 @@
 */
 
 #pragma once
+
+#include <Containers/NaoBytes.h>
+#include <Containers/NaoString.h>
+#include <Containers/NaoVariant.h>
+
+class NaoIO;
+class NaoMemoryIO;
+
+class UTFReader {
+    public:
+
+    struct Row {
+        int32_t type;
+        int64_t pos;
+        NaoVariant val;
+    };
+
+    struct Field {
+        uint8_t flags;
+        uint64_t name_pos;
+        NaoString name;
+        NaoVariant const_val;
+    };
+
+    enum StorageFlags : uint32_t {
+        HasName = 0x10,
+        ConstVal = 0x20,
+        RowVal = 0x40
+    };
+
+    enum TypeFlags : uint32_t {
+        UChar = 0x00,
+        SChar = 0x01,
+        UShort = 0x02,
+        Short = 0x03,
+        UInt = 0x04,
+        Int = 0x05,
+        ULong = 0x06,
+        Long = 0x07,
+        Float = 0x08,
+        Double = 0x09,
+        String = 0x0A,
+        Data = 0x0B
+    };
+
+    static NaoBytes read_utf(NaoIO* in);
+
+    UTFReader(const NaoBytes& data);
+    ~UTFReader();
+
+    bool valid() const;
+
+    private:
+
+    bool _parse();
+
+    NaoMemoryIO* _m_io;
+    bool _m_valid;
+};
