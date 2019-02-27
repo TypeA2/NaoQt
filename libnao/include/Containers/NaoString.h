@@ -190,7 +190,9 @@ class LIBNAO_API NaoString {
     static NaoString number(long double n, int precision = 6);
 
     static NaoString bytes(uint64_t n);
+    static NaoString fromUtf8(const char* str);
     static NaoString fromWide(const wchar_t* str);
+    static NaoString fromShiftJIS(const char* str);
 
 #pragma endregion
 

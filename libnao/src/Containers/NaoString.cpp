@@ -520,6 +520,10 @@ NaoString NaoString::bytes(uint64_t n) {
     return number(n) + " bytes";
 }
 
+NaoString NaoString::fromUtf8(const char* str) {
+    return str;
+}
+
 NaoString NaoString::fromWide(const wchar_t* str) {
 #ifdef N_WINDOWS
 
@@ -543,6 +547,7 @@ NaoString NaoString::fromWide(const wchar_t* str) {
         nullptr,
         nullptr) == 0) {
         nerr << "WideCharToMultiByte failed with error " << GetLastError();
+        return NaoString();
     }
 
     NaoString result = utf8;
@@ -550,6 +555,33 @@ NaoString NaoString::fromWide(const wchar_t* str) {
     return result;
 
 #endif
+}
+
+NaoString NaoString::fromShiftJIS(const char* str) {
+    int utf16_size = MultiByteToWideChar(932,
+        MB_ERR_INVALID_CHARS,
+        shift,
+        -1,
+        nullptr,
+        0);
+
+    wchar_t* utf16 = new wchar_t[utf16_size]();
+
+    if (MultiByteToWideChar(932,
+        MB_ERR_INVALID_CHARS,
+        shift,
+        -1,
+        utf16,
+        utf16_size) == 0) {
+        nerr << "MultiByteToWideChar failed with error " << GetLastError();
+        return NaoString();
+    }
+
+    NaoWStringConst wstring(utf16);
+
+    delete[] utf16;
+
+    return fromWide(wstring);
 }
 
 #pragma endregion
