@@ -17,8 +17,9 @@
 
 #include "IO/NaoIO.h"
 
-//// Public
+#include "Containers/NaoVector.h"
 
+//// Public
 
 // ReSharper disable once hicpp-use-equals-default
 
@@ -36,6 +37,14 @@ bool NaoIO::seekc(int64_t pos) {
 
 int64_t NaoIO::read(char* buf, int64_t size) {
     return -1i64;
+}
+
+int64_t NaoIO::read(unsigned char* buf, int64_t size) {
+    return read(reinterpret_cast<char*>(buf), size);
+}
+
+int64_t NaoIO::read(signed char* buf, int64_t size) {
+    return read(reinterpret_cast<char*>(buf), size);
 }
 
 NaoBytes NaoIO::read(size_t size) {
@@ -78,7 +87,6 @@ NaoBytes NaoIO::read_singleshot(size_t size) {
 NaoBytes NaoIO::read_all() {
     return read(size());
 }
-
 
 int64_t NaoIO::write(const char* buf, int64_t size) {
     return -1i64;
@@ -125,7 +133,7 @@ NaoIO::ByteOrder NaoIO::default_byte_order() const {
 }
 
 uint8_t NaoIO::read_uchar() {
-    char val = 0;
+    uint8_t val = 0;
 
     read(&val, 1);
 
@@ -172,7 +180,94 @@ uint64_t NaoIO::read_ulong(ByteOrder order) {
             | (uint64_t(val[6]) << 48) | (uint64_t(val[7]) << 56));
 }
 
+int8_t NaoIO::read_char() {
+    int8_t val = 0;
+
+    read(&val, 1);
+
+    return val;
+}
+
+int16_t NaoIO::read_short(ByteOrder order) {
+    char val[2] { };
+
+    read(val, 2);
+
+    __default_order(order);
+
+    return (order == LE)
+        ? (*reinterpret_cast<int16_t*>(val))
+        : (uint16_t(val[0]) | (uint16_t(val[1]) << 8));
+}
+
+int32_t NaoIO::read_int(ByteOrder order) {
+    char val[4];
+
+    read(val, 4);
+
+    __default_order(order);
+
+    return (order == LE)
+        ? (*reinterpret_cast<int32_t*>(val))
+        : (uint32_t(val[0]) | (uint32_t(val[1]) << 8)
+            | (uint32_t(val[2]) << 16) | (uint32_t(val[3]) << 24));
+}
+
+int64_t NaoIO::read_long(ByteOrder order) {
+    char val[8];
+
+    read(val, 8);
+
+    __default_order(order);
+
+    return (order == LE)
+        ? (*reinterpret_cast<int64_t*>(val))
+        : (uint64_t(val[0]) | (uint64_t(val[1]) << 8)
+            | (uint64_t(val[2]) << 16) | (uint64_t(val[3]) << 24)
+            | (uint64_t(val[4]) << 32) | (uint64_t(val[5]) << 40)
+            | (uint64_t(val[6]) << 48) | (uint64_t(val[7]) << 56));
+}
+
+float NaoIO::read_float(ByteOrder order) {
+    uint8_t val[4];
+
+    read(val, 4);
+
+    __default_order(order);
+
+    return (order == LE)
+        ? (*reinterpret_cast<float*>(val))
+        : (uint32_t(val[0]) | (uint32_t(val[1]) << 8)
+            | (uint32_t(val[2]) << 16) | (uint32_t(val[3]) << 24));
+}
+
+double NaoIO::read_double(ByteOrder order) {
+    uint8_t val[8];
+
+    read(val, 8);
+
+    __default_order(order);
+
+    return (order == LE)
+        ? (*reinterpret_cast<double*>(val))
+        : (uint64_t(val[0]) | (uint64_t(val[1]) << 8)
+            | (uint64_t(val[2]) << 16) | (uint64_t(val[3]) << 24)
+            | (uint64_t(val[4]) << 32) | (uint64_t(val[5]) << 40)
+            | (uint64_t(val[6]) << 48) | (uint64_t(val[7]) << 56));
+}
+
+
 #pragma endregion
+
+NaoString NaoIO::read_cstring() {
+    NaoVector<char> r;
+
+    do {
+        r.push_back(*read(1));
+    } while (r.back());
+
+    return r.data();
+}
 
 //// Protected
 

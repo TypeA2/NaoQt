@@ -20,6 +20,7 @@
 #include "libnao.h"
 
 #include "Containers/NaoBytes.h"
+#include "Containers/NaoString.h"
 
 // Base class for all disk and memory IO
 class LIBNAO_API NaoIO {
@@ -46,9 +47,11 @@ class LIBNAO_API NaoIO {
     // Reads size bytes into buf
     // Returns the number of bytes actually read, or -1 on error
     virtual int64_t read(char* buf, int64_t size) = 0;
-    virtual NaoBytes read(size_t size);
+    int64_t read(unsigned char* buf, int64_t size);
+    int64_t read(signed char* buf, int64_t size);
+    NaoBytes read(size_t size);
     NaoBytes read_singleshot(size_t size);
-    virtual NaoBytes read_all();
+    NaoBytes read_all();
 
     // Writes size bytes from buf to the underlying device
     // Returns the number of bytes actually written, or -1 on error
@@ -100,10 +103,21 @@ class LIBNAO_API NaoIO {
     uint32_t read_uint(ByteOrder order = Default);
     uint64_t read_ulong(ByteOrder order = Default);
 
+    int8_t read_char();
+    int16_t read_short(ByteOrder order = Default);
+    int32_t read_int(ByteOrder order = Default);
+    int64_t read_long(ByteOrder order = Default);
+
+    float read_float(ByteOrder order = Default);
+    double read_double(ByteOrder order = Default);
+
     private:
     ByteOrder __m_default_byte_order;
 
 #pragma endregion
+
+    public:
+    NaoString read_cstring();
 
     protected:
 
