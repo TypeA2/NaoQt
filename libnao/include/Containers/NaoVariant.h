@@ -20,23 +20,36 @@
 #include "libnao.h"
 
 class NaoString;
+class NaoBytes;
 
 class LIBNAO_API NaoVariant {
     public:
+    ~NaoVariant();
+
+    NaoVariant(NaoVariant&& other) noexcept;
+    NaoVariant(const NaoVariant& other);
+
+    NaoVariant& operator=(NaoVariant&& other) noexcept;
+    NaoVariant& operator=(const NaoVariant& other);
+
     NaoVariant();
     NaoVariant(bool val);
     NaoVariant(signed char n);
     NaoVariant(unsigned char n);
     NaoVariant(short n);
     NaoVariant(unsigned short n);
+    NaoVariant(int n);
+    NaoVariant(unsigned int n);
     NaoVariant(long n);
     NaoVariant(unsigned long n);
     NaoVariant(long long n);
     NaoVariant(unsigned long long n);
 
+    NaoVariant(float n);
+    NaoVariant(double n);
+
     NaoVariant(NaoString str);
-    explicit NaoVariant(const char* str);
-    explicit NaoVariant(const wchar_t* str);
+    NaoVariant(NaoBytes data);
 
     bool as_bool() const;
 
@@ -51,9 +64,11 @@ class LIBNAO_API NaoVariant {
     long long as_longlong() const;
     unsigned long long as_ulonglong() const;
 
+    float as_float() const;
+    double as_double() const;
+
     NaoString as_string() const;
-    const char* as_cstring() const;
-    const wchar_t* as_cwstring() const;
+    NaoBytes as_bytes() const;
 
     private:
 
