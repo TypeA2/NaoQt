@@ -20,6 +20,7 @@
 #include <Containers/NaoBytes.h>
 #include <Containers/NaoString.h>
 #include <Containers/NaoVariant.h>
+#include <Containers/NaoVector.h>
 
 class NaoIO;
 class NaoMemoryIO;
@@ -27,11 +28,13 @@ class NaoMemoryIO;
 class UTFReader {
     public:
 
-    struct Row {
+    struct RowField {
         int32_t type;
         int64_t pos;
         NaoVariant val;
     };
+
+    using Row = NaoVector<RowField>;
 
     struct Field {
         uint8_t flags;
@@ -68,10 +71,16 @@ class UTFReader {
 
     bool valid() const;
 
+    const NaoVariant& get_data(
+        uint32_t row, const NaoString& name) const;
+
     private:
 
     bool _parse();
 
     NaoMemoryIO* _m_io;
     bool _m_valid;
+
+    NaoVector<Field> _m_fields;
+    NaoVector<Row> _m_rows;
 };
