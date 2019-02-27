@@ -24,6 +24,7 @@
 
 class NaoVariant::NVPrivate {
     public:
+
     enum Type : uint32_t {
         Bool,
         SChar,
@@ -42,36 +43,57 @@ class NaoVariant::NVPrivate {
         NaoBytes
     };
 
+    static bool is_signed(Type t) {
+        return t == Bool
+            || t == SChar
+            || t == Short
+            || t == Long
+            || t == LongLong;
+    }
+
+    static bool is_unsigned(Type t) {
+        return t == UChar
+            || t == UShort
+            || t == ULong
+            || t == ULongLong;
+    }
+
+    static bool is_real(Type t) {
+        return t == Float || t == Double;
+    }
+
     explicit NVPrivate() : _m_valid(false), _m_type() { }
     NVPrivate(void* val, Type type);
 
-    void* value();
+    void* value_ptr();
+
+    int64_t val_signed() const { return _val._signed; }
+    uint64_t val_unsigned() const { return _val._unsigned; }
+    double val_real() const { return _val._real; }
+
+    ::NaoString val_string() const { return _val._naostring; }
+    ::NaoBytes val_bytes() const { return _val._naobytes; }
 
     ~NVPrivate() = default;
 
     Type type() const { return _m_type; }
+    bool valid() const { return _m_valid; }
 
     private:
     bool _m_valid;
 
     union Value {
-        bool _bool;
-        signed char _schar;
-        unsigned char _uchar;
-        short _short;
-        unsigned short _ushort;
-        long _long;
-        unsigned long _ulong;
-        long long _longlong;
-        unsigned long long _ulonglong;
+        int64_t _signed;
+        uint64_t _unsigned;
 
-        float _float;
-        double _double;
+        double _real;
 
         ::NaoString _naostring;
         ::NaoBytes _naobytes;
 
         Value() { std::fill_n(this, sizeof(Value), 0); }
+
+        // ReSharper disable once hicpp-use-equals-default
         ~Value() { }
     } _val;
 
@@ -81,24 +103,25 @@ class NaoVariant::NVPrivate {
 NaoVariant::NVPrivate::NVPrivate(void* val, Type type)
     : _m_valid(true)
     , _m_type(type) {
+
     switch (type) {
-        case Bool:      _val._bool      = *static_cast<bool*>               (val); break;
-        case SChar:     _val._schar     = *static_cast<signed char*>        (val); break;
-        case UChar:     _val._uchar     = *static_cast<unsigned char*>      (val); break;
-        case Short:     _val._short     = *static_cast<short*>              (val); break;
-        case UShort:    _val._ushort    = *static_cast<unsigned short*>     (val); break;
-        case Long:      _val._long      = *static_cast<long*>               (val); break;
-        case ULong:     _val._ulong     = *static_cast<unsigned long*>      (val); break;
-        case LongLong:  _val._longlong  = *static_cast<long long*>          (val); break;
-        case ULongLong: _val._ulonglong = *static_cast<unsigned long long*> (val); break;
-        case Float:     _val._float     = *static_cast<float*>              (val); break;
-        case Double:    _val._double    = *static_cast<double*>             (val); break;
-        case NaoString: _val._naostring = *static_cast<::NaoString*>        (val); break;
-        case NaoBytes:  _val._naobytes  = *static_cast<::NaoBytes*>         (val); break;
+        case Bool:      _val._signed    = *static_cast<bool*>       (val); break;
+        case SChar:     _val._signed    = *static_cast<int8_t*>     (val); break;
+        case UChar:     _val._unsigned  = *static_cast<uint8_t*>    (val); break;
+        case Short:     _val._signed    = *static_cast<int16_t*>    (val); break;
+        case UShort:    _val._unsigned  = *static_cast<uint16_t*>   (val); break;
+        case Long:      _val._signed    = *static_cast<int32_t*>    (val); break;
+        case ULong:     _val._unsigned  = *static_cast<uint32_t*>   (val); break;
+        case LongLong:  _val._signed    = *static_cast<int64_t*>    (val); break;
+        case ULongLong: _val._unsigned  = *static_cast<uint64_t*>   (val); break;
+        case Float:     _val._real      = *static_cast<float*>      (val); break;
+        case Double:    _val._real      = *static_cast<double*>     (val); break;
+        case NaoString: _val._naostring = *static_cast<::NaoString*>(val); break;
+        case NaoBytes:  _val._naobytes  = *static_cast<::NaoBytes*> (val); break;
     }
 }
 
-void* NaoVariant::NVPrivate::value() {
+void* NaoVariant::NVPrivate::value_ptr() {
     if (!_m_valid) {
         throw std::exception("NaoVariant is invalid");
     }
@@ -116,14 +139,30 @@ NaoVariant::~NaoVariant() {
     delete d_ptr;
 }
 
+bool NaoVariant::valid() const {
+    return d_ptr->valid();
+}
+
+bool NaoVariant::is_signed() const {
+    return NVPrivate::is_signed(d_ptr->type());
+}
+
+bool NaoVariant::is_unsigned() const {
+    return NVPrivate::is_unsigned(d_ptr->type());
+}
+
+bool NaoVariant::is_real() const {
+    return NVPrivate::is_real(d_ptr->type());
+}
+
 NaoVariant::NaoVariant(NaoVariant&& other) noexcept : d_ptr(other.d_ptr) {
     other.d_ptr = nullptr;
 }
 
 NaoVariant::NaoVariant(const NaoVariant& other)
-    : d_ptr(new NVPrivate(other.d_ptr->value(), other.d_ptr->type())) { }
+    : d_ptr(new NVPrivate(other.d_ptr->value_ptr(), other.d_ptr->type())) { }
 
-class NaoVariant& NaoVariant::operator=(NaoVariant&& other) noexcept {
+NaoVariant& NaoVariant::operator=(NaoVariant&& other) noexcept {
     delete d_ptr;
 
     d_ptr = other.d_ptr;
@@ -142,36 +181,106 @@ NaoVariant& NaoVariant::operator=(const NaoVariant& other) {
 
 NaoVariant::NaoVariant() : d_ptr() { }
 
-NaoVariant::NaoVariant(bool val)             : d_ptr(new NVPrivate(&val,    NVPrivate::Bool)) { }
-NaoVariant::NaoVariant(signed char n)        : d_ptr(new NVPrivate(&n,      NVPrivate::SChar)) { }
-NaoVariant::NaoVariant(unsigned char n)      : d_ptr(new NVPrivate(&n,      NVPrivate::UChar)) { }
-NaoVariant::NaoVariant(short n)              : d_ptr(new NVPrivate(&n,      NVPrivate::Short)) { }
-NaoVariant::NaoVariant(unsigned short n)     : d_ptr(new NVPrivate(&n,      NVPrivate::UShort)) { }
-NaoVariant::NaoVariant(int n)                : d_ptr(new NVPrivate(&n,      NVPrivate::Long)) { }
-NaoVariant::NaoVariant(unsigned int n)       : d_ptr(new NVPrivate(&n,      NVPrivate::ULong)) { }
-NaoVariant::NaoVariant(long n)               : d_ptr(new NVPrivate(&n,      NVPrivate::Long)) { }
-NaoVariant::NaoVariant(unsigned long n)      : d_ptr(new NVPrivate(&n,      NVPrivate::ULong)) { }
-NaoVariant::NaoVariant(long long n)          : d_ptr(new NVPrivate(&n,      NVPrivate::LongLong)) { }
-NaoVariant::NaoVariant(unsigned long long n) : d_ptr(new NVPrivate(&n,      NVPrivate::ULongLong)) { }
-NaoVariant::NaoVariant(float n)              : d_ptr(new NVPrivate(&n,      NVPrivate::Float)) { }
-NaoVariant::NaoVariant(double n)             : d_ptr(new NVPrivate(&n,      NVPrivate::Double)) { }
-NaoVariant::NaoVariant(NaoString str)        : d_ptr(new NVPrivate(&str,    NVPrivate::NaoString)) { }
-NaoVariant::NaoVariant(NaoBytes data)        : d_ptr(new NVPrivate(&data,   NVPrivate::NaoBytes)) { }
+NaoVariant::NaoVariant(bool val)        : d_ptr(new NVPrivate(&val,    NVPrivate::Bool)) { }
+NaoVariant::NaoVariant(int8_t n)        : d_ptr(new NVPrivate(&n,      NVPrivate::SChar)) { }
+NaoVariant::NaoVariant(uint8_t n)       : d_ptr(new NVPrivate(&n,      NVPrivate::UChar)) { }
+NaoVariant::NaoVariant(int16_t n)       : d_ptr(new NVPrivate(&n,      NVPrivate::Short)) { }
+NaoVariant::NaoVariant(uint16_t n)      : d_ptr(new NVPrivate(&n,      NVPrivate::UShort)) { }
+NaoVariant::NaoVariant(int32_t n)       : d_ptr(new NVPrivate(&n,      NVPrivate::Long)) { }
+NaoVariant::NaoVariant(uint32_t n)      : d_ptr(new NVPrivate(&n,      NVPrivate::ULong)) { }
+NaoVariant::NaoVariant(int64_t n)       : d_ptr(new NVPrivate(&n,      NVPrivate::LongLong)) { }
+NaoVariant::NaoVariant(uint64_t n)      : d_ptr(new NVPrivate(&n,      NVPrivate::ULongLong)) { }
+NaoVariant::NaoVariant(float n)         : d_ptr(new NVPrivate(&n,      NVPrivate::Float)) { }
+NaoVariant::NaoVariant(double n)        : d_ptr(new NVPrivate(&n,      NVPrivate::Double)) { }
+NaoVariant::NaoVariant(NaoString str)   : d_ptr(new NVPrivate(&str,    NVPrivate::NaoString)) { }
+NaoVariant::NaoVariant(NaoBytes data)   : d_ptr(new NVPrivate(&data,   NVPrivate::NaoBytes)) { }
 
-bool                NaoVariant::as_bool()       const { return *static_cast<bool*>              (d_ptr->value()); }
-signed char         NaoVariant::as_char()       const { return *static_cast<signed char*>       (d_ptr->value()); }
-unsigned char       NaoVariant::as_uchar()      const { return *static_cast<unsigned char*>     (d_ptr->value()); }
-short               NaoVariant::as_short()      const { return *static_cast<short*>             (d_ptr->value()); }
-unsigned short      NaoVariant::as_ushort()     const { return *static_cast<unsigned short*>    (d_ptr->value()); }
-int                 NaoVariant::as_int()        const { return *static_cast<int*>               (d_ptr->value()); }
-unsigned int        NaoVariant::as_uint()       const { return *static_cast<unsigned int*>      (d_ptr->value()); }
-long                NaoVariant::as_long()       const { return *static_cast<long*>              (d_ptr->value()); }
-unsigned long       NaoVariant::as_ulong()      const { return *static_cast<unsigned long*>     (d_ptr->value()); }
-long long           NaoVariant::as_longlong()   const { return *static_cast<long long*>         (d_ptr->value()); }
-unsigned long long  NaoVariant::as_ulonglong()  const { return *static_cast<unsigned long long*>(d_ptr->value()); }
-float               NaoVariant::as_float()      const { return *static_cast<float*>             (d_ptr->value()); }
-double              NaoVariant::as_double()     const { return *static_cast<double*>            (d_ptr->value()); }
-NaoString           NaoVariant::as_string()     const { return *static_cast<NaoString*>         (d_ptr->value()); }
-NaoBytes            NaoVariant::as_bytes()      const { return *static_cast<NaoBytes*>          (d_ptr->value()); }
+#pragma region Type getters
+
+bool NaoVariant::as_bool() const { 
+    return !!as_int64();
+}
+
+#define IMPL_NUM_GETTER(name, type) \
+type NaoVariant::name() const { \
+    if (is_signed()) { return type(d_ptr->val_signed()); } \
+    if (is_unsigned()) { return type(d_ptr->val_unsigned()); } \
+    if (is_real()) { return type(d_ptr->val_real()); } \
+    return type(); \
+}
+
+IMPL_NUM_GETTER(as_int8, int8_t)
+IMPL_NUM_GETTER(as_uint8, uint8_t)
+IMPL_NUM_GETTER(as_int16, int16_t)
+IMPL_NUM_GETTER(as_uint16, uint16_t)
+IMPL_NUM_GETTER(as_int32, int32_t)
+IMPL_NUM_GETTER(as_uint32, uint32_t)
+IMPL_NUM_GETTER(as_float, float)
+
+int64_t NaoVariant::as_int64() const {
+    if (is_signed()) {
+        return d_ptr->val_signed();
+    }
+
+    if (is_unsigned()) {
+        return int64_t(d_ptr->val_unsigned());
+    }
+
+    if (is_real()) {
+        return int64_t(d_ptr->val_real());
+    }
+
+    return int64_t();
+}
+
+uint64_t NaoVariant::as_uint64() const {
+    if (is_signed()) {
+        return uint64_t(d_ptr->val_signed());
+    }
+
+    if (is_unsigned()) {
+        return d_ptr->val_unsigned();
+    }
+
+    if (is_real()) {
+        return uint64_t(d_ptr->val_real());
+    }
+
+    return uint64_t();
+}
+
+double NaoVariant::as_double() const {
+    if (is_signed()) {
+        return double(d_ptr->val_signed());
+    }
+
+    if (is_unsigned()) {
+        return double(d_ptr->val_unsigned());
+    }
+
+    if (is_real()) {
+        return d_ptr->val_real();
+    }
+
+    return double();
+}
+
+NaoString NaoVariant::as_string() const {
+    if (d_ptr->type() == NVPrivate::NaoString) {
+        return d_ptr->val_string();
+    }
+
+    return NaoString();
+}
+
+NaoBytes NaoVariant::as_bytes() const {
+    if (d_ptr->type() == NVPrivate::NaoBytes) {
+        return d_ptr->val_bytes();
+    }
+
+    return NaoBytes();
+}
+
+#pragma endregion
 
 #pragma endregion

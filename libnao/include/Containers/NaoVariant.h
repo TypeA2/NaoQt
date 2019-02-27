@@ -26,6 +26,12 @@ class LIBNAO_API NaoVariant {
     public:
     ~NaoVariant();
 
+    bool valid() const;
+
+    bool is_signed() const;
+    bool is_unsigned() const;
+    bool is_real() const;
+
     NaoVariant(NaoVariant&& other) noexcept;
     NaoVariant(const NaoVariant& other);
 
@@ -53,14 +59,14 @@ class LIBNAO_API NaoVariant {
 
     bool as_bool() const;
 
-    signed char as_char() const;
-    unsigned char as_uchar() const;
-    short as_short() const;
-    unsigned short as_ushort() const;
-    int as_int() const;
-    unsigned int as_uint() const;
-    long as_long() const;
-    unsigned long as_ulong() const;
+    int8_t as_int8() const;
+    uint8_t as_uint8() const;
+    int16_t as_int16() const;
+    uint16_t as_uint16() const;
+    int32_t as_int32() const;
+    uint32_t as_uint32() const;
+    int64_t as_int64() const;
+    uint64_t as_uint64() const;
     long long as_longlong() const;
     unsigned long long as_ulonglong() const;
 
