@@ -16,3 +16,17 @@
 */
 
 #include "Readers/CPKReader.h"
+
+CPKReader::CPKReader(NaoIO* in)
+    : _m_io(in) {
+    _m_valid = _parse();
+}
+
+bool CPKReader::valid() const {
+    return _m_valid;
+}
+
+bool CPKReader::_parse() {
+    
+}
+

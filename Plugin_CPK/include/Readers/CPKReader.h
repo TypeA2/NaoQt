@@ -16,3 +16,44 @@
 */
 
 #pragma once
+
+#include <Containers/NaoString.h>
+
+#include <set>
+#include <map>
+
+class NaoIO;
+
+class CPKReader {
+    public:
+
+    struct File {
+        NaoString origin;
+        NaoString name;
+        NaoString dir;
+        NaoString user_string;
+
+        uint64_t offset;
+        uint64_t extra_offset;
+        uint64_t size;
+        uint64_t extracted_size;
+        uint32_t id;
+    };
+
+    CPKReader(NaoIO* in);
+
+    ~CPKReader() = default;
+
+    bool valid() const;
+
+    private:
+
+    bool _parse();
+
+    bool _m_valid;
+
+    NaoIO* _m_io;
+
+    std::map<NaoString, File> _m_files;
+    std::set<NaoString> _m_dirs;
+};
