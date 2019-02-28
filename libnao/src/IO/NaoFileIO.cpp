@@ -109,6 +109,10 @@ bool NaoFileIO::flush() {
 bool NaoFileIO::open(OpenMode mode) {
     const OpenMode current = NaoIO::open_mode();
 
+    if (current == mode) {
+        return true;
+    }
+
     if (current != Closed) {
         return false;
     }
