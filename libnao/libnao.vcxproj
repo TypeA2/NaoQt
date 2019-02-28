@@ -205,12 +205,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Containers\NaoBytes.h" />
+    <ClInclude Include="include\Containers\NaoEndianInteger.h" />
     <ClInclude Include="include\Containers\NaoPair.h" />
     <ClInclude Include="include\Containers\NaoString.h" />
     <ClInclude Include="include\Containers\NaoVariant.h" />
     <ClInclude Include="include\Containers\NaoVector.h" />
     <ClInclude Include="include\Filesystem\Filesystem.h" />
     <ClInclude Include="include\Filesystem\NaoFileSystemManager.h" />
+    <ClInclude Include="include\Functionality\NaoEndian.h" />
     <ClInclude Include="include\Functionality\NaoMath.h" />
     <ClInclude Include="include\IO\NaoChunkIO.h" />
     <ClInclude Include="include\IO\NaoFileIO.h" />
