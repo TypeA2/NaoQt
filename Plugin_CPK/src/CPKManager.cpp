@@ -23,9 +23,9 @@ CPKManager& CPKManager::instance() {
 }
 
 bool CPKManager::can_move(NaoObject* from, NaoObject* to) const {
-    return !(from && to);
+    return false;
 }
 
 bool CPKManager::populate(NaoObject* object) {
-    
+    return false;
 }

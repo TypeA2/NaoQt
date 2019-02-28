@@ -18,9 +18,9 @@
 #pragma once
 
 #include <Containers/NaoString.h>
+#include <Containers/NaoVector.h>
 
 #include <set>
-#include <map>
 
 class NaoIO;
 
@@ -54,6 +54,6 @@ class CPKReader {
 
     NaoIO* _m_io;
 
-    std::map<NaoString, File> _m_files;
+    NaoVector<File> _m_files;
     std::set<NaoString> _m_dirs;
 };
