@@ -40,16 +40,14 @@ class LIBNAO_API NaoVariant {
 
     NaoVariant();
     NaoVariant(bool val);
-    NaoVariant(signed char n);
-    NaoVariant(unsigned char n);
-    NaoVariant(short n);
-    NaoVariant(unsigned short n);
-    NaoVariant(int n);
-    NaoVariant(unsigned int n);
-    NaoVariant(long n);
-    NaoVariant(unsigned long n);
-    NaoVariant(long long n);
-    NaoVariant(unsigned long long n);
+    NaoVariant(int8_t n);
+    NaoVariant(uint8_t n);
+    NaoVariant(int16_t n);
+    NaoVariant(uint16_t n);
+    NaoVariant(int32_t n);
+    NaoVariant(uint32_t n);
+    NaoVariant(int64_t n);
+    NaoVariant(uint64_t n);
 
     NaoVariant(float n);
     NaoVariant(double n);
@@ -67,8 +65,6 @@ class LIBNAO_API NaoVariant {
     uint32_t as_uint32() const;
     int64_t as_int64() const;
     uint64_t as_uint64() const;
-    long long as_longlong() const;
-    unsigned long long as_ulonglong() const;
 
     float as_float() const;
     double as_double() const;

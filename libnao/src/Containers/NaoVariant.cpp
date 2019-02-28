@@ -82,7 +82,7 @@ class NaoVariant::NVPrivate {
     private:
     bool _m_valid;
 
-    union Value {
+    struct Value {
         int64_t _signed;
         uint64_t _unsigned;
 
@@ -90,11 +90,6 @@ class NaoVariant::NVPrivate {
 
         ::NaoString _naostring;
         ::NaoBytes _naobytes;
-
-        Value() { std::fill_n(this, sizeof(Value), 0); }
-
-        // ReSharper disable once hicpp-use-equals-default
-        ~Value() { }
     } _val;
 
     Type _m_type;
@@ -103,7 +98,7 @@ class NaoVariant::NVPrivate {
 NaoVariant::NVPrivate::NVPrivate(void* val, Type type)
     : _m_valid(true)
     , _m_type(type) {
-
+    
     switch (type) {
         case Bool:      _val._signed    = *static_cast<bool*>       (val); break;
         case SChar:     _val._signed    = *static_cast<int8_t*>     (val); break;
@@ -174,7 +169,7 @@ NaoVariant& NaoVariant::operator=(NaoVariant&& other) noexcept {
 NaoVariant& NaoVariant::operator=(const NaoVariant& other) {
     delete d_ptr;
 
-    d_ptr = new NVPrivate(other.d_ptr->value(), other.d_ptr->type());
+    d_ptr = new NVPrivate(other.d_ptr->value_ptr(), other.d_ptr->type());
 
     return *this;
 }
