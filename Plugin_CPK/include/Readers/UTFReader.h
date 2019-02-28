@@ -21,6 +21,7 @@
 #include <Containers/NaoString.h>
 #include <Containers/NaoVariant.h>
 #include <Containers/NaoVector.h>
+#include <Containers/NaoEndianInteger.h>
 
 class NaoIO;
 class NaoMemoryIO;
@@ -32,6 +33,19 @@ class UTFReader {
         int32_t type;
         int64_t pos;
         NaoVariant val;
+    };
+
+    struct UTFHeader {
+        uint32_be table_size;
+        uint8_t unused1;
+        uint8_t encoding;
+        uint16_be rows_start;
+        uint32_be strings_start;
+        uint32_be data_start;
+        uint32_be table_name_offset;
+        uint16_be field_count;
+        uint16_be row_align;
+        uint32_be row_count;
     };
 
     using Row = NaoVector<RowField>;
@@ -71,8 +85,10 @@ class UTFReader {
 
     bool valid() const;
 
-    const NaoVariant& get_data(
-        uint32_t row, const NaoString& name) const;
+    bool has_field(const NaoString& name) const;
+    NaoVariant get_data(uint32_t row, const NaoString& name) const;
+
+    const UTFHeader& header() const;
 
     private:
 
@@ -80,6 +96,8 @@ class UTFReader {
 
     NaoMemoryIO* _m_io;
     bool _m_valid;
+
+    UTFHeader _m_header;
 
     NaoVector<Field> _m_fields;
     NaoVector<Row> _m_rows;

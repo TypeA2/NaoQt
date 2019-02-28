@@ -55,7 +55,17 @@ bool UTFReader::valid() const {
     return _m_valid;
 }
 
-const NaoVariant& UTFReader::get_data(uint32_t row, const NaoString& name) const {
+bool UTFReader::has_field(const NaoString& name) const {
+    for (uint16_t i = 0; i < _m_fields.size(); ++i) {
+        if (_m_fields.at(i).name == name) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+NaoVariant UTFReader::get_data(uint32_t row, const NaoString& name) const {
     for (uint16_t i = 0; i < _m_fields.size(); ++i) {
         if (_m_fields.at(i).name == name) {
             return _m_rows.at(row).at(i).val;
@@ -63,6 +73,10 @@ const NaoVariant& UTFReader::get_data(uint32_t row, const NaoString& name) const
     }
 
     return NaoVariant();
+}
+
+const UTFReader::UTFHeader& UTFReader::header() const {
+    return _m_header;
 }
 
 bool UTFReader::_parse() {
@@ -77,25 +91,14 @@ bool UTFReader::_parse() {
     }
 
     _m_io->set_default_byte_order(NaoIO::BE);
+    if (_m_io->read(reinterpret_cast<char*>(&_m_header), sizeof(UTFHeader)) != sizeof(UTFHeader)) {
+        nerr << "Could not read entire UTF header";
+        return false;
+    };
 
-    uint32_t table_size         = _m_io->read_uint();
-    _m_io->seekc(1); // unused byte;
-    uint8_t encoding            = _m_io->read_uchar();
-    uint16_t rows_start         = _m_io->read_ushort() + 8;
-    uint32_t strings_start      = _m_io->read_uint() + 8;
-    uint32_t data_start         = _m_io->read_uint() + 8;
-    uint32_t table_name_offset  = _m_io->read_uint() + 8;
-    uint16_t field_count        = _m_io->read_ushort();
-    uint16_t row_align          = _m_io->read_ushort();
-    uint32_t row_count          = _m_io->read_uint();
+    _m_fields.reserve(_m_header.field_count);
 
-    (void) table_size;
-    (void) table_name_offset;
-    (void) row_align;
-
-    _m_fields.reserve(field_count);
-
-    auto read_value = [this, encoding, strings_start, data_start](RowField& row) {
+    auto read_value = [this](RowField& row) {
         switch (row.type) {
             case UChar:     row.val = _m_io->read_uchar();  break;
             case SChar:     row.val = _m_io->read_char();   break;
@@ -111,10 +114,10 @@ bool UTFReader::_parse() {
                 uint32_t offset = _m_io->read_uint();
                 int64_t pos = _m_io->pos();
 
-                if (!_m_io->seek(strings_start + offset)) {
+                if (!_m_io->seek(_m_header.strings_start + offset)) {
                     nerr << "Failed seeking to string position";
                 } else {
-                    row.val = ((encoding == 0)
+                    row.val = ((_m_header.encoding == 0)
                         ? NaoString::fromShiftJIS : NaoString::fromUtf8)
                         (_m_io->read_cstring());
                 }
@@ -126,10 +129,10 @@ bool UTFReader::_parse() {
             }
             case Data: {
                 uint32_t offset = _m_io->read_uint();
-                uint32_t size = _m_io->size();
+                uint32_t size = _m_io->read_uint();
                 int64_t pos = _m_io->pos();
 
-                if (!_m_io->seek(data_start + offset)) {
+                if (!_m_io->seek(_m_header.data_start + offset)) {
                     nerr << "Failed seeking to data position";
                 } else {
                     row.val = NaoVariant(_m_io->read(size));
@@ -144,7 +147,7 @@ bool UTFReader::_parse() {
         }
     };
 
-    for (uint16_t i = 0; i < field_count; ++i) {
+    for (uint16_t i = 0; i < _m_header.field_count; ++i) {
         Field field;
 
         field.flags = _m_io->read_uchar();
@@ -154,7 +157,7 @@ bool UTFReader::_parse() {
 
             int64_t pos = _m_io->pos();
             
-            if (!_m_io->seek(strings_start + field.name_pos)) {
+            if (!_m_io->seek(_m_header.strings_start + field.name_pos)) {
                 nerr << "Could not seek to strings field";
                 return false;
             }
@@ -178,16 +181,16 @@ bool UTFReader::_parse() {
         _m_fields.push_back(field);
     }
 
-    _m_rows.reserve(row_count);
+    _m_rows.reserve(_m_header.row_count);
 
-    if (!_m_io->seek(rows_start)) {
+    if (!_m_io->seek(_m_header.rows_start)) {
         nerr << "Failed seeking to rows";
         return false;
     }
 
-    for (uint32_t j = 0; j < row_count; ++j) {
+    for (uint32_t j = 0; j < _m_header.row_count; ++j) {
         Row row;
-        for (uint16_t i = 0; i < field_count; ++i) {
+        for (uint16_t i = 0; i < _m_header.field_count; ++i) {
             RowField entry;
 
             uint32_t flags = _m_fields.at(i).flags & 0xF0;
