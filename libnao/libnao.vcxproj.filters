@@ -130,6 +130,12 @@
     <ClInclude Include="include\Containers\NaoVariant.h">
       <Filter>Headers\Containers</Filter>
     </ClInclude>
+    <ClInclude Include="include\Containers\NaoEndianInteger.h">
+      <Filter>Headers\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Functionality\NaoEndian.h">
+      <Filter>Headers\Functionality</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\libnao.cpp">
