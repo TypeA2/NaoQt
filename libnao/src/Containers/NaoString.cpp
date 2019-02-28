@@ -560,7 +560,7 @@ NaoString NaoString::fromWide(const wchar_t* str) {
 NaoString NaoString::fromShiftJIS(const char* str) {
     int utf16_size = MultiByteToWideChar(932,
         MB_ERR_INVALID_CHARS,
-        shift,
+        str,
         -1,
         nullptr,
         0);
@@ -569,7 +569,7 @@ NaoString NaoString::fromShiftJIS(const char* str) {
 
     if (MultiByteToWideChar(932,
         MB_ERR_INVALID_CHARS,
-        shift,
+        str,
         -1,
         utf16,
         utf16_size) == 0) {
