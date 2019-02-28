@@ -152,10 +152,10 @@ namespace Plugin {
         }
 
         bool can_move(NaoObject* from, NaoObject* to) {
-            if (to->parent() == from
-                || (supports(from)
-                    && from->name().starts_with(to->name())
-                    && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP))) {
+            if (to->parent() == from // `to` is a child of `from`
+                || (supports(from) // `from` (current object) is supported
+                    && from->name().starts_with(to->name()) // `from` is a child of `to`
+                    && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP))) { // direct child
                 return true;
             }
 
