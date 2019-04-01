@@ -27,11 +27,16 @@ class CPKManager {
 
     ~CPKManager() = default;
 
+    static bool populatable(NaoObject* object);
     bool can_move(NaoObject* from, NaoObject* to) const;
 
     bool populate(NaoObject* object);
 
     private:
 
+    void _cleanup();
+
     CPKManager() = default;
+
+    NaoObject* _m_root;
 };

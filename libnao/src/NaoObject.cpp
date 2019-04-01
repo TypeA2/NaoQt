@@ -177,3 +177,18 @@ bool NaoObject::set_parent(NaoObject* parent) {
 NaoObject* NaoObject::parent() const {
     return _m_parent;
 }
+
+bool NaoObject::is_child_of(NaoObject* search) const {
+    NaoObject* parent = _m_parent;
+
+    while (parent) {
+        if (parent == search) {
+            return true;
+        }
+
+        parent = parent->parent();
+    }
+
+    return false;
+}
+

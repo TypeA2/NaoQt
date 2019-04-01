@@ -81,6 +81,8 @@ class LIBNAO_API NaoObject {
     bool set_parent(NaoObject* parent);
     NaoObject* parent() const;
 
+    bool is_child_of(NaoObject* search) const;
+
 
     private:
     bool _m_is_dir;

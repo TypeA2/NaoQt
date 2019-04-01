@@ -142,8 +142,7 @@ namespace Plugin {
         }
 
         bool populatable(NaoObject* object) {
-            return !object->is_dir()
-                && object->file_ref().io->read_singleshot(4) == NaoBytes("CPK\0", 4);
+            return CPK.populatable(object);
         }
 
         bool decodable(N_UNUSED NaoObject* object) {

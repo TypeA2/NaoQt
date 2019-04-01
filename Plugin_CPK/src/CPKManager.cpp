@@ -17,15 +17,42 @@
 
 #include "CPKManager.h"
 
+#define N_LOG_ID "Plugin_CPK/CPKManager"
+#include <Logging/NaoLogging.h>
+#include <Containers/NaoBytes.h>
+#include <IO/NaoIO.h>
+#include <NaoObject.h>
+
 CPKManager& CPKManager::instance() {
     static CPKManager manager;
     return manager;
 }
 
+bool CPKManager::populatable(NaoObject* object) {
+    if (!object->is_dir()) {
+        ndebug << object->name() << object->file_ref().io->read_singleshot(4).data();
+    }
+    return !object->is_dir()
+        && object->file_ref().io->read_singleshot(4) == NaoBytes("CPK ", 4);;
+}
+
 bool CPKManager::can_move(NaoObject* from, NaoObject* to) const {
-    return false;
+    ndebug << to->is_child_of(_m_root)
+           << populatable(from)
+           << from->name().starts_with(to->name())
+           << !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP);
+
+    return (to->is_child_of(_m_root)
+        || (populatable(from)
+            && from->name().starts_with(to->name())
+            && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP)));
 }
 
 bool CPKManager::populate(NaoObject* object) {
     return false;
 }
+
+void CPKManager::_cleanup() {
+    
+}
+
