@@ -1,3 +1,0 @@
-Containers:
- - Separate, non-STL implementation of container classes
- - Performance improvements by doing the latter
