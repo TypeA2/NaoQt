@@ -38,9 +38,9 @@ class LIBNAO_API NaoWStringConst {
     ~NaoWStringConst();
 
     operator wchar_t*() const;
-    wchar_t* data() const;
-    const wchar_t* utf16() const;
-    const wchar_t* c_str() const;
+    N_NODISCARD wchar_t* data() const;
+    N_NODISCARD const wchar_t* utf16() const;
+    N_NODISCARD const wchar_t* c_str() const;
 
     private:
     wchar_t* _m_data;
@@ -94,8 +94,8 @@ class LIBNAO_API NaoString {
 
 #pragma region Conversion functions
 
-    const char* c_str() const;
-    NaoWStringConst utf16() const;
+    N_NODISCARD const char* c_str() const;
+    N_NODISCARD NaoWStringConst utf16() const;
 
 #pragma endregion 
 
@@ -119,26 +119,26 @@ class LIBNAO_API NaoString {
 
 #pragma region General functions
 
-    size_t size() const noexcept;
+    N_NODISCARD size_t size() const noexcept;
 
-    bool empty() const noexcept;
+    N_NODISCARD bool empty() const noexcept;
 
     void clear() noexcept;
 
     void reserve(size_t size);
-    size_t capacity() const;
+    N_NODISCARD size_t capacity() const;
 
-    char* data();
+    N_NODISCARD char* data();
 
-    iterator begin();
-    const_iterator begin() const;
-    const_iterator cbegin() const;
+    N_NODISCARD iterator begin();
+    N_NODISCARD const_iterator begin() const;
+    N_NODISCARD const_iterator cbegin() const;
 
-    iterator end();
-    const_iterator end() const;
-    const_iterator cend() const;
+    N_NODISCARD iterator end();
+    N_NODISCARD const_iterator end() const;
+    N_NODISCARD const_iterator cend() const;
 
-    iterator erase(const_iterator first, const_iterator last);
+    N_NODISCARD iterator erase(const_iterator first, const_iterator last);
 
 #pragma endregion
 
@@ -156,23 +156,23 @@ class LIBNAO_API NaoString {
 
 #pragma region Quality of life improvements
 
-    NaoString copy() const;
+    N_NODISCARD NaoString copy() const;
 
-    reference operator[](size_t i);
+    N_NODISCARD reference operator[](size_t i);
 
-    bool starts_with(const NaoString& other) const noexcept;
-    bool starts_with(const char* other) const noexcept;
-    bool starts_with(char ch) const noexcept;
+    N_NODISCARD bool starts_with(const NaoString& other) const noexcept;
+    N_NODISCARD bool starts_with(const char* other) const noexcept;
+    N_NODISCARD bool starts_with(char ch) const noexcept;
 
-    bool ends_with(const NaoString& other) const noexcept;
-    bool ends_with(const char* other) const noexcept;
-    bool ends_with(char ch) const noexcept;
+    N_NODISCARD bool ends_with(const NaoString& other) const noexcept;
+    N_NODISCARD bool ends_with(const char* other) const noexcept;
+    N_NODISCARD bool ends_with(char ch) const noexcept;
 
-    NaoString substr(size_t index, size_t len = size_t(-1)) const;
+    N_NODISCARD NaoString substr(size_t index, size_t len = size_t(-1)) const;
 
-    iterator last_pos_of(char ch) const noexcept;
-    size_t last_index_of(char ch) const noexcept;
-    bool contains(char ch) const noexcept;
+    N_NODISCARD iterator last_pos_of(char ch) const noexcept;
+    N_NODISCARD size_t last_index_of(char ch) const noexcept;
+    N_NODISCARD bool contains(char ch) const noexcept;
 
     size_t replace(char target, char replace);
 

@@ -315,6 +315,7 @@ void NaoString::_reallocate_to(size_t size) {
         _m_allocated = size;
         _m_data = new char[_m_allocated]();
         _m_end = std::copy(old_data, _m_end, _m_data);
+        delete old_data;
     }
 }
 

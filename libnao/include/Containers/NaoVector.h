@@ -50,18 +50,28 @@ class NaoVector {
     explicit NaoVector(size_t size) 
         : _m_size(size) {
         _m_allocated = NaoMath::round_up(size, data_alignment);
-        _m_data = new T[_m_allocated];
+        _m_data = new T[_m_allocated]();
         _m_end = _m_data + _m_size;
     }
 
     NaoVector() : NaoVector(0) { }
 
-    NaoVector(std::initializer_list<T> ilist) {
-        operator=(ilist);
+    NaoVector(std::initializer_list<T> ilist)
+        : _m_size(std::size(ilist))
+        , _m_allocated(NaoMath::round_up(_m_size, data_alignment))
+        , _m_data(nullptr)
+        , _m_end(nullptr) {
+        _m_data = new T[_m_allocated]();
+        _m_end = std::copy(std::begin(ilist), std::end(ilist), _m_data);
     }
 
-    NaoVector(const NaoVector<T>& other) {
-        operator=(other);
+    NaoVector(const NaoVector<T>& other)
+        : _m_size(other._m_size)
+        , _m_allocated(other._m_allocated)
+        , _m_data(nullptr)
+        , _m_end(nullptr) {
+        _m_data = new T[_m_allocated]();
+        _m_end = std::copy(std::begin(other), std::end(other), _m_data);
     }
 
     NaoVector(NaoVector<T>&& other) noexcept {
@@ -83,16 +93,24 @@ class NaoVector {
     }
 
     NaoVector& operator=(const NaoVector& other) {
+        if (_m_allocated) {
+            delete[] _m_data;
+        }
+
         _m_size = other._m_size;
         _m_allocated = other._m_allocated;
-        _m_data = new T[_m_allocated];
 
-        _m_end = std::copy(other._m_data, other._m_end, _m_data);
+        _m_data = new T[_m_allocated]();
+        _m_end = std::copy(std::begin(other), std::end(other), _m_data);
 
         return *this;
     }
 
     NaoVector& operator=(NaoVector&& other) noexcept {
+        if (_m_allocated) {
+            delete[] _m_data;
+        }
+
         _m_size = other._m_size;
         _m_allocated = other._m_allocated;
         _m_data = other._m_data;
@@ -107,16 +125,19 @@ class NaoVector {
     }
 
     NaoVector& operator=(std::initializer_list<T> ilist) {
+        if (_m_allocated) {
+            delete[] _m_data;
+        }
+
         _m_size = std::size(ilist);
         _m_allocated = NaoMath::round_up(_m_size, data_alignment);
-        _m_data = new T[_m_allocated];
-
+        _m_data = new T[_m_allocated]();
         _m_end = std::copy(std::begin(ilist), std::end(ilist), _m_data);
 
         return *this;
     }
 
-    reference at(size_type pos) {
+    N_NODISCARD reference at(size_type pos) {
         if (pos >= _m_size) {
             throw std::out_of_range("index is out of range");
         }
@@ -124,7 +145,7 @@ class NaoVector {
         return _m_data[pos];
     }
 
-    const_reference at(size_type pos) const {
+    N_NODISCARD const_reference at(size_type pos) const {
         if (pos >= _m_size) {
             throw std::out_of_range("index is out of range");
         }
@@ -132,7 +153,7 @@ class NaoVector {
         return _m_data[pos];
     }
 
-    reference operator[](size_type pos) {
+    N_NODISCARD reference operator[](size_type pos) {
         if (pos >= _m_size) {
             throw std::out_of_range("index is out of range");
         }
@@ -140,7 +161,7 @@ class NaoVector {
         return _m_data[pos];
     }
 
-    const_reference operator[](size_type pos) const {
+    N_NODISCARD const_reference operator[](size_type pos) const {
         if (pos >= _m_size) {
             throw std::out_of_range("index is out of range");
         }
@@ -148,89 +169,89 @@ class NaoVector {
         return _m_data[pos];
     }
 
-    reference front() {
+    N_NODISCARD reference front() {
         return _m_data[0];
     }
 
-    const_reference front() const {
+    N_NODISCARD const_reference front() const {
         return _m_data[0];
     }
 
-    reference back() {
+    N_NODISCARD reference back() {
         return *(_m_end - 1);
     }
 
-    const_reference back() const {
+    N_NODISCARD const_reference back() const {
         return *(_m_end - 1);
     }
 
-    T* data() noexcept {
+    N_NODISCARD T* data() noexcept {
         return _m_data;
     }
 
-    const T* data() const noexcept {
+    N_NODISCARD const T* data() const noexcept {
         return _m_data;
     }
 
-    iterator begin() noexcept {
+    N_NODISCARD iterator begin() noexcept {
         return _m_data;
     }
 
-    const_iterator begin() const noexcept {
+    N_NODISCARD const_iterator begin() const noexcept {
         return _m_data;
     }
 
-    const_iterator cbegin() const noexcept {
+    N_NODISCARD const_iterator cbegin() const noexcept {
         return _m_data;
     }
 
-    iterator end() noexcept {
+    N_NODISCARD iterator end() noexcept {
         return _m_end;
     }
 
-    const_iterator end() const noexcept {
+    N_NODISCARD const_iterator end() const noexcept {
         return _m_end;
     }
 
-    const_iterator cend() const noexcept {
+    N_NODISCARD const_iterator cend() const noexcept {
         return _m_end;
     }
 
-    reverse_iterator rbegin() noexcept {
+    N_NODISCARD reverse_iterator rbegin() noexcept {
         return reverse_iterator(_m_data);
     }
 
-    const_reverse_iterator rbegin() const noexcept {
+    N_NODISCARD const_reverse_iterator rbegin() const noexcept {
         return const_reverse_iterator(_m_data);
     }
 
-    const_reverse_iterator crbegin() const noexcept {
+    N_NODISCARD const_reverse_iterator crbegin() const noexcept {
         return const_reverse_iterator(_m_data);
     }
 
-    reverse_iterator rend() noexcept {
+    N_NODISCARD reverse_iterator rend() noexcept {
         return reverse_iterator(_m_end);
     }
 
-    const_reverse_iterator rend() const noexcept {
+    N_NODISCARD const_reverse_iterator rend() const noexcept {
         return const_reverse_iterator(_m_end);
     }
 
-    const_reverse_iterator crend() const noexcept {
+    N_NODISCARD const_reverse_iterator crend() const noexcept {
         return const_reverse_iterator(_m_end);
     }
 
-    bool empty() const noexcept {
+    N_NODISCARD bool empty() const noexcept {
         return _m_size == 0;
     }
 
-    size_type size() const noexcept {
+    N_NODISCARD size_type size() const noexcept {
         return _m_size;
     }
 
     // ReSharper disable once CppMemberFunctionMayBeStatic
 
-    size_type max_size() const noexcept {
+    N_NODISCARD size_type max_size() const noexcept {
         return std::numeric_limits<size_type>::max();
     }
 
@@ -243,17 +264,10 @@ class NaoVector {
             return;
         }
 
-        T* old_data = _m_data;
-
-        _m_allocated = NaoMath::round_up(new_cap, data_alignment);
-        _m_data = new T[_m_allocated];
-
-        _m_end = std::copy(old_data, _m_end, _m_data);
-
-        delete[] old_data;
+        _reallocate_to(new_cap);
     }
 
-    size_type capacity() const noexcept {
+    N_NODISCARD size_type capacity() const noexcept {
         return _m_allocated;
     }
 
@@ -277,14 +291,12 @@ class NaoVector {
         delete[] _m_data;
         _m_size = 0;
         
-        _m_data = new T[_m_allocated];
+        _m_data = new T[_m_allocated]();
         _m_end = _m_data;
     }
 
     void push_back(const T& value) {
-        if (_m_size + 1 >= _m_allocated) {
-            reserve(_m_size + data_alignment);
-        }
+        _reallocate_to(_m_size + 1);
 
         *_m_end = value;
         ++_m_end;
@@ -315,7 +327,7 @@ class NaoVector {
 
         if (_m_allocated < allocate_target) {
             _m_allocated = allocate_target;
-            T* new_data = new T[_m_allocated];
+            T* new_data = new T[_m_allocated]();
 
             iterator insert_pos = std::copy(const_iterator(_m_data), pos, new_data);
             iterator continue_pos = std::copy(first, last, insert_pos);
@@ -346,7 +358,7 @@ class NaoVector {
 
 #pragma endregion
 
-    size_type index_of(const T& val) const {
+    N_NODISCARD size_type index_of(const T& val) const {
         for (size_type i = 0; i < _m_size; ++i) {
             if (_m_data[i] == val) {
                 return i;
@@ -356,7 +368,7 @@ class NaoVector {
         return -1;
     }
 
-    bool contains(const T& val) const {
+    N_NODISCARD bool contains(const T& val) const {
         for (size_type i = 0; i < _m_size; ++i) {
             if (_m_data[i] == val) {
                 return true;
@@ -367,6 +379,19 @@ class NaoVector {
     }
 
     private:
+        void _reallocate_to(size_t size) {
+            size = NaoMath::round_up(size, data_alignment);
+
+            if (_m_allocated < size) {
+                T* old_data = _m_data;
+
+                _m_allocated = size;
+                _m_data = new T[_m_allocated]();
+                _m_end = std::copy(old_data, _m_end, _m_data);
+                delete old_data;
+            }
+        }
+
     T* _m_data;
     size_type _m_size;
     size_type _m_allocated;
