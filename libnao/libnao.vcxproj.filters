@@ -195,6 +195,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="libnao.licenseheader" />
+    <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource\libnao.rc">

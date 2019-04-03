@@ -56,8 +56,6 @@ class NaoFileSystemManager::NFSMPrivate {
     private:
 
     NaoObject* _try_locate_child(const NaoString& path);
-    bool _try_move(NaoObject* new_object, NaoPlugin* previous_plugin);
-    bool _try_populate();
 };
 
 #pragma region NaoFileSystemManager
@@ -87,7 +85,7 @@ const NaoString& NaoFileSystemManager::current_path() const {
     return d_ptr->m_current_object->name();
 }
 
-const NaoPlugin* NaoFileSystemManager::current_plugin() const {
+NaoPlugin const* NaoFileSystemManager::current_plugin() const {
     return d_ptr->m_current_plugin;
 }
 
@@ -143,36 +141,49 @@ bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
 
     NaoObject* new_object = _try_locate_child(target_path);
 
-    NaoPlugin* previous_plugin = m_current_plugin;
-    
-    // Checks if any plugin supports this object
-    if (!((m_current_plugin = PluginManager.plugin_for_object(new_object)))) {
-        delete new_object;
-        nerr << "Could not find plugin";
-        m_last_error = "NaoFSM::move - could not find plugin for object with name " + target_path;
+    // Already have a plugin
+    if (m_current_plugin) {
+        // Try to move if possible, else manually leave and enter a new object
+        if (m_current_plugin->CanMove(m_current_object, new_object)) {
+            nlog << "Move using current plugin supported";
 
+            if (!m_current_plugin->Move(m_current_object, new_object)) {
+                nerr << "Move failed";
+                return false;
+            }
+        } else if (m_current_plugin->ShouldLeave(m_current_object)) {
+            nlog << "Leaving using current plugin";
+
+            if (!m_current_plugin->Leave(m_current_object)) {
+                nerr << "Leave failed";
+                return false;
+            }
+        }
+    }
+
+    delete m_current_object;
+    m_current_object = new_object;
+    m_current_plugin = PluginManager.enter_plugin(m_current_object);
+
+    if (!m_current_plugin->Enter(m_current_object)) {
+        nerr << "Enter failed";
         return false;
     }
 
-    nlog << "Target is supported, attempting move";
-
-    // Move from the current to the new object, else just replace the current object
-    
-    return _try_move(new_object, previous_plugin)
-        && _try_populate();
+    return true;
 }
 
 NaoString NaoFileSystemManager::NFSMPrivate::description_for_object(NaoObject* object) const {
 
-    NaoPlugin* plugin = PluginManager.plugin_for_object(object);
+    NaoPlugin* plugin = PluginManager.description_plugin(object);
 
-    if (plugin && plugin->description.prioritise()) {
-        return plugin->description.get();
+    if (plugin && plugin->PrioritiseDescription()) {
+        return plugin->Description(object);
     }
 
 #ifdef N_WINDOWS
 
-    SHFILEINFOA finfo;;
+    SHFILEINFOA finfo { };
     SHGetFileInfoA(object->name(),
         object->is_dir() ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL,
         &finfo,
@@ -206,84 +217,6 @@ NaoObject* NaoFileSystemManager::NFSMPrivate::_try_locate_child(const NaoString&
 
     nlog << "Constructing new object instead";
     return new NaoObject(NaoObject::Dir { path });
-}
-
-bool NaoFileSystemManager::NFSMPrivate::_try_move(NaoObject* new_object, NaoPlugin* previous_plugin) {
-    if (m_current_object == new_object) {
-        nlog << "Detected refresh, not moving";
-
-        for (NaoObject* child : m_current_object->take_children()) {
-            delete child;
-        }
-
-        return true;
-    }
-
-    if (m_current_object) {
-        nlog << "Got existing object";
-
-        NaoPlugin* move_plugin = nullptr;
-
-        if (previous_plugin
-            && previous_plugin->capabilities.can_move(m_current_object, new_object)) {
-            move_plugin = previous_plugin;
-
-        } else if (m_current_plugin->capabilities.can_move(m_current_object, new_object)) {
-            move_plugin = m_current_plugin;
-        }
-
-        if (move_plugin) {
-            nlog << "Moving using" << ('"' + move_plugin->plugin_info.display_name() + '"');
-            if (!move_plugin->functionality.move(m_current_object, new_object)) {
-                delete new_object;
-                m_last_error = "NaoFSM::move - could not move from "
-                    + m_current_object->name() + " to " + new_object->name();
-
-                nerr << "Could not move";
-
-                return false;
-            }
-
-            return true;
-        }
-        
-        nerr << "No plugin could move, this needs to be fixed.";
-    } else {
-        nwarn << "No current object";
-    }
-
-    delete m_current_object;
-    m_current_object = new_object;
-
-    return true;
-}
-
-
-bool NaoFileSystemManager::NFSMPrivate::_try_populate() {
-    if (!m_current_plugin->capabilities.populatable(m_current_object)) {
-        nerr << "Populating not supported";
-
-        delete m_current_object;
-        m_current_object = nullptr;
-
-        m_last_error = "NaoFSM::move - path is not supported";
-
-        return false;
-    }
-
-    nlog << "Populating supported, populating";
-    if (!m_current_plugin->functionality.populate(m_current_object)) {
-        nerr << "Populating failed";
-
-        delete m_current_object;
-        m_current_object = nullptr;
-
-        m_last_error = "NaoFSM::move - failed to populate, plugin error:\n" + m_current_plugin->error();
-
-        return false;
-    }
-
-    return true;
 }
 
 #pragma endregion

@@ -42,14 +42,18 @@ class NaoPluginManager::NaoPluginManagerPrivate {
     // Struct to hold each plugin
     struct Plugin {
         HMODULE handle;
-        NaoPlugin plugin;
+        NaoPlugin* plugin;
+
+        NaoPlugin* operator->() const {
+            return plugin;
+        }
     };
 
     // All plugins and their handles
     NaoVector<Plugin> m_plugins;
 
     // All plugins without their handle
-    NaoVector<NaoPlugin> m_plugins_raw;
+    NaoVector<NaoPlugin*> m_plugins_raw;
 
     // Path (relative or absolute) to the plugins directory
     NaoString m_plugins_dir;
@@ -69,7 +73,9 @@ class NaoPluginManager::NaoPluginManagerPrivate {
     // Loads a single plugin
     bool load(const NaoString& plugin_name);
 
-    NaoPlugin* get_plugin_for_object(NaoObject* object);
+    NaoPlugin* enter_plugin(NaoObject* object) const;
+    NaoPlugin* leave_plugin(NaoObject* object) const;
+    NaoPlugin* description_plugin(NaoObject* object) const;
 
     bool set_description_for_object(NaoObject* object);
 };
@@ -97,7 +103,7 @@ const NaoVector<NaoPair<NaoString, NaoString>>& NaoPluginManager::errored_list()
     return d_ptr->m_errored_list;
 }
 
-const NaoVector<NaoPlugin>& NaoPluginManager::loaded() const {
+const NaoVector<NaoPlugin*>& NaoPluginManager::loaded() const {
     return d_ptr->m_plugins_raw;
 }
 
@@ -105,9 +111,14 @@ bool NaoPluginManager::initialised() const {
     return d_ptr->m_initialised;
 }
 
-NaoPlugin* NaoPluginManager::plugin_for_object(NaoObject* object) {
-    return d_ptr->get_plugin_for_object(object);
+NaoPlugin* NaoPluginManager::enter_plugin(class NaoObject* object) const {
+    return d_ptr->enter_plugin(object);
 }
+
+NaoPlugin* NaoPluginManager::leave_plugin(NaoObject* object) const {
+    return d_ptr->leave_plugin(object);
+}
+
 
 bool NaoPluginManager::set_description(NaoObject* object) {
     return d_ptr->set_description_for_object(object);
@@ -197,7 +208,7 @@ bool NaoPluginManager::NaoPluginManagerPrivate::load(const NaoString& plugin_nam
         m_plugins_raw.push_back(plugin.plugin);
 
         nlog << "Loaded plugin" << fs::path(plugin_name).filename()
-            << ("(\"" + plugin.plugin.plugin_info.display_name() + "\")");
+            << ("(\"" + plugin->Name() + "\")");
 
         return true;
     }
@@ -209,28 +220,54 @@ bool NaoPluginManager::NaoPluginManagerPrivate::load(const NaoString& plugin_nam
     return false;
 }
 
-NaoPlugin* NaoPluginManager::NaoPluginManagerPrivate::get_plugin_for_object(NaoObject* object) {
-    for (NaoPlugin& plugin : m_plugins_raw) {
-        if (plugin.capabilities.supports(object)) {
-            return &plugin;
+NaoPlugin* NaoPluginManager::NaoPluginManagerPrivate::enter_plugin(NaoObject* object) const {
+    for (const Plugin& plugin : m_plugins) {
+        if (plugin->CanEnter(object)) {
+            return plugin.plugin;
         }
     }
 
     return nullptr;
 }
 
+NaoPlugin* NaoPluginManager::NaoPluginManagerPrivate::leave_plugin(NaoObject* object) const {
+    for (const Plugin& plugin : m_plugins) {
+        if (plugin->ShouldLeave(object)) {
+            return plugin.plugin;
+        }
+    }
+
+    return nullptr;
+}
+
+class NaoPlugin* NaoPluginManager::description_plugin(NaoObject* object) const {
+    return d_ptr->description_plugin(object);
+}
+
+
+NaoPlugin* NaoPluginManager::NaoPluginManagerPrivate::description_plugin(NaoObject* object) const {
+    for (const Plugin& plugin : m_plugins) {
+        if (plugin->HasDescription(object)) {
+            return plugin.plugin;
+        }
+    }
+
+    return nullptr;
+}
+
+
 bool NaoPluginManager::NaoPluginManagerPrivate::set_description_for_object(NaoObject* object) {
     if (!object) {
         return false;
     }
 
-    const NaoPlugin* plugin = get_plugin_for_object(object);
+    NaoPlugin* plugin = description_plugin(object);
 
     if (!plugin) {
         return false;
     }
 
-    object->set_description(plugin->description.get());
+    object->set_description(plugin->Description(object));
 
     return true;
 }

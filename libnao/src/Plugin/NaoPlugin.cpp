@@ -16,3 +16,7 @@
 */
 
 #include "Plugin/NaoPlugin.h"
+
+NaoPlugin::~NaoPlugin() {
+
+}

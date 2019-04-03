@@ -233,6 +233,7 @@
     <ClInclude Include="resource\resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="cpp.hint" />
     <None Include="libnao.licenseheader" />
   </ItemGroup>
   <ItemGroup>

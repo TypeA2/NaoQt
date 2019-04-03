@@ -32,7 +32,7 @@
 
 #define NaoFSM NaoFileSystemManager::global_instance()
 
-struct NaoPlugin;
+class NaoPlugin;
 
 class NaoFileSystemManager {
     public:
@@ -42,11 +42,11 @@ class NaoFileSystemManager {
     LIBNAO_API bool init(const NaoString& root_dir);
     LIBNAO_API bool move(const NaoString& target);
 
-    LIBNAO_API NaoObject* current_object() const;
-    LIBNAO_API const NaoString& current_path() const;
-    LIBNAO_API const NaoPlugin* current_plugin() const;
+    N_NODISCARD LIBNAO_API NaoObject* current_object() const;
+    N_NODISCARD LIBNAO_API const NaoString& current_path() const;
+    N_NODISCARD LIBNAO_API NaoPlugin const* current_plugin() const;
 
-    LIBNAO_API const NaoString& last_error() const;
+    N_NODISCARD LIBNAO_API const NaoString& last_error() const;
 
     LIBNAO_API NaoString description(NaoObject* object) const;
 

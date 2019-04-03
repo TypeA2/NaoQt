@@ -2,3 +2,5 @@
 // such as names of functions and macros.
 // For more information see https://go.microsoft.com/fwlink/?linkid=865984
 #define N_NODISCARD [[nodiscard]]
+#define LIBNAO_API __declspec(dllexport)
+#define LIBNAO_API __declspec(dllimport)

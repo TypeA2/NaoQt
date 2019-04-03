@@ -21,9 +21,6 @@
 
 #include "Containers/NaoString.h"
 #include "Containers/NaoVector.h"
-#include "Containers/NaoPair.h"
-
-#include <cstdint>
 
 class NaoObject;
 class NaoIO;
@@ -47,7 +44,8 @@ class LIBNAO_API NaoPlugin {
     N_NODISCARD virtual NaoString AuthorDescription() const = 0;
 
     // Supported file description
-    N_NODISCARD virtual bool Prioritise() const = 0;
+    N_NODISCARD virtual bool PrioritiseDescription() const = 0;
+    N_NODISCARD virtual bool HasDescription(NaoObject* object) const = 0;
     N_NODISCARD virtual NaoString Description() const = 0;
     N_NODISCARD virtual NaoString Description(NaoObject* of) const = 0;
 
@@ -60,8 +58,8 @@ class LIBNAO_API NaoPlugin {
     virtual bool Leave(NaoObject* object) = 0;
 
     // Moving
-    N_NODISCARD virtual bool CanMove(NaoObject* object) = 0;
-    virtual bool Move(NaoObject* object) = 0;
+    N_NODISCARD virtual bool CanMove(NaoObject* from, NaoObject* to) = 0;
+    virtual bool Move(NaoObject*& from, NaoObject* to) = 0; // Replace from with to
 
     // Decoding
     N_NODISCARD virtual bool CanDecode(NaoObject* object) = 0;
@@ -77,5 +75,5 @@ class LIBNAO_API NaoPlugin {
     };
 
     N_NODISCARD virtual bool HasContextMenu(NaoObject* object) = 0;
-    N_NODISCARD virtual NaoVector<NaoContextMenuEntry> ContextMenu(NaoObject* object) = 0;
+    N_NODISCARD virtual NaoVector<NaoContextMenuEntry*> ContextMenu(NaoObject* object) = 0;
 };
