@@ -40,7 +40,7 @@
 #ifdef N_WINDOWS
 #   define LIBNAO_PLUGIN_EXTENSION ".dll"
 #else
-#   define LIBNAO_PLUGIN_EXT ""
+#   define LIBNAO_PLUGIN_EXT ".so"
 #endif
 
 #define LIBNAO_VERSION_MAJOR 0
@@ -52,6 +52,7 @@
 #define LIBNAO_PLUGIN_DECL __declspec(dllexport)
 
 #define N_UNUSED [[maybe_unused]]
+#define N_NODISCARD [[nodiscard]]
 
 // For dllexport'ed classes with members we don't want to import
 #define N_ESCAPE_DLLSPEC template <class ____T = void>
