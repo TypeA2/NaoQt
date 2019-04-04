@@ -30,8 +30,7 @@ NaoObject::NaoObject(const File& file, NaoObject* parent)
     , _m_dir({ })
     , _m_flags(0ui64)
     , _m_parent(parent) {
-
-    if (parent && !parent->children().contains(parent)) {
+    if (parent && !parent->children().contains(this)) {
         if (!parent->add_child(this)) {
             nerr << "NaoObject::NaoObject - failed adding child file with name " << file.name;
         }
@@ -44,10 +43,10 @@ NaoObject::NaoObject(const Dir& dir, NaoObject* parent)
     , _m_dir(dir)
     , _m_flags(0ui64)
     , _m_parent(parent) {
-    if (parent
-        && !parent->children().contains(parent)
-        && !parent->add_child(this)) {
-        nerr << "NaoObject::NaoObject - failed adding child dir with name " << dir.name;
+    if (parent && !parent->children().contains(this)) {
+        if (!parent->add_child(this)) {
+            nerr << "NaoObject::NaoObject - failed adding child dir with name " << dir.name;
+        }
     }
 }
 
