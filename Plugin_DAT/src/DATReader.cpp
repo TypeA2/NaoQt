@@ -29,7 +29,6 @@ DATReader* DATReader::create(NaoIO* in) {
     return new DATReader(in);
 }
 
-
 DATReader::DATReader(NaoIO* in)
     : _m_io(in) {
     _read();

@@ -37,7 +37,7 @@ class DATReader {
 
     ~DATReader() = default;
 
-    const NaoVector<FileEntry>& files() const;
+    N_NODISCARD const NaoVector<FileEntry>& files() const;
 
     private:
 

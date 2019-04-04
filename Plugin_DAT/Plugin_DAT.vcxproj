@@ -28,6 +28,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\libnao\libnao.licenseheader" />
+    <None Include="cpp.hint" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

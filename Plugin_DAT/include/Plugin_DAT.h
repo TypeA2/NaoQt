@@ -21,54 +21,26 @@
 
 #include <Plugin/NaoPlugin.h>
 
-LIBNAO_PLUGIN_CALL LIBNAO_PLUGIN_DECL NaoPlugin GetNaoPlugin();
+LIBNAO_PLUGIN_CALL LIBNAO_PLUGIN_DECL NaoPlugin* GetNaoPlugin();
 
-namespace Plugin {
-    namespace PluginInfo {
-        LIBNAO_PLUGIN_DECL NaoString name();
-        LIBNAO_PLUGIN_DECL NaoString display_name();
-        LIBNAO_PLUGIN_DECL NaoString description();
-        LIBNAO_PLUGIN_DECL uint64_t version();
-    }
+class Plugin_DAT final : public NaoPlugin {
+    public:
+    N_NODISCARD NaoString Name() const override;
+    N_NODISCARD NaoString DisplayName() const override;
+    N_NODISCARD NaoString PluginDescription() const override;
+    N_NODISCARD NaoString VersionString() const override;
 
-    namespace AuthorInfo {
-        LIBNAO_PLUGIN_DECL NaoString name();
-        LIBNAO_PLUGIN_DECL NaoString text_plain();
-        LIBNAO_PLUGIN_DECL NaoString text_rich();
-    }
+    N_NODISCARD NaoString AuthorName() const override;
+    N_NODISCARD NaoString AuthorDescription() const override;
 
-    namespace Error {
-        LIBNAO_PLUGIN_DECL const NaoString& get_error();
+    N_NODISCARD bool HasDescription(NaoObject* object) const override;
+    N_NODISCARD bool PrioritiseDescription() const override;
+    N_NODISCARD NaoString Description() const override;
+    N_NODISCARD NaoString Description(NaoObject* of) const override;
 
-        NaoString& error();
-    }
+    N_NODISCARD bool CanEnter(NaoObject* object) override;
+    bool Enter(NaoObject* object) override;
 
-    namespace Description {
-        LIBNAO_PLUGIN_DECL bool prioritise_description();
-        LIBNAO_PLUGIN_DECL NaoString description();
-    }
-
-    namespace Capabilities {
-        LIBNAO_PLUGIN_DECL bool supports(NaoObject* object);
-        LIBNAO_PLUGIN_DECL bool populatable(NaoObject* object);
-        LIBNAO_PLUGIN_DECL bool decodable(N_UNUSED NaoObject* object);
-        LIBNAO_PLUGIN_DECL bool can_move(NaoObject* from, NaoObject* to);
-    }
-
-    namespace Function {
-        LIBNAO_PLUGIN_DECL bool populate(NaoObject* object);
-        LIBNAO_PLUGIN_DECL bool decode(N_UNUSED NaoObject* object, N_UNUSED NaoIO* out);
-        LIBNAO_PLUGIN_DECL bool move(NaoObject*& from, NaoObject* to);
-    }
-
-    namespace ContextMenu {
-        LIBNAO_PLUGIN_DECL bool has_context_menu(NaoObject* object);
-        LIBNAO_PLUGIN_DECL NaoPlugin::ContextMenu::type context_menu(NaoObject* object);
-    }
-
-    namespace Extraction {
-        LIBNAO_PLUGIN_DECL bool extract_single_file(NaoObject* object);
-        LIBNAO_PLUGIN_DECL bool extract_all_files(NaoObject* object);
-    }
-}
-
+    N_NODISCARD bool CanMove(NaoObject* from, NaoObject* to) override;
+    bool Move(NaoObject*& from, NaoObject* to) override;
+};

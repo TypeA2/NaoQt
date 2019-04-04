@@ -31,221 +31,154 @@
 
 #include <numeric>
 
-NaoPlugin GetNaoPlugin() {
-    using namespace Plugin;
-    return NaoPlugin {
-        GetNaoPlugin,
-        Error::get_error,
+#error Context menu + DAT leaving
 
-        NaoPlugin::PluginInfo {
-            PluginInfo::name,
-            PluginInfo::display_name,
-            PluginInfo::description,
-            PluginInfo::version
-            },
-
-        NaoPlugin::AuthorInfo {
-            AuthorInfo::name,
-            AuthorInfo::text_plain,
-            AuthorInfo::text_rich
-            },
-
-        NaoPlugin::Description {
-            Description::prioritise_description,
-            Description::description
-            },
-
-        NaoPlugin::Capabilities {
-            Capabilities::supports,
-            Capabilities::populatable,
-            Capabilities::decodable,
-            Capabilities::can_move
-            },
-
-        NaoPlugin::Functionality {
-            Function::populate,
-            Function::decode,
-            Function::move
-            },
-
-        NaoPlugin::ContextMenu {
-            ContextMenu::has_context_menu,
-            ContextMenu::context_menu
-            }
-    };
+NaoPlugin* GetNaoPlugin() {
+    return new Plugin_DAT();
 }
 
+#pragma region Plugin info
+
+NaoString Plugin_DAT::Name() const {
+    return "libnao DAT plugin";
+}
+
+NaoString Plugin_DAT::DisplayName() const {
+    return "libnao DAT";
+}
+
+NaoString Plugin_DAT::PluginDescription() const {
+    return "Adds support for DAT archives";
+}
+
+NaoString Plugin_DAT::VersionString() const {
+    return "1.1";
+}
+
+#pragma endregion 
+
+#pragma region Author info
+
+NaoString Plugin_DAT::AuthorName() const {
+    return "TypeA2/I_Copy_Jokes";
+}
+
+NaoString Plugin_DAT::AuthorDescription() const {
+    return "License: LGPLv3 or later<br>"
+        "<a href=\"https://github.com/TypeA2\">Github</a><br>"
+        "<a href=\"https://steamcommunity.com/id/TypeA2/\">Steam</a>";
+}
+
+#pragma endregion 
+
+#pragma region Description
+
+bool Plugin_DAT::HasDescription(NaoObject* object) const {
+    return true;
+}
+
+bool Plugin_DAT::PrioritiseDescription() const {
+    return false;
+}
+
+NaoString Plugin_DAT::Description() const {
+    return "DAT Archive";
+}
+
+NaoString Plugin_DAT::Description(NaoObject* of) const {
+    return "DAT Archive";
+}
+
+
+#pragma endregion 
+
+#pragma region Actions
+
+bool Plugin_DAT::CanEnter(NaoObject* object) {
+    return !object->is_dir()
+        && object->file_ref().io->read_singleshot(4)
+            == NaoBytes("DAT\0", 4);
+}
+
+bool Plugin_DAT::Enter(NaoObject* object) {
+    NaoIO* io = object->file_ref().io;
+
+    if (DATReader* reader = DATReader::create(io)) {
+
+        int64_t subsequent_errors = 0;
+
+        for (const DATReader::FileEntry& file : reader->files()) {
+            NaoChunkIO* file_io = new NaoChunkIO(io, 
+                { file.offset, file.size, 0 });
+
+            NaoObject* new_object = new NaoObject(NaoObject::File{
+                file_io,
+                file.size,
+                file.size,
+                false,
+                object->name() + N_PATHSEP + file.name
+                }, object);
+
+            if (!PluginManager.set_description(new_object)) {
+                if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
+                    nwarn << "Failed to set description for"
+                        << new_object->name();
+                }
+
+                ++subsequent_errors;
+            }
+        }
+
+        if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
+            nwarn << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
+                << "messages suppressed.";
+        }
+
+        delete reader;
+
+        return true;
+    }
+
+    return false;
+}
+
+bool Plugin_DAT::CanMove(NaoObject* from, NaoObject* to) {
+    return to->parent() == from // `to` is a child of `from`
+        || (CanEnter(from) // `from` (current object) is a DAT file
+            && from->name().starts_with(to->name()) // `from` is a child of `to`
+            && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP)); // Direct child
+}
+
+bool Plugin_DAT::Move(NaoObject*& from, NaoObject* to) {
+    if (to->parent() == from) {
+        from->remove_child(to);
+
+        to->set_parent(nullptr);
+
+        delete from;
+    } else if (CanEnter(from)
+        && from->name().starts_with(to->name())
+        && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP)) {
+
+        for (NaoObject* child : from->take_children()) {
+            delete child;
+        }
+
+        from->set_parent(to);
+    }
+
+    from = to;
+
+    Enter(from);
+
+    return true;
+}
+
+#pragma endregion 
+
 namespace Plugin {
-    namespace PluginInfo {
-        NaoString name() {
-            return "libnao DAT plugin";
-        }
 
-        NaoString display_name() {
-            return "libnao DAT";
-        }
-
-        NaoString description() {
-            return "Adds support for DAT archives";
-        }
-
-        uint64_t version() {
-            return 1;
-        }
-
-    }
-
-    namespace AuthorInfo {
-        NaoString name() {
-            return "TypeA2/I_Copy_Jokes";
-        }
-
-        NaoString text_plain() {
-            return "License: LGPLv3 or later\n"
-                "Github: https://github.com/TypeA2\n"
-                "Steam: https://steamcommunity.com/id/TypeA2/";
-
-        }
-
-        NaoString text_rich() {
-            return "License: LGPLv3 or later<br>"
-                "<a href=\"https://github.com/TypeA2\">Github</a><br>"
-                "<a href=\"https://steamcommunity.com/id/TypeA2/\">Steam</a>";
-        }
-
-    }
-
-    namespace Error {
-        const NaoString& get_error() {
-            return error();
-        }
-
-        NaoString& error() {
-            static NaoString err;
-
-            return err;
-        }
-    }
-
-    namespace Description {
-        bool prioritise_description() {
-            return true;
-        }
-
-        NaoString description() {
-            return "DAT Archive";
-        }
-    }
-
-    namespace Capabilities {
-        bool supports(NaoObject* object) {
-            return populatable(object);
-        }
-
-        bool populatable(NaoObject* object) {
-            return !object->is_dir()
-                && object->file_ref().io->read_singleshot(4) == NaoBytes("DAT\0", 4);
-        }
-
-        bool decodable(N_UNUSED NaoObject* object) {
-            return false;
-        }
-
-        bool can_move(NaoObject* from, NaoObject* to) {
-            if (to->parent() == from // `to` is a child of `from`
-                || (supports(from) // `from` (current object) is supported
-                    && from->name().starts_with(to->name()) // `from` is a child of `to`
-                    && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP))) { // direct child
-                return true;
-            }
-
-            Error::error() = "Target is not a child of source object";
-
-            return false;
-        }
-    }
-
-    namespace Function {
-        bool populate(NaoObject* object) {
-            if (!Capabilities::populatable(object)) {
-                return false;
-            }
-
-            NaoIO* io = object->file_ref().io;
-
-            if (DATReader* reader = DATReader::create(io)) {
-                
-                int64_t subsequent_errors = 0;
-
-                for (const DATReader::FileEntry& file : reader->files()) {
-                    NaoChunkIO* file_io = new NaoChunkIO(io, { file.offset, file.size, 0 });
-
-                    NaoObject* new_object = new NaoObject(NaoObject::File {
-                        file_io,
-                        file.size,
-                        file.size,
-                        false,
-                        object->name() + N_PATHSEP + file.name
-                        }, object);
-
-                    if (!PluginManager.set_description(new_object)) {
-                        if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-                            nwarn << "Failed to set description for"
-                                << new_object->name();
-                        }
-
-                        ++subsequent_errors;
-                    }
-                }
-
-                if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-                    nwarn << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
-                        << "messages suppressed.";
-                }
-
-
-                delete reader;
-
-                return true;
-            }
-
-            return false;
-        }
-
-        bool decode(N_UNUSED NaoObject* object, N_UNUSED NaoIO* out) {
-            return false;
-        }
-
-        bool move(NaoObject*& from, NaoObject* to) {
-            if (!Capabilities::can_move(from, to)) {
-                return false;
-            }
-
-            if (to->parent() == from) {
-                from->remove_child(to);
-
-                to->set_parent(nullptr);
-
-                delete from;
-
-                from = to;
-            } else if (Capabilities::supports(from)
-                && from->name().starts_with(to->name())
-                && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP)) {
-
-                for (NaoObject* child : from->take_children()) {
-                    delete child;
-                }
-
-                from->set_parent(to);
-
-                from = to;
-            }
-
-            return true;
-        }
-    }
-
+    /*
     namespace ContextMenu {
         bool has_context_menu(NaoObject* object) {
             return Capabilities::supports(object)
@@ -407,7 +340,7 @@ namespace Plugin {
 
             return true;
         }
+        
 
-
-    }
+    }*/
 }
