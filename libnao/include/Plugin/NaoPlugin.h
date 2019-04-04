@@ -50,19 +50,19 @@ class LIBNAO_API NaoPlugin {
     N_NODISCARD virtual NaoString Description(NaoObject* of) const;
 
     // Entering
-    N_NODISCARD virtual bool CanEnter(NaoObject* object) = 0;
+    N_NODISCARD virtual bool CanEnter(NaoObject* object);
     virtual bool Enter(NaoObject* object);
 
     // Leaving
-    N_NODISCARD virtual bool ShouldLeave(NaoObject* object) = 0;
+    N_NODISCARD virtual bool ShouldLeave(NaoObject* object);
     virtual bool Leave(NaoObject* object);
 
     // Moving
-    N_NODISCARD virtual bool CanMove(NaoObject* from, NaoObject* to) = 0;
+    N_NODISCARD virtual bool CanMove(NaoObject* from, NaoObject* to);
     virtual bool Move(NaoObject*& from, NaoObject* to); // Replace from with to
 
     // Decoding
-    N_NODISCARD virtual bool CanDecode(NaoObject* object) = 0;
+    N_NODISCARD virtual bool CanDecode(NaoObject* object);
     virtual bool Decode(NaoObject* object, NaoIO* output);
 
     // Context menu
@@ -74,6 +74,6 @@ class LIBNAO_API NaoPlugin {
         virtual bool Execute(NaoObject* object) = 0;
     };
 
-    N_NODISCARD virtual bool HasContextMenu(NaoObject* object) = 0;
+    N_NODISCARD virtual bool HasContextMenu(NaoObject* object);
     N_NODISCARD virtual NaoVector<NaoContextMenuEntry*> ContextMenu(NaoObject* object);
 };
