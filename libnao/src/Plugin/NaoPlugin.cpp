@@ -29,7 +29,15 @@ NaoString NaoPlugin::Description(NaoObject* of) const {
     return "No description given";
 }
 
+bool NaoPlugin::CanEnter(NaoObject* object) {
+    return false;
+}
+
 bool NaoPlugin::Enter(NaoObject* object) {
+    return false;
+}
+
+bool NaoPlugin::ShouldLeave(NaoObject* object) {
     return false;
 }
 
@@ -37,11 +45,23 @@ bool NaoPlugin::Leave(NaoObject* object) {
     return false;
 }
 
+bool NaoPlugin::CanMove(NaoObject* from, NaoObject* to) {
+    return false;
+}
+
 bool NaoPlugin::Move(NaoObject*& from, NaoObject* to) {
     return false;
 }
 
+bool NaoPlugin::CanDecode(NaoObject* object) {
+    return false;
+}
+
 bool NaoPlugin::Decode(NaoObject* object, NaoIO* output) {
+    return false;
+}
+
+bool NaoPlugin::HasContextMenu(NaoObject* object) {
     return false;
 }
 
