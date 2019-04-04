@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "libnao.h"
+
 #include "Functionality/NaoMath.h"
 
 #include <iterator>
