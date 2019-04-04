@@ -179,6 +179,12 @@ bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
         }
     }
 
+    // Don't remove ourselves
+    if (m_current_object
+        && m_current_object->children().contains(new_object)) {
+        m_current_object->remove_child(new_object);
+    }
+
     delete m_current_object;
     m_current_object = new_object;
     m_current_plugin = PluginManager.enter_plugin(m_current_object);
