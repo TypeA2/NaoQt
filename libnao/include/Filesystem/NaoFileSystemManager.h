@@ -44,7 +44,7 @@ class NaoFileSystemManager {
 
     N_NODISCARD LIBNAO_API NaoObject* current_object() const;
     N_NODISCARD LIBNAO_API const NaoString& current_path() const;
-    N_NODISCARD LIBNAO_API NaoPlugin const* current_plugin() const;
+    N_NODISCARD LIBNAO_API NaoPlugin* current_plugin() const;
 
     N_NODISCARD LIBNAO_API const NaoString& last_error() const;
 

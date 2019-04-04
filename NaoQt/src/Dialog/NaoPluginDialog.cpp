@@ -36,23 +36,22 @@ void NaoPluginDialog::list(QWidget* parent) {
 
     template_file.close();
 
-    NaoVector<NaoPlugin> plugins = PluginManager.loaded();
+    NaoVector<NaoPlugin*> plugins = PluginManager.loaded();
 
     enum AuthorRoles {
         AuthorText = Qt::UserRole + 1,
         AutorTextRich
     };
 
-    for (const NaoPlugin& plugin : plugins) {
+    for (NaoPlugin* plugin : plugins) {
         QTreeWidgetItem* item = new QTreeWidgetItem(tree_widget);
 
-        item->setText(0, plugin.plugin_info.display_name());
-        item->setText(1, QString::number(plugin.plugin_info.version()));
-        item->setText(2, plugin.author_info.name());
-        item->setText(3, plugin.plugin_info.desc());
+        item->setText(0, plugin->DisplayName());
+        item->setText(1, plugin->VersionString());
+        item->setText(2, plugin->AuthorName());
+        item->setText(3, plugin->PluginDescription());
 
-        item->setData(0, AuthorText, plugin.author_info.text_plain().c_str());
-        item->setData(0, AutorTextRich, plugin.author_info.text_rich().c_str());
+        item->setData(0, AutorTextRich, plugin->AuthorDescription().c_str());
     }
 
     tree_widget->resizeColumnToContents(0);
@@ -75,6 +74,7 @@ void NaoPluginDialog::list(QWidget* parent) {
 
             subdialog->setModal(true);
 
+            // ReSharper disable once cppcoreguidelines-avoid-magic-numbers
             subdialog->setMinimumWidth(480);
 
             subdialog->show();

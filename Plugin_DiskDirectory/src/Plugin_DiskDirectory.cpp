@@ -25,281 +25,196 @@
 #include <Plugin/NaoPluginManager.h>
 #include <NaoObject.h>
 
-NaoPlugin GetNaoPlugin() {
-    using namespace Plugin;
-    return NaoPlugin {
-        GetNaoPlugin,
-        Error::get_error,
-
-        NaoPlugin::PluginInfo {
-            PluginInfo::name,
-            PluginInfo::display_name,
-            PluginInfo::description,
-            PluginInfo::version
-            },
-
-        NaoPlugin::AuthorInfo {
-            AuthorInfo::name,
-            AuthorInfo::text_plain,
-            AuthorInfo::text_rich
-            },
-
-        NaoPlugin::Description {
-            Description::prioritise_description,
-            Description::description
-            },
-
-        NaoPlugin::Capabilities {
-            Capabilities::supports,
-            Capabilities::populatable,
-            Capabilities::decodable,
-            Capabilities::can_move
-            },
-
-        NaoPlugin::Functionality {
-            Function::populate,
-            Function::decode,
-            Function::move
-            },
-
-        NaoPlugin::ContextMenu {
-            ContextMenu::has_context_menu,
-            ContextMenu::context_menu
-            }
-    };
-}
-
-namespace Plugin {
-    namespace PluginInfo {
-        NaoString name() {
-            return "libnao directory plugin";
-        }
-
-        NaoString display_name() {
-            return "libnao directory";
-        }
-
-        NaoString description() {
-            return "Adds support for existing directories";
-        }
-
-        uint64_t version() {
-            return 1;
-        }
-
-    }
-
-    namespace AuthorInfo {
-        NaoString name() {
-            return "TypeA2/I_Copy_Jokes";
-        }
-
-        NaoString text_plain() {
-            return "License: LGPLv3 or later\n"
-                   "Github: https://github.com/TypeA2\n"
-                   "Steam: https://steamcommunity.com/id/TypeA2/";
-
-        }
-
-        NaoString text_rich() {
-            return "License: LGPLv3 or later<br>"
-                   "<a href=\"https://github.com/TypeA2\">Github</a><br>"
-                   "<a href=\"https://steamcommunity.com/id/TypeA2/\">Steam</a>";
-        }
-
-    }
-    
-    namespace Error {
-        const NaoString& get_error() {
-            return error();
-        }
-
-        NaoString& error() {
-            static NaoString err;
-
-            return err;
-        }
-    }
-
-    namespace Description {
-        bool prioritise_description() {
-            return false;
-        }
-
-        NaoString description() {
-            return "Directory";
-        }
-    }
-
-    namespace Capabilities {
-        bool supports(NaoObject* object) {
-            return populatable(object);
-        }
-
-        bool populatable(NaoObject* object) {
-            if (!object->is_dir()) {
-                Error::error() = "Object is not a directory";
-
-                return false;
-            }
-
-            if (!fs::exists(object->name())) {
-                Error::error() = "Object does not exist";
-
-                return false;
-            }
-
-            return true;
-        }
-
-        bool decodable(N_UNUSED NaoObject* object) {
-            return false;
-        }
-
-        bool can_move(NaoObject* from, NaoObject* to) {
-            if (!populatable(from) || !populatable(to)) {
-                return false;
-            }
-
-            if (to->parent() == from
-                || (supports(from)
-                    && from->name().starts_with(to->name())
-                    && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP))) {
-                return true;
-            }
-
-            Error::error() = "Target is not a child of source object";
-
-            return false;
-        }
-    }
-
-    namespace Function {
-        bool populate(NaoObject* object) {
-            if (!Capabilities::supports(object)) {
-                return false;
-            }
-
-            object->set_description(Description::description());
-            NaoString path_str;
-
-            int64_t subsequent_errors = 0;
-
-            for (const fs::directory_entry& entry : fs::directory_iterator(object->name().c_str())) {
-
-                path_str = entry.path().string().c_str();
-
-                NaoObject* new_object = nullptr;
-
-#ifdef N_WINDOWS
-                DWORD attrs = GetFileAttributesA(path_str);
-
-                if (attrs == INVALID_FILE_ATTRIBUTES) {
-                    nlog << "Invalid attributes, skipping" << path_str;
-                    continue;
-                }
-
-                if (attrs & FILE_ATTRIBUTE_SYSTEM) {
-                    nlog << "Skipping hidden"
-                        << (attrs & FILE_ATTRIBUTE_DIRECTORY ? "directory" : "file")
-                        << path_str;
-                    continue;
-                }
-
-                if (attrs & FILE_ATTRIBUTE_HIDDEN) {
-                    nlog << "Skipping hidden"
-                        << (attrs & FILE_ATTRIBUTE_DIRECTORY ? "directory" : "file")
-                        << path_str;
-                    continue;
-                }
-
-#endif
-
-                if (is_directory(entry.path())) {
-                    new_object = new NaoObject({ path_str }, object);
-                    new_object->set_description(Description::description());
-                } else if (is_regular_file(entry.path())) {
-
-#ifdef N_WINDOWS
-                    
-                    if (attrs & FILE_ATTRIBUTE_SPARSE_FILE) {
-                        nlog << "Skipping sparse file" << path_str;
-                        continue;
-                    }
-#endif
-
-                    NaoFileIO* io = new NaoFileIO(path_str);
-
-                    new_object = new NaoObject({
-                        io,
-                        io->size(),
-                        io->size(),
-                        false,
-                        path_str
-                        }, object);
-
-                    
-                    if (!PluginManager.set_description(new_object)) {
-                        if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-                            nwarn << "Failed to set description for" << new_object->name();
-                        }
-
-                        ++subsequent_errors;
-                    }
-                }
-            }
-
-            if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-                nwarn << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT) << "messages suppressed.";
-            }
-
-            return true;
-        }
-
-        bool decode(N_UNUSED NaoObject* object, N_UNUSED NaoIO* out) {
-            return false;
-        }
-
-        bool move(NaoObject*& from, NaoObject* to) {
-            if (!Capabilities::can_move(from, to)) {
-                return false;
-            }
-
-            if (to->parent() == from) {
-                
-                from->remove_child(to);
-
-                to->set_parent(nullptr);
-
-                delete from;
-
-                from = to;
-            } else if (Capabilities::supports(from)
-                && from->name().starts_with(to->name())
-                && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP)) {
-                
-                for (NaoObject* child : from->take_children()) {
-                    delete child;
-                }
-
-                from->set_parent(to);
-
-                from = to;
-            }
-
-            return true;
-        }
-    }
-
-    namespace ContextMenu {
-        bool has_context_menu(N_UNUSED NaoObject* object) {
-            return false;
-        }
-
-        NaoPlugin::ContextMenu::type context_menu(N_UNUSED NaoObject* object) {
-            return NaoPlugin::ContextMenu::type();
-        }
-    }
+NaoPlugin* GetNaoPlugin() {
+    return new Plugin_DiskDirectory();
 }
 
 
+#pragma region Plugin info
+
+NaoString Plugin_DiskDirectory::Name() const {
+    return "libnao directory plugin";
+}
+
+NaoString Plugin_DiskDirectory::DisplayName() const {
+    return "libnao directory";
+}
+
+NaoString Plugin_DiskDirectory::PluginDescription() const {
+    return "Adds support for existing directories";
+}
+
+NaoString Plugin_DiskDirectory::VersionString() const {
+    return "1.1";
+}
+
+#pragma endregion 
+
+#pragma region Author info
+
+NaoString Plugin_DiskDirectory::AuthorName() const {
+    return "TypeA2/I_Copy_Jokes";
+}
+
+NaoString Plugin_DiskDirectory::AuthorDescription() const {
+    return "License: LGPLv3 or later<br>"
+        "<a href=\"https://github.com/TypeA2\">Github</a><br>"
+        "<a href=\"https://steamcommunity.com/id/TypeA2/\">Steam</a>";
+}
+
+#pragma endregion 
+
+#pragma region Description
+
+bool Plugin_DiskDirectory::HasDescription(NaoObject* object) const {
+    return true;
+}
+
+bool Plugin_DiskDirectory::PrioritiseDescription() const {
+    return false;
+}
+
+NaoString Plugin_DiskDirectory::Description() const {
+    return "Directory";
+}
+
+NaoString Plugin_DiskDirectory::Description(NaoObject* of) const {
+    return "Directory";
+}
+
+
+#pragma endregion 
+
+#pragma region Actions
+
+bool Plugin_DiskDirectory::CanEnter(NaoObject* object) {
+    return object->is_dir() && fs::is_directory(object->name());
+}
+
+bool Plugin_DiskDirectory::Enter(NaoObject* object) {
+    object->set_description(Description());
+    NaoString path_str;
+
+    int64_t subsequent_errors = 0;
+
+    for (const fs::directory_entry& entry : fs::directory_iterator(object->name())) {
+
+        path_str = entry.path();
+
+        NaoObject* new_object = nullptr;
+
+#ifdef N_WINDOWS
+        DWORD attrs = GetFileAttributesA(path_str);
+
+        if (attrs == INVALID_FILE_ATTRIBUTES) {
+            nlog << "Invalid attributes, skipping" << path_str;
+            continue;
+        }
+
+        if (attrs & FILE_ATTRIBUTE_SYSTEM) {
+            nlog << "Skipping hidden"
+                << (attrs & FILE_ATTRIBUTE_DIRECTORY ? "directory" : "file")
+                << path_str;
+            continue;
+        }
+
+        if (attrs & FILE_ATTRIBUTE_HIDDEN) {
+            nlog << "Skipping hidden"
+                << (attrs & FILE_ATTRIBUTE_DIRECTORY ? "directory" : "file")
+                << path_str;
+            continue;
+        }
+
+#endif
+
+        if (fs::is_directory(path_str)) {
+            new_object = new NaoObject({ path_str }, object);
+            new_object->set_description(Description());
+        }
+        else if (is_regular_file(entry.path())) {
+
+#ifdef N_WINDOWS
+
+            if (attrs & FILE_ATTRIBUTE_SPARSE_FILE) {
+                nlog << "Skipping sparse file" << path_str;
+                continue;
+            }
+#endif
+
+            NaoFileIO* io = new NaoFileIO(path_str);
+
+            new_object = new NaoObject({
+                io,
+                io->size(),
+                io->size(),
+                false,
+                path_str
+                }, object);
+
+
+            if (!PluginManager.set_description(new_object)) {
+                if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
+                    nwarn << "Failed to set description for" << new_object->name();
+                }
+
+                ++subsequent_errors;
+            }
+        }
+    }
+
+    if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
+        nwarn << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
+            << " description messages suppressed.";
+    }
+
+    return true;
+}
+
+bool Plugin_DiskDirectory::ShouldLeave(NaoObject* object) {
+    return false;
+}
+
+bool Plugin_DiskDirectory::CanMove(NaoObject* from, NaoObject* to) {
+    return CanEnter(from) && CanEnter(to)
+           && (to->parent() == from // Moving to a child
+               || (CanEnter(from) && // Moving up
+                   from->name().starts_with(to->name())
+                   && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP)));
+}
+
+bool Plugin_DiskDirectory::Move(NaoObject*& from, NaoObject* to) {
+    if (to->parent() == from) { // Moving to a child
+        from->remove_child(to);
+        to->set_parent(nullptr);
+
+        delete from;
+    } else if (from->name().starts_with(to->name())
+        && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP)) {
+        
+        for (NaoObject* child : from->take_children()) {
+            delete child;
+        }
+
+        from->set_parent(to);
+    }
+
+    from = to;
+
+    Enter(from);
+
+    return true;
+}
+
+bool Plugin_DiskDirectory::CanDecode(NaoObject* object) {
+    return false;
+}
+
+#pragma endregion 
+
+#pragma region Context menu
+
+bool Plugin_DiskDirectory::HasContextMenu(NaoObject* object) {
+    return false;
+}
+
+#pragma endregion 

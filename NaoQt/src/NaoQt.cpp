@@ -317,7 +317,7 @@ void NaoQt::view_double_click(QTreeWidgetItem* item, int col) {
         return;
     }
 
-    NaoPlugin* plugin = PluginManager.plugin_for_object(object);
+    NaoPlugin* plugin = PluginManager.enter_plugin(object);
 
     if (!plugin && QFile(object->name()).exists()) {
         DesktopUtils::open_file(object->name());
@@ -361,8 +361,8 @@ void NaoQt::view_context_menu(const QPoint& pos) {
 
         bool append_show = false;
         NaoPlugin* target_plugin = nullptr;
-        const NaoPlugin* current_plugin = NaoFSM.current_plugin();
-        if ((target_plugin = PluginManager.plugin_for_object(object))) {
+        NaoPlugin* current_plugin = NaoFSM.current_plugin();
+        if ((target_plugin = PluginManager.context_menu_plugin(object))) {
             append_show = true;
 
             ADDOPT("Open", this, ([this, object] {
@@ -381,30 +381,29 @@ void NaoQt::view_context_menu(const QPoint& pos) {
 
         if (target_plugin
             && target_plugin != current_plugin
-            && target_plugin->context_menu.has_context_menu(object)) {
+            && target_plugin->HasContextMenu(object)) {
 
-            nlog << NaoString("Using target plugin \"" + target_plugin->plugin_info.display_name() + '"');
+            nlog << NaoString("Using target plugin \"" + target_plugin->DisplayName() + '"');
 
-            menu->addSection(target_plugin->plugin_info.display_name());
+            menu->addSection(target_plugin->DisplayName());
 
             const int64_t count = menu->actions().size();
 
-            for (const NaoPlugin::ContextMenu::Entry& entry :
-                target_plugin->context_menu.get(object)) {
+            for (NaoPlugin::NaoContextMenuEntry* entry : target_plugin->ContextMenu(object)) {
 
-                QAction* act = new QAction(entry.first, menu);
+                QAction* act = new QAction(entry->EntryName(), menu);
                 connect(act, &QAction::triggered, this, [this, entry, object] {
 
                     auto watcher = new QFutureWatcher<bool>(this);
                     connect(watcher, &QFutureWatcher<bool>::finished, this, [this, entry, watcher] {
                         if (!watcher->result()) {
                             QMessageBox::warning(this, "Action failed",
-                                "Failed executing action with name: " + entry.first);
+                                "Failed executing action with name: " + entry->EntryName());
                         }
                     });
                     connect(watcher, &QFutureWatcher<bool>::finished, &QFutureWatcher<bool>::deleteLater);
 
-                    watcher->setFuture(QtConcurrent::run(entry.second, object));
+                    watcher->setFuture(QtConcurrent::run(entry, &NaoPlugin::NaoContextMenuEntry::Execute, object));
                 });
 
                 menu->addAction(act);
@@ -413,23 +412,22 @@ void NaoQt::view_context_menu(const QPoint& pos) {
             nlog << "Added" << (menu->actions().size() - count) << "action(s)";
         }
 
-        if (current_plugin->context_menu.has_context_menu(object)) {
+        if (current_plugin->HasContextMenu(object)) {
 
             nlog << NaoString("Using source plugin \""
-                + current_plugin->plugin_info.display_name() + '"');
+                + current_plugin->DisplayName() + '"');
 
-            menu->addSection(current_plugin->plugin_info.display_name());
+            menu->addSection(current_plugin->DisplayName());
 
             const int64_t count = menu->actions().size();
 
-            for (const NaoPlugin::ContextMenu::Entry& entry :
-                current_plugin->context_menu.get(object)) {
+            for (NaoPlugin::NaoContextMenuEntry* entry : current_plugin->ContextMenu(object)) {
                 
-                QAction* act = new QAction(entry.first, menu);
+                QAction* act = new QAction(entry->EntryName(), menu);
                 connect(act, &QAction::triggered, this, [this, entry, object] {
-                    if (!entry.second(object)) {
+                    if (!entry->Execute(object)) {
                         QMessageBox::warning(this, "Action failed",
-                            "Failed executing action with name: " + entry.first);
+                            "Failed executing action with name: " + entry->EntryName());
                     }
                 });
 

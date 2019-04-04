@@ -21,48 +21,32 @@
 
 #include <Plugin/NaoPlugin.h>
 
-LIBNAO_PLUGIN_CALL LIBNAO_PLUGIN_DECL NaoPlugin GetNaoPlugin();
+LIBNAO_PLUGIN_CALL LIBNAO_PLUGIN_DECL NaoPlugin* GetNaoPlugin();
 
-namespace Plugin {
-    namespace PluginInfo {
-        LIBNAO_PLUGIN_DECL NaoString name();
-        LIBNAO_PLUGIN_DECL NaoString display_name();
-        LIBNAO_PLUGIN_DECL NaoString description();
-        LIBNAO_PLUGIN_DECL uint64_t version();
-    }
+class LIBNAO_PLUGIN_DECL Plugin_DiskDirectory final : public NaoPlugin {
+    public:
+    N_NODISCARD NaoString Name() const override;
+    N_NODISCARD NaoString DisplayName() const override;
+    N_NODISCARD NaoString PluginDescription() const override;
+    N_NODISCARD NaoString VersionString() const override;
 
-    namespace AuthorInfo {
-        LIBNAO_PLUGIN_DECL NaoString name();
-        LIBNAO_PLUGIN_DECL NaoString text_plain();
-        LIBNAO_PLUGIN_DECL NaoString text_rich();
-    }
-    
-    namespace Error {
-        LIBNAO_PLUGIN_DECL const NaoString& get_error();
+    N_NODISCARD NaoString AuthorName() const override;
+    N_NODISCARD NaoString AuthorDescription() const override;
 
-        NaoString& error();
-    }
+    N_NODISCARD bool HasDescription(NaoObject* object) const override;
+    N_NODISCARD bool PrioritiseDescription() const override;
+    N_NODISCARD NaoString Description() const override;
+    N_NODISCARD NaoString Description(NaoObject* of) const override;
 
-    namespace Description {
-        LIBNAO_PLUGIN_DECL bool prioritise_description();
-        LIBNAO_PLUGIN_DECL NaoString description();
-    }
+    N_NODISCARD bool CanEnter(NaoObject* object) override;
+    bool Enter(NaoObject* object) override;
 
-    namespace Capabilities {
-        LIBNAO_PLUGIN_DECL bool supports(NaoObject* object);
-        LIBNAO_PLUGIN_DECL bool populatable(NaoObject* object);
-        LIBNAO_PLUGIN_DECL bool decodable(N_UNUSED NaoObject* object);
-        LIBNAO_PLUGIN_DECL bool can_move(NaoObject* from, NaoObject* to);
-    }
+    N_NODISCARD bool ShouldLeave(NaoObject* object) override;
 
-    namespace Function {
-        LIBNAO_PLUGIN_DECL bool populate(NaoObject* object);
-        LIBNAO_PLUGIN_DECL bool decode(N_UNUSED NaoObject* object, N_UNUSED NaoIO* out);
-        LIBNAO_PLUGIN_DECL bool move(NaoObject*& from, NaoObject* to);
-    }
+    N_NODISCARD bool CanMove(NaoObject* from, NaoObject* to) override;
+    bool Move(NaoObject*& from, NaoObject* to) override;
 
-    namespace ContextMenu {
-        LIBNAO_PLUGIN_DECL bool has_context_menu(N_UNUSED NaoObject* object);
-        LIBNAO_PLUGIN_DECL NaoPlugin::ContextMenu::type context_menu(N_UNUSED NaoObject* object);
-    }
-}
+    N_NODISCARD bool CanDecode(NaoObject* object) override;
+
+    N_NODISCARD bool HasContextMenu(NaoObject* object) override;
+};

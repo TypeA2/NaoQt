@@ -31,7 +31,7 @@ using PluginFunc = NaoPlugin*(*)();
 
 class LIBNAO_API NaoPlugin {
     public:
-    virtual ~NaoPlugin();
+    virtual ~NaoPlugin() = default;
 
     // Plugin info
     N_NODISCARD virtual NaoString Name() const = 0;
@@ -44,26 +44,26 @@ class LIBNAO_API NaoPlugin {
     N_NODISCARD virtual NaoString AuthorDescription() const = 0;
 
     // Supported file description
-    N_NODISCARD virtual bool PrioritiseDescription() const = 0;
     N_NODISCARD virtual bool HasDescription(NaoObject* object) const = 0;
-    N_NODISCARD virtual NaoString Description() const = 0;
-    N_NODISCARD virtual NaoString Description(NaoObject* of) const = 0;
+    N_NODISCARD virtual bool PrioritiseDescription() const;
+    N_NODISCARD virtual NaoString Description() const;
+    N_NODISCARD virtual NaoString Description(NaoObject* of) const;
 
     // Entering
     N_NODISCARD virtual bool CanEnter(NaoObject* object) = 0;
-    virtual bool Enter(NaoObject* object) = 0;
+    virtual bool Enter(NaoObject* object);
 
     // Leaving
     N_NODISCARD virtual bool ShouldLeave(NaoObject* object) = 0;
-    virtual bool Leave(NaoObject* object) = 0;
+    virtual bool Leave(NaoObject* object);
 
     // Moving
     N_NODISCARD virtual bool CanMove(NaoObject* from, NaoObject* to) = 0;
-    virtual bool Move(NaoObject*& from, NaoObject* to) = 0; // Replace from with to
+    virtual bool Move(NaoObject*& from, NaoObject* to); // Replace from with to
 
     // Decoding
     N_NODISCARD virtual bool CanDecode(NaoObject* object) = 0;
-    virtual bool Decode(NaoObject* object, NaoIO* output) = 0;
+    virtual bool Decode(NaoObject* object, NaoIO* output);
 
     // Context menu
     class NaoContextMenuEntry {
@@ -75,5 +75,5 @@ class LIBNAO_API NaoPlugin {
     };
 
     N_NODISCARD virtual bool HasContextMenu(NaoObject* object) = 0;
-    N_NODISCARD virtual NaoVector<NaoContextMenuEntry*> ContextMenu(NaoObject* object) = 0;
+    N_NODISCARD virtual NaoVector<NaoContextMenuEntry*> ContextMenu(NaoObject* object);
 };

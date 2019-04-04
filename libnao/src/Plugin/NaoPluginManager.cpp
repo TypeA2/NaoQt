@@ -76,6 +76,7 @@ class NaoPluginManager::NaoPluginManagerPrivate {
     NaoPlugin* enter_plugin(NaoObject* object) const;
     NaoPlugin* leave_plugin(NaoObject* object) const;
     NaoPlugin* description_plugin(NaoObject* object) const;
+	NaoPlugin* context_menu_plugin(NaoObject* object) const;
 
     bool set_description_for_object(NaoObject* object);
 };
@@ -119,6 +120,13 @@ NaoPlugin* NaoPluginManager::leave_plugin(NaoObject* object) const {
     return d_ptr->leave_plugin(object);
 }
 
+NaoPlugin* NaoPluginManager::description_plugin(NaoObject* object) const {
+    return d_ptr->description_plugin(object);
+}
+
+NaoPlugin* NaoPluginManager::context_menu_plugin(NaoObject* object) const {
+	return d_ptr->context_menu_plugin(object);
+}
 
 bool NaoPluginManager::set_description(NaoObject* object) {
     return d_ptr->set_description_for_object(object);
@@ -138,15 +146,16 @@ NaoPluginManager::NaoPluginManager() {
 
 NaoPluginManager::NaoPluginManagerPrivate::~NaoPluginManagerPrivate() {
     for (Plugin plugin : m_plugins) {
+        delete plugin.plugin;
         FreeLibrary(plugin.handle);
     }
 }
 
 bool NaoPluginManager::NaoPluginManagerPrivate::init(const NaoString& plugins_dir) {
     
-    nlog << "Loading plugins from" << plugins_dir;
-    
     m_plugins_dir = fs::absolute(plugins_dir);
+
+    nlog << "Loading plugins from" << m_plugins_dir;
 
     for (const fs::directory_entry& file : fs::directory_iterator(m_plugins_dir)) {
         NaoString target_lib;
@@ -240,11 +249,6 @@ NaoPlugin* NaoPluginManager::NaoPluginManagerPrivate::leave_plugin(NaoObject* ob
     return nullptr;
 }
 
-class NaoPlugin* NaoPluginManager::description_plugin(NaoObject* object) const {
-    return d_ptr->description_plugin(object);
-}
-
-
 NaoPlugin* NaoPluginManager::NaoPluginManagerPrivate::description_plugin(NaoObject* object) const {
     for (const Plugin& plugin : m_plugins) {
         if (plugin->HasDescription(object)) {
@@ -255,6 +259,15 @@ NaoPlugin* NaoPluginManager::NaoPluginManagerPrivate::description_plugin(NaoObje
     return nullptr;
 }
 
+NaoPlugin* NaoPluginManager::NaoPluginManagerPrivate::context_menu_plugin(NaoObject* object) const {
+    for (const Plugin& plugin : m_plugins) {
+        if (plugin->HasContextMenu(object)) {
+            return plugin.plugin;
+        }
+    }
+
+    return nullptr;
+}
 
 bool NaoPluginManager::NaoPluginManagerPrivate::set_description_for_object(NaoObject* object) {
     if (!object) {

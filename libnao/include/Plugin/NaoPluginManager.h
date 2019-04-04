@@ -49,6 +49,7 @@ class NaoPluginManager {
 	N_NODISCARD LIBNAO_API NaoPlugin* enter_plugin(NaoObject* object) const;
 	N_NODISCARD LIBNAO_API NaoPlugin* leave_plugin(NaoObject* object) const;
 	N_NODISCARD LIBNAO_API NaoPlugin* description_plugin(NaoObject* object) const;
+	N_NODISCARD LIBNAO_API NaoPlugin* context_menu_plugin(NaoObject* object) const;
 
     LIBNAO_API bool set_description(NaoObject* object);
 

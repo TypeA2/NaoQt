@@ -85,7 +85,7 @@ const NaoString& NaoFileSystemManager::current_path() const {
     return d_ptr->m_current_object->name();
 }
 
-NaoPlugin const* NaoFileSystemManager::current_plugin() const {
+NaoPlugin* NaoFileSystemManager::current_plugin() const {
     return d_ptr->m_current_plugin;
 }
 
@@ -141,6 +141,20 @@ bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
 
     NaoObject* new_object = _try_locate_child(target_path);
 
+    // Refresh
+    if (m_current_object == new_object) {
+        for (NaoObject* child : m_current_object->take_children()) {
+            delete child;
+        }
+
+        if (!m_current_plugin->Enter(m_current_object)) {
+            nerr << "Enter failed";
+            return false;
+        }
+
+        return true;
+    }
+
     // Already have a plugin
     if (m_current_plugin) {
         // Try to move if possible, else manually leave and enter a new object
@@ -151,7 +165,11 @@ bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
                 nerr << "Move failed";
                 return false;
             }
-        } else if (m_current_plugin->ShouldLeave(m_current_object)) {
+
+            return true;
+        }
+        
+        if (m_current_plugin->ShouldLeave(m_current_object)) {
             nlog << "Leaving using current plugin";
 
             if (!m_current_plugin->Leave(m_current_object)) {
@@ -173,6 +191,8 @@ bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
     return true;
 }
 
+
+// ReSharper disable once CppMemberFunctionMayBeStatic
 NaoString NaoFileSystemManager::NFSMPrivate::description_for_object(NaoObject* object) const {
 
     NaoPlugin* plugin = PluginManager.description_plugin(object);
@@ -201,12 +221,13 @@ NaoObject* NaoFileSystemManager::NFSMPrivate::_try_locate_child(const NaoString&
     nlog << "Attempting to locate existing child";
 
     // Assign a child object if possible, else create a new one
-    if (m_current_object
-        && m_current_object->name() == path) {
-        return m_current_object;
-    }
 
     if (m_current_object) {
+        if (m_current_object->name() == path) {
+            nlog << "Child is self";
+            return m_current_object;
+        }
+
         for (NaoObject* child : m_current_object->children()) {
             if (child->name() == path) {
                 nlog << "Found child";
