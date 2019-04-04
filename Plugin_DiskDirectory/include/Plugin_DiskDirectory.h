@@ -23,7 +23,7 @@
 
 LIBNAO_PLUGIN_CALL LIBNAO_PLUGIN_DECL NaoPlugin* GetNaoPlugin();
 
-class LIBNAO_PLUGIN_DECL Plugin_DiskDirectory final : public NaoPlugin {
+class Plugin_DiskDirectory final : public NaoPlugin {
     public:
     N_NODISCARD NaoString Name() const override;
     N_NODISCARD NaoString DisplayName() const override;
@@ -40,13 +40,4 @@ class LIBNAO_PLUGIN_DECL Plugin_DiskDirectory final : public NaoPlugin {
 
     N_NODISCARD bool CanEnter(NaoObject* object) override;
     bool Enter(NaoObject* object) override;
-
-    N_NODISCARD bool ShouldLeave(NaoObject* object) override;
-
-    N_NODISCARD bool CanMove(NaoObject* from, NaoObject* to) override;
-    bool Move(NaoObject*& from, NaoObject* to) override;
-
-    N_NODISCARD bool CanDecode(NaoObject* object) override;
-
-    N_NODISCARD bool HasContextMenu(NaoObject* object) override;
 };

@@ -151,7 +151,6 @@ bool Plugin_DiskDirectory::Enter(NaoObject* object) {
                 path_str
                 }, object);
 
-
             if (!PluginManager.set_description(new_object)) {
                 if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
                     nwarn << "Failed to set description for" << new_object->name();
@@ -170,51 +169,5 @@ bool Plugin_DiskDirectory::Enter(NaoObject* object) {
     return true;
 }
 
-bool Plugin_DiskDirectory::ShouldLeave(NaoObject* object) {
-    return false;
-}
-
-bool Plugin_DiskDirectory::CanMove(NaoObject* from, NaoObject* to) {
-    return CanEnter(from) && CanEnter(to)
-           && (to->parent() == from // Moving to a child
-               || (CanEnter(from) && // Moving up
-                   from->name().starts_with(to->name())
-                   && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP)));
-}
-
-bool Plugin_DiskDirectory::Move(NaoObject*& from, NaoObject* to) {
-    if (to->parent() == from) { // Moving to a child
-        from->remove_child(to);
-        to->set_parent(nullptr);
-
-        delete from;
-    } else if (from->name().starts_with(to->name())
-        && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP)) {
-        
-        for (NaoObject* child : from->take_children()) {
-            delete child;
-        }
-
-        from->set_parent(to);
-    }
-
-    from = to;
-
-    Enter(from);
-
-    return true;
-}
-
-bool Plugin_DiskDirectory::CanDecode(NaoObject* object) {
-    return false;
-}
-
 #pragma endregion 
 
-#pragma region Context menu
-
-bool Plugin_DiskDirectory::HasContextMenu(NaoObject* object) {
-    return false;
-}
-
-#pragma endregion 
