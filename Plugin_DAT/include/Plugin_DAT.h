@@ -41,6 +41,22 @@ class Plugin_DAT final : public NaoPlugin {
     N_NODISCARD bool CanEnter(NaoObject* object) override;
     bool Enter(NaoObject* object) override;
 
-    N_NODISCARD bool CanMove(NaoObject* from, NaoObject* to) override;
-    bool Move(NaoObject*& from, NaoObject* to) override;
+    N_NODISCARD bool HasContextMenu(NaoObject* object) override;
+    NaoVector<NaoAction*> ContextMenu(NaoObject* object) override;
+};
+
+class ExtractAllAction final : public NaoAction {
+    public:
+    ExtractAllAction(NaoPlugin* parent);
+
+    N_NODISCARD NaoString ActionName() override;
+    bool Execute(NaoObject* object) override;
+};
+
+class ExtractOneAction final : public NaoAction {
+    public:
+    ExtractOneAction(NaoPlugin* parent);
+
+    N_NODISCARD NaoString ActionName() override;
+    bool Execute(NaoObject* object) override;
 };

@@ -26,6 +26,7 @@ class NaoObject;
 class NaoIO;
 
 class LIBNAO_API NaoPlugin;
+class LIBNAO_API NaoAction;
 
 using PluginFunc = NaoPlugin*(*)();
 
@@ -57,23 +58,25 @@ class LIBNAO_API NaoPlugin {
     N_NODISCARD virtual bool ShouldLeave(NaoObject* object);
     virtual bool Leave(NaoObject* object);
 
-    // Moving
-    N_NODISCARD virtual bool CanMove(NaoObject* from, NaoObject* to);
-    virtual bool Move(NaoObject*& from, NaoObject* to); // Replace from with to
-
     // Decoding
     N_NODISCARD virtual bool CanDecode(NaoObject* object);
     virtual bool Decode(NaoObject* object, NaoIO* output);
 
     // Context menu
-    class NaoContextMenuEntry {
-        public:
-        virtual ~NaoContextMenuEntry() = 0;
-
-        N_NODISCARD virtual NaoString EntryName() = 0;
-        virtual bool Execute(NaoObject* object) = 0;
-    };
-
     N_NODISCARD virtual bool HasContextMenu(NaoObject* object);
-    N_NODISCARD virtual NaoVector<NaoContextMenuEntry*> ContextMenu(NaoObject* object);
+    N_NODISCARD virtual NaoVector<NaoAction*> ContextMenu(NaoObject* object);
+};
+
+class LIBNAO_API NaoAction {
+    public:
+    NaoAction(NaoPlugin* parent);
+    virtual ~NaoAction() = default;
+
+    N_NODISCARD virtual NaoString ActionName() = 0;
+    virtual bool Execute(NaoObject* object) = 0;
+
+    N_NODISCARD NaoPlugin* parent() const;
+
+    private:
+    NaoPlugin* _m_parent;
 };

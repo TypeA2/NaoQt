@@ -31,8 +31,6 @@
 
 #include <numeric>
 
-#error Context menu + DAT leaving
-
 NaoPlugin* GetNaoPlugin() {
     return new Plugin_DAT();
 }
@@ -142,205 +140,188 @@ bool Plugin_DAT::Enter(NaoObject* object) {
     return false;
 }
 
-bool Plugin_DAT::CanMove(NaoObject* from, NaoObject* to) {
-    return to->parent() == from // `to` is a child of `from`
-        || (CanEnter(from) // `from` (current object) is a DAT file
-            && from->name().starts_with(to->name()) // `from` is a child of `to`
-            && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP)); // Direct child
+#pragma endregion 
+
+#pragma region Context menu
+
+bool Plugin_DAT::HasContextMenu(NaoObject* object) {
+    return CanEnter(object) || CanEnter(object->parent());
 }
 
-bool Plugin_DAT::Move(NaoObject*& from, NaoObject* to) {
-    if (to->parent() == from) {
-        from->remove_child(to);
+NaoVector<NaoAction*> Plugin_DAT::ContextMenu(NaoObject* object) {
+    if (CanEnter(object)) {
+        return { new ExtractAllAction(this) };
+    }
 
-        to->set_parent(nullptr);
+    if (CanEnter(object->parent())) {
+        return { new ExtractOneAction(this) };
+    }
 
-        delete from;
-    } else if (CanEnter(from)
-        && from->name().starts_with(to->name())
-        && !from->name().substr(std::size(to->name()) + 1).contains(N_PATHSEP)) {
+    return { };
+}
 
-        for (NaoObject* child : from->take_children()) {
+#pragma endregion
+
+#pragma region ExtractAllAction
+
+ExtractAllAction::ExtractAllAction(NaoPlugin* parent)
+    : NaoAction(parent) { }
+
+NaoString ExtractAllAction::ActionName() {
+    return "Extract";
+}
+
+bool ExtractAllAction::Execute(NaoObject* object) {
+    NaoString fname = fs::path(object->name()).filename();
+
+    NaoString target = DesktopUtils::save_as_dir(
+        fs::path(object->name()).parent_path(),
+        "",
+        "Select target folder");
+
+    NaoString out_dir;
+
+    if (!std::empty(target)
+        && DesktopUtils::confirm_overwrite(
+        (out_dir = target + N_PATHSEP + fname.copy().clean_dir_name()), true)) {
+
+        nlog << "Extracting to" << target;
+
+        if (!parent()->Enter(object)) {
+            nerr << "Failed populating extraction target";
+            return false;
+        }
+
+        NaoVector<NaoObject*> children = object->take_children();
+
+        uint64_t total = std::accumulate(children.cbegin(), children.cend(),
+            0ui64,
+            [](uint64_t i, NaoObject * object) -> uint64_t {
+            return i + object->file_ref().real_size;
+        });
+
+        nlog << "Found" << children.size()
+            << (children.size() > 1 ? "children" : "child")
+            << "with a total size of" << NaoString::bytes(total);
+
+        NProgressDialog progress(UIWindow);
+
+        progress.set_title("Extracting" + fname);
+        progress.set_max(total);
+        progress.start();
+
+        for (NaoObject* child : children) {
+            // Shouldn't be possible
+            if (child->is_dir()) {
+                delete child;
+                continue;
+            }
+
+            const NaoObject::File& info = child->file_ref();
+
+            progress.set_text("Extracting: " + fs::path(info.name).filename());
+
+            if (!info.io->open()) {
+                nerr << "Failed opening input io with name" << info.name;
+                delete child;
+                continue;
+            }
+
+            if (!info.io->seek(0)) {
+                nerr << "Failed seeking to start in input io with name" << info.name;
+            }
+
+            NaoFileIO output_file(out_dir + N_PATHSEP + fs::path(info.name).filename());
+
+            if (!output_file.open(NaoIO::WriteOnly)) {
+                nerr << "Failed opening output io with name" << output_file.path();
+                delete child;
+                continue;
+            }
+
+            if (output_file.write(info.io->read_all()) != info.real_size) {
+                nerr << "Failed writing all data from" << info.name;
+            } else {
+                nlog << "Wrote" << NaoString::bytes(info.real_size) << "to" << output_file.path();
+            }
+
+            progress.add_progress(info.real_size);
+
+            output_file.close();
             delete child;
         }
 
-        from->set_parent(to);
+        progress.close();
     }
-
-    from = to;
-
-    Enter(from);
 
     return true;
 }
 
-#pragma endregion 
+#pragma endregion
 
-namespace Plugin {
+#pragma region ExtractOneAction
 
-    /*
-    namespace ContextMenu {
-        bool has_context_menu(NaoObject* object) {
-            return Capabilities::supports(object)
-                || exists(fs::absolute(object->parent()->name()));
-        }
+ExtractOneAction::ExtractOneAction(NaoPlugin* parent)
+    : NaoAction(parent) { }
 
-        NaoPlugin::ContextMenu::type context_menu(NaoObject* object) {
-            if (Capabilities::supports(object)) {
-                return { { "Extract", Extraction::extract_all_files } };
-            }
+NaoString ExtractOneAction::ActionName() {
+    return "Extract";
+}
 
-            if (exists(fs::absolute(object->parent()->name()))) {
-                return { { "Extract", Extraction::extract_single_file } };
-            }
-
-            return NaoPlugin::ContextMenu::type();
-        }
+bool ExtractOneAction::Execute(NaoObject* object) {
+    if (object->is_dir()) {
+        nerr << "Shouldn't be possible to extract a directory";
+        return false;
     }
 
-    namespace Extraction {
-        bool extract_single_file(NaoObject* object) {
-            if (object->is_dir()) {
-                nerr << "Shouldn't be possible to extract a directory";
-                return false;
-            }
+    nlog << "Saving file" << object->name();
 
-            nlog << "Saving file" << object->name();
+    NaoString ext = fs::path(object->name()).extension();
 
-            NaoString ext = fs::path(object->name()).extension();
+    char* filters = new char[32]();
+    std::copy_n("\0\0\0\0 file\0*.\0\0\0\0All files\0*.*\0", 31, filters);
+    std::copy_n(std::begin(ext), 4, filters);
+    std::copy_n(std::begin(ext) + 1, 3, filters + 12);
 
-            char* filters = new char[32]();
-            std::copy_n("\0\0\0\0 file\0*.\0\0\0\0All files\0*.*\0", 31, filters);
-            std::copy_n(std::begin(ext), 4, filters);
-            std::copy_n(std::begin(ext) + 1, 3, filters + 12);
+    NaoString target = DesktopUtils::save_as_file(object->name(), filters);
 
-            NaoString target = DesktopUtils::save_as_file(object->name(), filters);
+    delete[] filters;
 
-            delete[] filters;
+    if (!std::empty(target)) {
+        nlog << "Writing to " << target;
 
-            if (!std::empty(target)) {
-                nlog << "Writing to " << target;
-
-                NaoIO* source = object->file_ref().io;
-                if (!source->open()) {
-                    nerr << "Failed opening source";
-                    Error::error() = "Failed opening source io";
-                    return false;
-                }
-
-                if (!source->seek(0)) {
-                    nerr << "Failed seeking in source";
-                    Error::error() = "Failed seeking in source io";
-                    return false;
-                }
-                
-                NaoFileIO io(target);
-                if (!io.open(NaoIO::WriteOnly)) {
-                    nerr << "Failed opening target";
-                    Error::error() = "Failed opening target file";
-                    return false;
-                }
-
-                int64_t written = 0;
-                if ((written = io.write(source->read_all())) != source->size()) {
-                    nerr << "Could not write all data, missing" << (source->size() - written) << "bytes";
-                    source->close();
-                    io.close();
-                    return false;
-                }
-
-                nlog << "Wrote" << NaoString::bytes(written) << ('(' + NaoString::number(written) + ") bytes");
-
-                source->close();
-                io.close();
-            }
-
-            return true;
+        NaoIO* source = object->file_ref().io;
+        if (!source->open()) {
+            nerr << "Failed opening source";
+            return false;
         }
 
-        bool extract_all_files(NaoObject* object) {
-            NaoString fname = fs::path(object->name()).filename();
-
-            NaoString target = DesktopUtils::save_as_dir(
-                fs::path(object->name()).parent_path(),
-                "",
-                "Select target folder");
-
-            if (!std::empty(target)
-                && DesktopUtils::confirm_overwrite(target + N_PATHSEP + fname.copy().clean_dir_name(), true)) {
-                
-                nlog << "Extracting to" << target;
-
-                if (!Function::populate(object)) {
-                    nerr << "Failed populating extraction target";
-                    return false;
-                }
-
-                NaoVector<NaoObject*> children = object->take_children();
-
-                uint64_t total = std::accumulate(children.cbegin(), children.cend(),
-                    0ui64,
-                    [](uint64_t i, NaoObject* object) -> uint64_t {
-                    return i + object->file_ref().real_size;
-                });
-
-                nlog << "Found" << children.size()
-                    << (children.size() > 1 ? "children" : "child")
-                    << "with a total size of" << NaoString::bytes(total);
-
-                NProgressDialog progress(UIWindow);
-
-                progress.set_title("Extracting" + fname);
-                progress.set_max(total);
-                progress.start();
-
-                for (NaoObject* child : children) {
-                    // Shouldn't be possible
-                    if (child->is_dir()) {
-                        delete child;
-                        continue;
-                    }
-
-                    const NaoObject::File& info = child->file_ref();
-
-                    progress.set_text("Extracting: " + fs::path(info.name).filename());
-
-                    if (!info.io->open()) {
-                        nerr << "Failed opening input io with name" << info.name;
-                        delete child;
-                        continue;
-                    }
-
-                    if (!info.io->seek(0)) {
-                        nerr << "Failed seeking to start in input io with name" << info.name;
-                    }
-
-                    NaoFileIO output_file(target + N_PATHSEP + fs::path(info.name).filename());
-
-                    if (!output_file.open(NaoIO::WriteOnly)) {
-                        nerr << "Failed opening output io with name" << output_file.path();
-                        delete child;
-                        continue;
-                    }
-
-                    if (output_file.write(info.io->read_all()) != info.real_size) {
-                        nerr << "Failed writing all data from" << info.name;
-                    } else {
-                        nlog << "Wrote" << NaoString::bytes(info.real_size) << "to" << output_file.path();
-                    }
-
-                    progress.add_progress(info.real_size);
-
-                    output_file.close();
-                    delete child;
-                }
-
-                progress.close();
-            }
-
-            return true;
+        if (!source->seek(0)) {
+            nerr << "Failed seeking in source";
+            return false;
         }
-        
 
-    }*/
+        NaoFileIO io(target);
+        if (!io.open(NaoIO::WriteOnly)) {
+            nerr << "Failed opening target";
+            return false;
+        }
+
+        int64_t written = io.write(source->read_all());
+        if (written != source->size()) {
+            nerr << "Could not write all data, missing" << (source->size() - written) << "bytes";
+            source->close();
+            io.close();
+            return false;
+        }
+
+        nlog << "Wrote" << NaoString::bytes(written) << ('(' + NaoString::number(written) + ") bytes");
+
+        source->close();
+        io.close();
+    }
+
+    return true;
 }
+
+#pragma endregion

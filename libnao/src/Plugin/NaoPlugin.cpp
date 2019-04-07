@@ -45,14 +45,6 @@ bool NaoPlugin::Leave(NaoObject* object) {
     return false;
 }
 
-bool NaoPlugin::CanMove(NaoObject* from, NaoObject* to) {
-    return false;
-}
-
-bool NaoPlugin::Move(NaoObject*& from, NaoObject* to) {
-    return false;
-}
-
 bool NaoPlugin::CanDecode(NaoObject* object) {
     return false;
 }
@@ -65,6 +57,17 @@ bool NaoPlugin::HasContextMenu(NaoObject* object) {
     return false;
 }
 
-NaoVector<NaoPlugin::NaoContextMenuEntry*> NaoPlugin::ContextMenu(NaoObject* object) {
+NaoVector<NaoAction*> NaoPlugin::ContextMenu(NaoObject* object) {
     return { };
 }
+
+#pragma region NaoAction
+
+NaoAction::NaoAction(NaoPlugin* parent)
+    : _m_parent(parent) { }
+
+NaoPlugin* NaoAction::parent() const {
+    return _m_parent;
+}
+
+#pragma endregion

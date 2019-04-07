@@ -383,27 +383,29 @@ void NaoQt::view_context_menu(const QPoint& pos) {
             && target_plugin != current_plugin
             && target_plugin->HasContextMenu(object)) {
 
-            nlog << NaoString("Using target plugin \"" + target_plugin->DisplayName() + '"');
+            nlog << NaoString("Using plugin \"" + target_plugin->DisplayName() + '"');
 
             menu->addSection(target_plugin->DisplayName());
 
             const int64_t count = menu->actions().size();
 
-            for (NaoPlugin::NaoContextMenuEntry* entry : target_plugin->ContextMenu(object)) {
+            for (NaoAction* action : target_plugin->ContextMenu(object)) {
 
-                QAction* act = new QAction(entry->EntryName(), menu);
-                connect(act, &QAction::triggered, this, [this, entry, object] {
+                QAction* act = new QAction(action->ActionName(), menu);
+                connect(act, &QAction::triggered, this, [this, action, object] {
 
                     auto watcher = new QFutureWatcher<bool>(this);
-                    connect(watcher, &QFutureWatcher<bool>::finished, this, [this, entry, watcher] {
+                    connect(watcher, &QFutureWatcher<bool>::finished, this, [this, action, watcher] {
                         if (!watcher->result()) {
                             QMessageBox::warning(this, "Action failed",
-                                "Failed executing action with name: " + entry->EntryName());
+                                "Failed executing action with name: " + action->ActionName());
                         }
+
+                        delete action;
                     });
                     connect(watcher, &QFutureWatcher<bool>::finished, &QFutureWatcher<bool>::deleteLater);
 
-                    watcher->setFuture(QtConcurrent::run(entry, &NaoPlugin::NaoContextMenuEntry::Execute, object));
+                    watcher->setFuture(QtConcurrent::run(action, &NaoAction::Execute, object));
                 });
 
                 menu->addAction(act);
@@ -421,13 +423,13 @@ void NaoQt::view_context_menu(const QPoint& pos) {
 
             const int64_t count = menu->actions().size();
 
-            for (NaoPlugin::NaoContextMenuEntry* entry : current_plugin->ContextMenu(object)) {
+            for (NaoAction* action : current_plugin->ContextMenu(object)) {
                 
-                QAction* act = new QAction(entry->EntryName(), menu);
-                connect(act, &QAction::triggered, this, [this, entry, object] {
-                    if (!entry->Execute(object)) {
+                QAction* act = new QAction(action->ActionName(), menu);
+                connect(act, &QAction::triggered, this, [this, action, object] {
+                    if (!action->Execute(object)) {
                         QMessageBox::warning(this, "Action failed",
-                            "Failed executing action with name: " + entry->EntryName());
+                            "Failed executing action \"" + action->ActionName() + "\"");
                     }
                 });
 

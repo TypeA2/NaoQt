@@ -157,18 +157,6 @@ bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
 
     // Already have a plugin
     if (m_current_plugin) {
-        // Try to move if possible, else manually leave and enter a new object
-        if (m_current_plugin->CanMove(m_current_object, new_object)) {
-            nlog << "Move using current plugin supported";
-
-            if (!m_current_plugin->Move(m_current_object, new_object)) {
-                nerr << "Move failed";
-                return false;
-            }
-
-            return true;
-        }
-        
         if (m_current_plugin->ShouldLeave(m_current_object)) {
             nlog << "Leaving using current plugin";
 
