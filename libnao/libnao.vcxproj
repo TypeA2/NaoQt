@@ -187,7 +187,9 @@
     <ClCompile Include="src\Containers\NaoBytes.cpp" />
     <ClCompile Include="src\Containers\NaoString.cpp" />
     <ClCompile Include="src\Containers\NaoVariant.cpp" />
+    <ClCompile Include="src\Decoding\Archives\NaoCPKReader.cpp" />
     <ClCompile Include="src\Decoding\Archives\NaoDATReader.cpp" />
+    <ClCompile Include="src\Decoding\Parsing\NaoUTFReader.cpp" />
     <ClCompile Include="src\Filesystem\NaoFileSystemManager.cpp" />
     <ClCompile Include="src\IO\NaoChunkIO.cpp" />
     <ClCompile Include="src\IO\NaoFileIO.cpp" />
@@ -211,8 +213,10 @@
     <ClInclude Include="include\Containers\NaoString.h" />
     <ClInclude Include="include\Containers\NaoVariant.h" />
     <ClInclude Include="include\Containers\NaoVector.h" />
+    <ClInclude Include="include\Decoding\Archives\NaoCPKReader.h" />
     <ClInclude Include="include\Decoding\Archives\NaoDATReader.h" />
     <ClInclude Include="include\Decoding\NaoDecodingException.h" />
+    <ClInclude Include="include\Decoding\Parsing\NaoUTFReader.h" />
     <ClInclude Include="include\Filesystem\Filesystem.h" />
     <ClInclude Include="include\Filesystem\NaoFileSystemManager.h" />
     <ClInclude Include="include\Functionality\NaoEndian.h" />

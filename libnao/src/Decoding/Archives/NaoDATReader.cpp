@@ -20,7 +20,6 @@
 #define N_LOG_ID "NaoDATReader"
 #include "Logging/NaoLogging.h"
 #include "Decoding/NaoDecodingException.h"
-#include "IO/NaoIO.h"
 #include "IO/NaoChunkIO.h"
 #include "NaoObject.h"
 

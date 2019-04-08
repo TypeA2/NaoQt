@@ -67,6 +67,12 @@
     <Filter Include="Headers\Decoding\Archives">
       <UniqueIdentifier>{e8f91f76-b482-4c67-b318-fd6a4fba624c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sources\Decoding\Parsing">
+      <UniqueIdentifier>{2ee91c53-2a36-4424-9c57-b32dcf4ea9d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Decoding\Parsing">
+      <UniqueIdentifier>{d84d316b-749f-42e7-b9e7-a30a7fa5784d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\libnao.h">
@@ -154,6 +160,12 @@
     <ClInclude Include="include\Decoding\NaoDecodingException.h">
       <Filter>Headers\Decoding</Filter>
     </ClInclude>
+    <ClInclude Include="include\Decoding\Archives\NaoCPKReader.h">
+      <Filter>Headers\Decoding\Archives</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Decoding\Parsing\NaoUTFReader.h">
+      <Filter>Headers\Decoding\Parsing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\libnao.cpp">
@@ -212,6 +224,12 @@
     </ClCompile>
     <ClCompile Include="src\Decoding\Archives\NaoDATReader.cpp">
       <Filter>Sources\Decoding\Archives</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Decoding\Archives\NaoCPKReader.cpp">
+      <Filter>Sources\Decoding\Archives</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Decoding\Parsing\NaoUTFReader.cpp">
+      <Filter>Sources\Decoding\Parsing</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

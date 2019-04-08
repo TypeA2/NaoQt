@@ -26,11 +26,11 @@ class LIBNAO_API NaoVariant {
     public:
     ~NaoVariant();
 
-    bool valid() const;
+    N_NODISCARD bool valid() const;
 
-    bool is_signed() const;
-    bool is_unsigned() const;
-    bool is_real() const;
+    N_NODISCARD bool is_signed() const;
+    N_NODISCARD bool is_unsigned() const;
+    N_NODISCARD bool is_real() const;
 
     NaoVariant(NaoVariant&& other) noexcept;
     NaoVariant(const NaoVariant& other);
@@ -55,22 +55,22 @@ class LIBNAO_API NaoVariant {
     NaoVariant(NaoString str);
     NaoVariant(NaoBytes data);
 
-    bool as_bool() const;
+    N_NODISCARD bool as_bool() const;
 
-    int8_t as_int8() const;
-    uint8_t as_uint8() const;
-    int16_t as_int16() const;
-    uint16_t as_uint16() const;
-    int32_t as_int32() const;
-    uint32_t as_uint32() const;
-    int64_t as_int64() const;
-    uint64_t as_uint64() const;
+    N_NODISCARD int8_t as_int8() const;
+    N_NODISCARD uint8_t as_uint8() const;
+    N_NODISCARD int16_t as_int16() const;
+    N_NODISCARD uint16_t as_uint16() const;
+    N_NODISCARD int32_t as_int32() const;
+    N_NODISCARD uint32_t as_uint32() const;
+    N_NODISCARD int64_t as_int64() const;
+    N_NODISCARD uint64_t as_uint64() const;
 
-    float as_float() const;
-    double as_double() const;
+    N_NODISCARD float as_float() const;
+    N_NODISCARD double as_double() const;
 
-    NaoString as_string() const;
-    NaoBytes as_bytes() const;
+    N_NODISCARD NaoString as_string() const;
+    N_NODISCARD NaoBytes as_bytes() const;
 
     private:
 
