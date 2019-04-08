@@ -14,15 +14,9 @@
     <ClCompile Include="src\Plugin_DAT.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\DATReader.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Plugin_DAT.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="include\DATReader.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

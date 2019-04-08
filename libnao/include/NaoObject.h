@@ -58,33 +58,35 @@ class LIBNAO_API NaoObject {
     void remove_child(const NaoVector<NaoObject*>& children);
     NaoVector<NaoObject*> take_children();
 
-    bool has_children() const;
-    bool is_dir() const;
+    N_NODISCARD bool has_children() const;
+    N_NODISCARD bool is_dir() const;
     
-    const NaoVector<NaoObject*>& children() const;
+    N_NODISCARD const NaoVector<NaoObject*>& children() const;
 
-    File file() const;
+    N_NODISCARD File file() const;
     File& file_ref();
 
-    Dir dir() const;
+    N_NODISCARD Dir dir() const;
     Dir& dir_ref();
 
-    const NaoString& name() const;
+    N_NODISCARD const NaoString& name() const;
 
     void set_description(const NaoString& desc);
 
-    const NaoString& description() const;
+    N_NODISCARD const NaoString& description() const;
 
-    uint64_t flags() const;
+    N_NODISCARD uint64_t flags() const;
     uint64_t set_flags(uint64_t flags);
 
     bool set_parent(NaoObject* parent);
-    NaoObject* parent() const;
+    N_NODISCARD NaoObject* parent() const;
 
-    bool is_child_of(NaoObject* search) const;
+    N_NODISCARD bool is_child_of(NaoObject* search) const;
 
 
     private:
+    void _attach_parent();
+
     bool _m_is_dir;
 
     NaoVector<NaoObject*> _m_children;

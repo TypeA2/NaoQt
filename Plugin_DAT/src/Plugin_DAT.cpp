@@ -17,17 +17,16 @@
 
 #include "Plugin_DAT.h"
 
-#include "DATReader.h"
-
 #define N_LOG_ID "Plugin_DAT"
 #include <Logging/NaoLogging.h>
 #include <NaoObject.h>
-#include <IO/NaoChunkIO.h>
 #include <IO/NaoFileIO.h>
 #include <Plugin/NaoPluginManager.h>
 #include <Utils/DesktopUtils.h>
 #include <UI/NaoUIManager.h>
 #include <UI/NProgressDialog.h>
+#include <Decoding/NaoDecodingException.h>
+#include <Decoding/Archives/NaoDATReader.h>
 
 #include <numeric>
 
@@ -71,8 +70,8 @@ NaoString Plugin_DAT::AuthorDescription() const {
 
 #pragma region Description
 
-bool Plugin_DAT::HasDescription(NaoObject* object) const {
-    return true;
+bool Plugin_DAT::HasDescription(NaoObject* object) {
+    return CanEnter(object);
 }
 
 bool Plugin_DAT::PrioritiseDescription() const {
@@ -82,11 +81,6 @@ bool Plugin_DAT::PrioritiseDescription() const {
 NaoString Plugin_DAT::Description() const {
     return "DAT Archive";
 }
-
-NaoString Plugin_DAT::Description(NaoObject* of) const {
-    return "DAT Archive";
-}
-
 
 #pragma endregion 
 
@@ -101,43 +95,41 @@ bool Plugin_DAT::CanEnter(NaoObject* object) {
 bool Plugin_DAT::Enter(NaoObject* object) {
     NaoIO* io = object->file_ref().io;
 
-    if (DATReader* reader = DATReader::create(io)) {
-
-        int64_t subsequent_errors = 0;
-
-        for (const DATReader::FileEntry& file : reader->files()) {
-            NaoChunkIO* file_io = new NaoChunkIO(io, 
-                { file.offset, file.size, 0 });
-
-            NaoObject* new_object = new NaoObject(NaoObject::File{
-                file_io,
-                file.size,
-                file.size,
-                false,
-                object->name() + N_PATHSEP + file.name
-                }, object);
-
-            if (!PluginManager.set_description(new_object)) {
-                if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-                    nwarn << "Failed to set description for"
-                        << new_object->name();
-                }
-
-                ++subsequent_errors;
-            }
-        }
-
-        if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-            nwarn << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
-                << "messages suppressed.";
-        }
-
-        delete reader;
-
-        return true;
+    NaoDATReader* reader = nullptr;
+    try {
+        reader = new NaoDATReader(io);
+    } catch (const NaoDecodingException& e) {
+        nerr << e.what();
+        return false;
     }
 
-    return false;
+    int64_t subsequent_errors = 0;
+
+    for (NaoObject* file : reader->take_files()) {
+        file->file_ref().name = object->name() + N_PATHSEP + file->name();
+
+        if (!PluginManager.set_description(file)) {
+            if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
+                nwarn << "Failed to set description for"
+                    << file->name();
+            }
+
+            ++subsequent_errors;
+        }
+
+        object->add_child(file);
+    }
+
+    ndebug << reader->files().size();
+
+    if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
+        nwarn << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
+            << "messages suppressed.";
+    }
+
+    delete reader;
+
+    return true;
 }
 
 #pragma endregion 
@@ -276,16 +268,8 @@ bool ExtractOneAction::Execute(NaoObject* object) {
 
     nlog << "Saving file" << object->name();
 
-    NaoString ext = fs::path(object->name()).extension();
-
-    char* filters = new char[32]();
-    std::copy_n("\0\0\0\0 file\0*.\0\0\0\0All files\0*.*\0", 31, filters);
-    std::copy_n(std::begin(ext), 4, filters);
-    std::copy_n(std::begin(ext) + 1, 3, filters + 12);
-
-    NaoString target = DesktopUtils::save_as_file(object->name(), filters);
-
-    delete[] filters;
+    NaoString target = DesktopUtils::save_as_file(object->name(),
+        fs::path(object->name()).filename());
 
     if (!std::empty(target)) {
         nlog << "Writing to " << target;

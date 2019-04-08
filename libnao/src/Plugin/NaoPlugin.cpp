@@ -25,8 +25,8 @@ NaoString NaoPlugin::Description() const {
     return "No description given";
 }
 
-NaoString NaoPlugin::Description(NaoObject* of) const {
-    return "No description given";
+NaoString NaoPlugin::Description(NaoObject* of) {
+    return Description();
 }
 
 bool NaoPlugin::CanEnter(NaoObject* object) {

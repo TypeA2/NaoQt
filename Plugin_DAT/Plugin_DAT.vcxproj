@@ -19,11 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\DATReader.cpp" />
     <ClCompile Include="src\Plugin_DAT.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\DATReader.h" />
     <ClInclude Include="include\Plugin_DAT.h" />
   </ItemGroup>
   <ItemGroup>

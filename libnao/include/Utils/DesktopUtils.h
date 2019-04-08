@@ -26,7 +26,7 @@ namespace DesktopUtils {
     LIBNAO_API void open_in_explorer(const NaoString& target);
     LIBNAO_API void open_file(const NaoString& target, bool choose = false);
     LIBNAO_API NaoString save_as_file(const NaoString& default_path,
-        const char* filters = "All files\0*.*\0", uint32_t current_filter = 0);
+        const NaoString& default_name, const NaoString& title = "Save as...");
     LIBNAO_API NaoString save_as_dir(const NaoString& default_path,
         const NaoString& default_name, const NaoString& title = "Select folder");
     LIBNAO_API bool confirm_overwrite(const NaoString& target, bool dir,

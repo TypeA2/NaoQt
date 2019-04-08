@@ -25,7 +25,6 @@
 #ifdef N_WINDOWS
 #   include <ShlObj_core.h>
 #   include <shellapi.h>
-#   include <commdlg.h>
 #endif
 
 namespace DesktopUtils {
@@ -82,7 +81,7 @@ namespace DesktopUtils {
             SW_SHOWDEFAULT);
 
             if (reinterpret_cast<uintptr_t>(res) <= 32) {
-                nerr << "DesktopUtils::open_file - ShellExecute failed with error code "
+                nerr << "ShellExecute failed with error code "
                     << reinterpret_cast<uintptr_t>(res);
             }
         }
@@ -91,9 +90,95 @@ namespace DesktopUtils {
 
     }
 
-    NaoString save_as_file(const NaoString& default_path, const char* filters, uint32_t current_filter) {
-
+    NaoString save_as_file(const NaoString& default_path,
+        const NaoString& default_name, const NaoString& title) {
 #ifdef N_WINDOWS
+
+#define CHECKERR(msg) if((hr) < 0) { \
+    nerr << (msg); \
+    dialog->Release(); \
+    return NaoString(); \
+}
+
+        IFileSaveDialog* dialog = nullptr;
+
+        HRESULT hr = CoCreateInstance(
+            CLSID_FileSaveDialog,
+            nullptr,
+            CLSCTX_INPROC_SERVER,
+            IID_IFileSaveDialog,
+            reinterpret_cast<void**>(&dialog));
+
+        if (FAILED(hr)) {
+            nerr << "Could not create file dialog instance";
+            return NaoString();
+        }
+
+        hr = dialog->SetFileName(default_name.utf16());
+        if (FAILED(hr)) {
+            nerr << "IFileSaveDialog::SetFileName failed";
+        }
+
+        std::wstring name = fs::path(default_path).extension().wstring().substr(1);
+        std::transform(std::begin(name), std::end(name), std::begin(name), ::towupper);
+        name += L" file";
+
+        std::wstring pattern = (NaoString("*") + fs::path(default_path).extension()).utf16().c_str();
+
+        COMDLG_FILTERSPEC filter {
+            name.c_str(),
+            pattern.c_str()
+        };
+
+        hr = dialog->SetFileTypes(1, &filter);
+        CHECKERR("IFileSaveDialog::SetFileTypes failed");
+
+        hr = dialog->SetTitle(title.utf16());
+        if (FAILED(hr)) {
+            nerr << "IFileSaveDialog::SetTitle failed";
+        }
+
+        DWORD opts;
+        hr = dialog->GetOptions(&opts);
+        CHECKERR("IFileSaveDialog::GetOptions failed");
+
+        opts |= FOS_FORCEFILESYSTEM;
+
+        hr = dialog->SetOptions(opts);
+        CHECKERR("IFileOpenDialog::SetOptions failed");
+
+        hr = dialog->Show(UIWindow);
+
+        if (FAILED(hr)) {
+            dialog->Release();
+            return NaoString();
+        }
+
+        IShellItem* item = nullptr;
+        hr = dialog->GetResult(&item);
+        CHECKERR("IShellItemArray::GetItemAt failed");
+
+#undef CHECKERR
+
+        wchar_t* path = nullptr;
+        hr = item->GetDisplayName(SIGDN_FILESYSPATH, &path);
+
+        item->Release();
+        dialog->Release();
+
+        if (SUCCEEDED(hr)) {
+            NaoString str = NaoString::fromWide(path);
+            CoTaskMemFree(path);
+
+            return str;
+        }
+
+        nerr << "IShellItem::GetDisplayName failed";
+        return NaoString();
+
+#endif
+
+#if 0 // N_WINDOWS
         char result[1024]{ 0 };
         NaoString fname = default_path.substr(default_path.last_index_of(N_PATHSEP) + 1);
 

@@ -45,10 +45,10 @@ class LIBNAO_API NaoPlugin {
     N_NODISCARD virtual NaoString AuthorDescription() const = 0;
 
     // Supported file description
-    N_NODISCARD virtual bool HasDescription(NaoObject* object) const = 0;
+    N_NODISCARD virtual bool HasDescription(NaoObject* object) = 0;
     N_NODISCARD virtual bool PrioritiseDescription() const;
     N_NODISCARD virtual NaoString Description() const;
-    N_NODISCARD virtual NaoString Description(NaoObject* of) const;
+    N_NODISCARD virtual NaoString Description(NaoObject* of);
 
     // Entering
     N_NODISCARD virtual bool CanEnter(NaoObject* object);

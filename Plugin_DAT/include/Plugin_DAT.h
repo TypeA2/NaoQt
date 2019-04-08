@@ -33,10 +33,9 @@ class Plugin_DAT final : public NaoPlugin {
     N_NODISCARD NaoString AuthorName() const override;
     N_NODISCARD NaoString AuthorDescription() const override;
 
-    N_NODISCARD bool HasDescription(NaoObject* object) const override;
+    N_NODISCARD bool HasDescription(NaoObject* object) override;
     N_NODISCARD bool PrioritiseDescription() const override;
     N_NODISCARD NaoString Description() const override;
-    N_NODISCARD NaoString Description(NaoObject* of) const override;
 
     N_NODISCARD bool CanEnter(NaoObject* object) override;
     bool Enter(NaoObject* object) override;

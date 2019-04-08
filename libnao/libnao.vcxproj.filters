@@ -55,6 +55,18 @@
     <Filter Include="Resource files">
       <UniqueIdentifier>{0ca71169-36bb-4a69-8704-f10dc39283b4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sources\Decoding">
+      <UniqueIdentifier>{9c9787f4-29f4-441b-9dd5-06b22c3ad8e8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Decoding\Archives">
+      <UniqueIdentifier>{7cad7e20-e874-4b35-9b3d-a97c2bb6a9ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Decoding">
+      <UniqueIdentifier>{8dcb06df-8169-4e6a-be21-c6ef159aa558}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Decoding\Archives">
+      <UniqueIdentifier>{e8f91f76-b482-4c67-b318-fd6a4fba624c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\libnao.h">
@@ -136,6 +148,12 @@
     <ClInclude Include="include\Functionality\NaoEndian.h">
       <Filter>Headers\Functionality</Filter>
     </ClInclude>
+    <ClInclude Include="include\Decoding\Archives\NaoDATReader.h">
+      <Filter>Headers\Decoding\Archives</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Decoding\NaoDecodingException.h">
+      <Filter>Headers\Decoding</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\libnao.cpp">
@@ -191,6 +209,9 @@
     </ClCompile>
     <ClCompile Include="src\Containers\NaoVariant.cpp">
       <Filter>Sources\Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Decoding\Archives\NaoDATReader.cpp">
+      <Filter>Sources\Decoding\Archives</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

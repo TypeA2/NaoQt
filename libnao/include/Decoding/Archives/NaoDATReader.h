@@ -17,32 +17,24 @@
 
 #pragma once
 
-#include <Containers/NaoVector.h>
-#include <Containers/NaoString.h>
+#include "libnao.h"
+
+#include "NaoObject.h"
 
 class NaoIO;
 
-class DATReader {
+class LIBNAO_API NaoDATReader {
     public:
+    NaoDATReader(NaoIO* io);
 
-    static DATReader* create(NaoIO* in);
+    ~NaoDATReader();
 
-    DATReader(NaoIO* in);
-
-    struct FileEntry {
-        NaoString name;
-        uint32_t size;
-        uint32_t offset;
-    };
-
-    ~DATReader() = default;
-
-    N_NODISCARD const NaoVector<FileEntry>& files() const;
+    N_NODISCARD const NaoVector<NaoObject*>& files() const;
+    N_NODISCARD NaoVector<NaoObject*> take_files();
 
     private:
-
-    void _read();
+    void _read_archive();
 
     NaoIO* _m_io;
-    NaoVector<FileEntry> _m_files;
+    NaoVector<NaoObject*> _m_files;
 };

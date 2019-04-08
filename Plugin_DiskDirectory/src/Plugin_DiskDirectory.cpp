@@ -29,7 +29,6 @@ NaoPlugin* GetNaoPlugin() {
     return new Plugin_DiskDirectory();
 }
 
-
 #pragma region Plugin info
 
 NaoString Plugin_DiskDirectory::Name() const {
@@ -66,8 +65,8 @@ NaoString Plugin_DiskDirectory::AuthorDescription() const {
 
 #pragma region Description
 
-bool Plugin_DiskDirectory::HasDescription(NaoObject* object) const {
-    return true;
+bool Plugin_DiskDirectory::HasDescription(NaoObject* object) {
+    return CanEnter(object);
 }
 
 bool Plugin_DiskDirectory::PrioritiseDescription() const {
@@ -77,11 +76,6 @@ bool Plugin_DiskDirectory::PrioritiseDescription() const {
 NaoString Plugin_DiskDirectory::Description() const {
     return "Directory";
 }
-
-NaoString Plugin_DiskDirectory::Description(NaoObject* of) const {
-    return "Directory";
-}
-
 
 #pragma endregion 
 
@@ -98,7 +92,6 @@ bool Plugin_DiskDirectory::Enter(NaoObject* object) {
     int64_t subsequent_errors = 0;
 
     for (const fs::directory_entry& entry : fs::directory_iterator(object->name())) {
-
         path_str = entry.path();
 
         NaoObject* new_object = nullptr;
@@ -170,4 +163,3 @@ bool Plugin_DiskDirectory::Enter(NaoObject* object) {
 }
 
 #pragma endregion 
-
