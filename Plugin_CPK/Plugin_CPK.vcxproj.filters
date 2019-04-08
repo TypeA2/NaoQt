@@ -32,6 +32,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\libnao\libnao.licenseheader" />
+    <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Plugin_CPK.h">

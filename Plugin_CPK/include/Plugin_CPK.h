@@ -21,29 +21,38 @@
 
 #include <Plugin/NaoPlugin.h>
 
-LIBNAO_PLUGIN_CALL LIBNAO_PLUGIN_DECL NaoPlugin GetNaoPlugin();
+LIBNAO_PLUGIN_CALL LIBNAO_PLUGIN_DECL NaoPlugin* GetNaoPlugin();
+
+class Plugin_CPK final : public NaoPlugin {
+    public:
+    Plugin_CPK() = default;
+
+    N_NODISCARD NaoString Name() const override;
+    N_NODISCARD NaoString DisplayName() const override;
+    N_NODISCARD NaoString PluginDescription() const override;
+    N_NODISCARD NaoString VersionString() const override;
+
+    N_NODISCARD NaoString AuthorName() const override;
+    N_NODISCARD NaoString AuthorDescription() const override;
+
+    N_NODISCARD bool HasDescription(NaoObject* object) override;
+    N_NODISCARD bool PrioritiseDescription() const override;
+    N_NODISCARD NaoString Description() const override;
+
+    N_NODISCARD bool CanEnter(NaoObject* object) override;
+    bool Enter(NaoObject* object) override;
+
+    N_NODISCARD bool ShouldLeave(NaoObject* object) override;
+    bool Leave(NaoObject* object) override;
+
+    N_NODISCARD bool HasContextMenu(NaoObject* object) override;
+    N_NODISCARD NaoVector<NaoAction*> ContextMenu(NaoObject* object) override;
+
+    private:
+    NaoObject* _m_root;
+};
 
 namespace Plugin {
-    namespace PluginInfo {
-        LIBNAO_PLUGIN_DECL NaoString name();
-        LIBNAO_PLUGIN_DECL NaoString display_name();
-        LIBNAO_PLUGIN_DECL NaoString description();
-        LIBNAO_PLUGIN_DECL uint64_t version();
-
-    }
-
-    namespace AuthorInfo {
-        LIBNAO_PLUGIN_DECL NaoString name();
-        LIBNAO_PLUGIN_DECL NaoString text_plain();
-        LIBNAO_PLUGIN_DECL NaoString text_rich();
-    }
-
-    namespace Error {
-        LIBNAO_PLUGIN_DECL const NaoString& get_error();
-
-        NaoString& error();
-    }
-
     namespace Description {
         LIBNAO_PLUGIN_DECL bool prioritise_description();
         LIBNAO_PLUGIN_DECL NaoString description();

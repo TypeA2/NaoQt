@@ -30,111 +30,76 @@
  *  - Keep information about file in memory as long as needed
  */
 
-NaoPlugin GetNaoPlugin() {
-    using namespace Plugin;
-    return NaoPlugin {
-        GetNaoPlugin,
-        Error::get_error,
-
-        NaoPlugin::PluginInfo {
-            PluginInfo::name,
-            PluginInfo::display_name,
-            PluginInfo::description,
-            PluginInfo::version
-            },
-
-        NaoPlugin::AuthorInfo {
-            AuthorInfo::name,
-            AuthorInfo::text_plain,
-            AuthorInfo::text_rich
-            },
-
-        NaoPlugin::Description {
-            Description::prioritise_description,
-            Description::description
-            },
-
-        NaoPlugin::Capabilities {
-            Capabilities::supports,
-            Capabilities::populatable,
-            Capabilities::decodable,
-            Capabilities::can_move
-            },
-
-        NaoPlugin::Functionality {
-            Function::populate,
-            Function::decode,
-            Function::move
-            },
-
-        NaoPlugin::ContextMenu {
-            ContextMenu::has_context_menu,
-            ContextMenu::context_menu
-            }
-    };
+NaoPlugin* GetNaoPlugin() {
+    return new Plugin_CPK();
 }
 
+#pragma region Plugin info
+
+NaoString Plugin_CPK::Name() const {
+    return "libnao CPK plugin";
+}
+
+NaoString Plugin_CPK::DisplayName() const {
+    return "libnao CPK";
+}
+
+NaoString Plugin_CPK::PluginDescription() const {
+    return "Adds support for CPK archives";
+}
+
+NaoString Plugin_CPK::VersionString() const {
+    return "1.1";
+}
+
+#pragma endregion 
+
+#pragma region Author info
+
+NaoString Plugin_CPK::AuthorName() const {
+    return "TypeA2/I_Copy_Jokes";
+}
+
+NaoString Plugin_CPK::AuthorDescription() const {
+    return "License: LGPLv3 or later<br>"
+        "<a href=\"https://github.com/TypeA2\">Github</a><br>"
+        "<a href=\"https://steamcommunity.com/id/TypeA2/\">Steam</a>";
+}
+
+#pragma endregion 
+
+#pragma region Description
+
+bool Plugin_CPK::HasDescription(NaoObject* object) {
+    return CanEnter(object);
+}
+
+bool Plugin_CPK::PrioritiseDescription() const {
+    return true;
+}
+
+NaoString Plugin_CPK::Description() const {
+    return "CPK Archive";
+}
+
+#pragma endregion 
+
+#pragma region Actions 
+
+bool Plugin_CPK::CanEnter(NaoObject* object) {
+    // Is a CPK archive
+    return !object->is_dir()
+        && object->file_ref().io->read_singleshot(4) == NaoBytes("CPK ", 4);
+}
+
+bool Plugin_CPK::Enter(NaoObject* object) {
+    _m_root = object;
+}
+
+
+#pragma endregion
+
 namespace Plugin {
-    namespace PluginInfo {
-        NaoString name() {
-            return "libnao CPK plugin";
-        }
-
-        NaoString display_name() {
-            return "libnao CPK";
-        }
-
-        NaoString description() {
-            return "Adds support for CPK archives";
-        }
-
-        uint64_t version() {
-            return 1;
-        }
-
-    }
-
-    namespace AuthorInfo {
-        NaoString name() {
-            return "TypeA2/I_Copy_Jokes";
-        }
-
-        NaoString text_plain() {
-            return "License: LGPLv3 or later\n"
-                "Github: https://github.com/TypeA2\n"
-                "Steam: https://steamcommunity.com/id/TypeA2/";
-
-        }
-
-        NaoString text_rich() {
-            return "License: LGPLv3 or later<br>"
-                "<a href=\"https://github.com/TypeA2\">Github</a><br>"
-                "<a href=\"https://steamcommunity.com/id/TypeA2/\">Steam</a>";
-        }
-
-    }
-
-    namespace Error {
-        const NaoString& get_error() {
-            return error();
-        }
-
-        NaoString& error() {
-            static NaoString err;
-
-            return err;
-        }
-    }
-
-    namespace Description {
-        bool prioritise_description() {
-            return true;
-        }
-
-        NaoString description() {
-            return "CPK Archive";
-        }
-    }
 
     namespace Capabilities {
         bool supports(NaoObject* object) {
