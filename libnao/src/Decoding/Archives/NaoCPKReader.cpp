@@ -19,9 +19,10 @@
 
 #define N_LOG_ID "NaoCPKReader"
 #include "Logging/NaoLogging.h"
+#include "Decoding/Parsing/NaoUTFReader.h"
 #include "Decoding/NaoDecodingException.h"
 #include "Containers/NaoBytes.h"
-#include "IO/NaoIO.h"
+#include "IO/NaoChunkIO.h"
 
 NaoCPKReader::NaoCPKReader(NaoIO* io)
     : _m_io(io) {
@@ -30,7 +31,7 @@ NaoCPKReader::NaoCPKReader(NaoIO* io)
         throw NaoDecodingException("IO not open");
     }
 
-    if (io->read_singleshot(4) != NaoBytes("DAT ", 4)) {
+    if (io->read_singleshot(4) != NaoBytes("CPK ", 4)) {
         nerr << "Invalid fourcc";
         throw NaoDecodingException("Invalid fourcc");
     }
@@ -52,5 +53,53 @@ NaoVector<NaoObject*> NaoCPKReader::take_files() {
 }
 
 void NaoCPKReader::_read_archive() {
-    
+    _m_io->seek(16);
+
+    NaoUTFReader cpk(_m_io);
+
+    if (cpk.has_field("TocOffset")) {
+        int64_t toc_offset = cpk.get_data(0, "TocOffset").as_int64();
+
+        if (toc_offset > 2048) {
+            toc_offset = 2048;
+        }
+
+        int64_t extra_offset = (!cpk.has_field("ContentOffset")
+            || cpk.get_data(0, "ContentOffset").as_int64() >= toc_offset)
+            ? toc_offset : cpk.get_data(0, "ContentOffset").as_int64();
+
+        _m_io->seek(cpk.get_data(0, "TocOffset").as_int64() + 16);
+
+        NaoUTFReader files(_m_io);
+
+        NaoVector<NaoString> dirs;
+
+        _m_files.reserve(files.row_count());
+        for (uint16_t i = 0; i < files.row_count(); ++i) {
+            NaoObject::File file{
+                nullptr,
+                files.get_data(i, "FileSize").as_int64(),
+                files.get_data(i, "ExtractSize").as_int64(),
+                false,
+                NaoString()
+            };
+
+            file.io = new NaoChunkIO(_m_io, {
+                    files.get_data(i, "FileOffset").as_int64() + extra_offset,
+                    file.binary_size,
+                    0
+                });
+            file.compressed = file.binary_size != file.real_size;
+
+            NaoString dir = files.get_data(i, "DirName").as_string();
+            file.name = (std::empty(dir) ? NaoString() : dir + '/') + files.get_data(i, "FileName").as_string();
+
+            _m_files.push_back(new NaoObject(file));
+
+            if (!dirs.contains(dir)) {
+                dirs.push_back(dir);
+                _m_files.push_back(new NaoObject(NaoObject::Dir{ dir }));
+            }
+        }
+    }
 }
