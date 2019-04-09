@@ -71,6 +71,10 @@ class LIBNAO_API NaoUTFReader {
     N_NODISCARD NaoVariant get_data(
         uint32_t row, const NaoString& name) const;
 
+    N_NODISCARD bool has_field(const NaoString& name) const;
+
+    N_NODISCARD uint16_t row_count() const;
+
     private:
     void _parse();
 
