@@ -120,8 +120,6 @@ bool Plugin_DAT::Enter(NaoObject* object) {
         object->add_child(file);
     }
 
-    ndebug << reader->files().size();
-
     if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
         nwarn << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
             << "messages suppressed.";
