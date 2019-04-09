@@ -46,12 +46,12 @@ class Plugin_CPK final : public NaoPlugin {
     bool Leave(NaoObject* object) override;
 
     N_NODISCARD bool HasContextMenu(NaoObject* object) override;
-    N_NODISCARD NaoVector<NaoAction*> ContextMenu(NaoObject* object) override;
+    //N_NODISCARD NaoVector<NaoAction*> ContextMenu(NaoObject* object) override;
 
     private:
     NaoObject* _m_root;
 };
-
+/*
 namespace Plugin {
     namespace Description {
         LIBNAO_PLUGIN_DECL bool prioritise_description();
@@ -81,3 +81,4 @@ namespace Plugin {
         LIBNAO_PLUGIN_DECL bool extract_all_files(NaoObject* object);
     }
 }
+*/

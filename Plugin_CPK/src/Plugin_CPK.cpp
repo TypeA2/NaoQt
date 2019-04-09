@@ -23,6 +23,9 @@
 #include <Logging/NaoLogging.h>
 #include <NaoObject.h>
 #include <IO/NaoIO.h>
+#include <Decoding/Archives/NaoCPKReader.h>
+#include <Decoding/NaoDecodingException.h>
+#include <Plugin/NaoPluginManager.h>
 
 /* TODO: THEORY
  *  - Global state management class
@@ -87,18 +90,67 @@ NaoString Plugin_CPK::Description() const {
 #pragma region Actions 
 
 bool Plugin_CPK::CanEnter(NaoObject* object) {
+    ndebug << object->name();
     // Is a CPK archive
     return !object->is_dir()
         && object->file_ref().io->read_singleshot(4) == NaoBytes("CPK ", 4);
 }
 
 bool Plugin_CPK::Enter(NaoObject* object) {
+    NaoIO* io = object->file_ref().io;
+
+    NaoCPKReader* reader = nullptr;
+    try {
+        reader = new NaoCPKReader(io);
+    } catch (const NaoDecodingException& e) {
+        nerr << e.what();
+        return false;
+    }
+
+    int64_t subsequent_errors = 0;
+
+    for (NaoObject* file : reader->take_files()) {
+        file->file_ref().name = object->name() + N_PATHSEP + file->name();
+
+        if (!PluginManager.set_description(file)) {
+            if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
+                nwarn << "Failed to set description for"
+                    << file->name();
+            }
+
+            ++subsequent_errors;
+        }
+
+        object->add_child(file);
+    }
+
+    if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
+        nwarn << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
+            << "messages suppressed.";
+    }
+
+    delete reader;
+
     _m_root = object;
+
+    return true;
 }
 
+bool Plugin_CPK::ShouldLeave(NaoObject* object) {
+    return object->is_child_of(_m_root);
+}
+
+bool Plugin_CPK::Leave(NaoObject* object) {
+    ndebug << "Leave" << object->name();
+    return true;
+}
+
+bool Plugin_CPK::HasContextMenu(NaoObject* object) {
+    return false;
+}
 
 #pragma endregion
-
+/*
 namespace Plugin {
 
     namespace Capabilities {
@@ -157,4 +209,4 @@ namespace Plugin {
         }
     }
 }
-
+*/
