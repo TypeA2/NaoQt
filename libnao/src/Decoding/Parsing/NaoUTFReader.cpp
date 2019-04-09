@@ -22,9 +22,20 @@
 #include "IO/NaoMemoryIO.h"
 #include "Decoding/NaoDecodingException.h"
 
+class NaoUTFReader::NaoUTFReaderPrivate {
+    public:
+    NaoUTFReaderPrivate() = default;
+
+    NaoIO* io;
+
+    NaoVector<Field> fields;
+    NaoVector<Row> rows;
+
+    uint32_t strings_start;
+};
+
 NaoUTFReader::NaoUTFReader(NaoIO* io)
-    : _m_io(nullptr)
-    , _m_strings_start(0) {
+    : d_ptr(new NaoUTFReaderPrivate()) {
     if (!io->is_open() && !io->open() && !io->is_open()) {
         nerr << "IO not open";
         throw NaoDecodingException("IO not open");
@@ -46,67 +57,67 @@ NaoUTFReader::NaoUTFReader(NaoIO* io)
         throw NaoDecodingException("Failed to seek back");
     }
 
-    _m_io = new NaoMemoryIO(io->read(size));
-    _m_io->open();
-    _m_io->set_default_byte_order(NaoIO::BE);
+    d_ptr->io = new NaoMemoryIO(io->read(size));
+    d_ptr->io->open();
+    d_ptr->io->set_default_byte_order(NaoIO::BE);
 
     _parse();
 }
 
 NaoUTFReader::~NaoUTFReader() {
-    delete _m_io;
+    delete d_ptr;
 }
 
 void NaoUTFReader::_parse() {
-    _m_io->seekc(8);
+    d_ptr->io->seekc(8);
 
-    uint32_t table_size = _m_io->read_uint();
-    _m_io->seekc(1); // table size
-    uint8_t encoding = _m_io->read_uchar(); // Shift-JIS: 0, else UTF-8
-    uint16_t rows_start = _m_io->read_ushort() + 8;
-    _m_strings_start = _m_io->read_uint() + 8;
-    uint32_t data_start = _m_io->read_uint() + 8;
-    uint32_t table_name_offset = _m_io->read_uint() + 8;
-    uint16_t field_count = _m_io->read_ushort();
-    uint16_t row_align = _m_io->read_ushort();
-    uint32_t row_count = _m_io->read_uint();
+    N_UNUSED uint32_t table_size = d_ptr->io->read_uint();
+    d_ptr->io->seekc(1); // table size
+    uint8_t encoding = d_ptr->io->read_uchar(); // Shift-JIS: 0, else UTF-8
+    uint16_t rows_start = d_ptr->io->read_ushort() + 8;
+    d_ptr->strings_start = d_ptr->io->read_uint() + 8;
+    uint32_t data_start = d_ptr->io->read_uint() + 8;
+    N_UNUSED uint32_t table_name_offset = d_ptr->io->read_uint() + 8;
+    uint16_t field_count = d_ptr->io->read_ushort();
+    N_UNUSED uint16_t row_align = d_ptr->io->read_ushort();
+    uint32_t row_count = d_ptr->io->read_uint();
 
-    _m_fields.reserve(field_count);
+    d_ptr->fields.reserve(field_count);
 
     auto read_val = [this, data_start, encoding](uint8_t type, NaoVariant & field) {
         switch (type) {
-            case UChar:   field = _m_io->read_uchar();  break;
-            case SChar:   field = _m_io->read_char();   break;
-            case UShort:  field = _m_io->read_ushort(); break;
-            case SShort:  field = _m_io->read_short();  break;
-            case UInt:    field = _m_io->read_uint();   break;
-            case SInt:    field = _m_io->read_int();    break;
-            case ULong:   field = _m_io->read_ulong();  break;
-            case SLong:   field = _m_io->read_long();   break;
-            case SFloat:  field = _m_io->read_float();  break;
-            case SDouble: field = _m_io->read_double(); break;
+            case UChar:   field = d_ptr->io->read_uchar();  break;
+            case SChar:   field = d_ptr->io->read_char();   break;
+            case UShort:  field = d_ptr->io->read_ushort(); break;
+            case SShort:  field = d_ptr->io->read_short();  break;
+            case UInt:    field = d_ptr->io->read_uint();   break;
+            case SInt:    field = d_ptr->io->read_int();    break;
+            case ULong:   field = d_ptr->io->read_ulong();  break;
+            case SLong:   field = d_ptr->io->read_long();   break;
+            case SFloat:  field = d_ptr->io->read_float();  break;
+            case SDouble: field = d_ptr->io->read_double(); break;
             case String:
             {
-                uint32_t offset = _m_io->read_uint();
-                int64_t current = _m_io->pos();
-                _m_io->seek(_m_strings_start + offset);
+                uint32_t offset = d_ptr->io->read_uint();
+                int64_t current = d_ptr->io->pos();
+                d_ptr->io->seek(d_ptr->strings_start + offset);
 
                 field = (encoding ?
-                    NaoString::fromShiftJIS : NaoString::fromUtf8)(_m_io->read_cstring());
+                    NaoString::fromShiftJIS : NaoString::fromUtf8)(d_ptr->io->read_cstring());
 
-                _m_io->seek(current);
+                d_ptr->io->seek(current);
                 break;
             }
             case Data:
             {
-                uint32_t offset = _m_io->read_uint();
-                uint32_t size = _m_io->read_uint();
-                int64_t current = _m_io->pos();
+                uint32_t offset = d_ptr->io->read_uint();
+                uint32_t size = d_ptr->io->read_uint();
+                int64_t current = d_ptr->io->pos();
 
-                _m_io->seek(data_start + offset);
-                field = _m_io->read(size);
+                d_ptr->io->seek(data_start + offset);
+                field = d_ptr->io->read(size);
 
-                _m_io->seek(current);
+                d_ptr->io->seek(current);
                 break;
             }
             default: break;
@@ -115,31 +126,31 @@ void NaoUTFReader::_parse() {
 
     for (uint16_t i = 0; i < field_count; ++i) {
         Field field = {
-            _m_io->read_uchar(),
+            d_ptr->io->read_uchar(),
             0,
             NaoString(),
             NaoVariant()
         };
 
         if (field.flags & HasName) {
-            field.name_pos = _m_io->read_uint();
+            field.name_pos = d_ptr->io->read_uint();
 
-            int64_t current = _m_io->pos();
-            _m_io->seek(_m_strings_start + field.name_pos);
-            field.name = _m_io->read_cstring();
-            _m_io->seek(current);
+            int64_t current = d_ptr->io->pos();
+            d_ptr->io->seek(d_ptr->strings_start + field.name_pos);
+            field.name = d_ptr->io->read_cstring();
+            d_ptr->io->seek(current);
         }
 
         if (field.flags & ConstVal) {
             read_val(field.flags & 0x0F, field.const_val);
         }
 
-        _m_fields.push_back(field);
+        d_ptr->fields.push_back(field);
     }
 
-    _m_rows.reserve(row_count);
+    d_ptr->rows.reserve(row_count);
 
-    _m_io->seek(rows_start);
+    d_ptr->io->seek(rows_start);
 
     for (uint32_t j = 0; j < row_count; ++j) {
         Row row(field_count);
@@ -151,7 +162,7 @@ void NaoUTFReader::_parse() {
                 NaoVariant()
             };
 
-            Field& field = _m_fields.at(i);
+            Field& field = d_ptr->fields.at(i);
 
             uint32_t flag = field.flags & 0xF0;
 
@@ -163,7 +174,7 @@ void NaoUTFReader::_parse() {
 
             if (flag & RowVal) {
                 val.type = field.flags & 0x0F;
-                val.pos = _m_io->pos();
+                val.pos = d_ptr->io->pos();
 
                 read_val(val.type, val.val);
             }
@@ -171,17 +182,31 @@ void NaoUTFReader::_parse() {
             row[i] = val;
         }
 
-        _m_rows.push_back(row);
+        d_ptr->rows.push_back(row);
     }
 }
 
 NaoVariant NaoUTFReader::get_data(uint32_t row, const NaoString& name) const {
-    for (size_t i = 0; i < std::size(_m_fields); ++i) {
-        if (_m_fields.at(i).name == name) {
-            return _m_rows.at(row).at(i).val;
+    for (size_t i = 0; i < std::size(d_ptr->fields); ++i) {
+        if (d_ptr->fields.at(i).name == name) {
+            return d_ptr->rows.at(row).at(i).val;
         }
     }
 
     return NaoVariant();
+}
+
+bool NaoUTFReader::has_field(const NaoString& name) const {
+    for (size_t i = 0; i < std::size(d_ptr->fields); ++i) {
+        if (d_ptr->fields.at(i).name == name) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+size_t NaoUTFReader::row_count() const {
+    return std::size(d_ptr->rows);
 }
 

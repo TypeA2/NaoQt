@@ -73,15 +73,11 @@ class LIBNAO_API NaoUTFReader {
 
     N_NODISCARD bool has_field(const NaoString& name) const;
 
-    N_NODISCARD uint16_t row_count() const;
+    N_NODISCARD size_t row_count() const;
 
     private:
     void _parse();
 
-    NaoIO* _m_io;
-
-    NaoVector<Field> _m_fields;
-    NaoVector<Row> _m_rows;
-
-    uint32_t _m_strings_start;
+    class NaoUTFReaderPrivate;
+    NaoUTFReaderPrivate* d_ptr;
 };
