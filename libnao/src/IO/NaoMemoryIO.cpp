@@ -61,9 +61,11 @@ int64_t NaoMemoryIO::read(char* buf, int64_t size) {
         return 0i64;
     }
 
-    return std::distance(std::copy_n(_m_data.data() + _m_pos,
-        std::clamp(size, 0i64, this->size() - _m_pos), buf),
-        _m_data.data() + _m_pos);
+    intptr_t read = std::distance(buf, 
+        std::copy_n(_m_data.data() + _m_pos,
+        std::clamp(size, 0i64, this->size() - _m_pos), buf));
+    _m_pos += read;
+    return read;
 }
 
 int64_t NaoMemoryIO::write(const char* buf, int64_t size) {
