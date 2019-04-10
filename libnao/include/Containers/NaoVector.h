@@ -381,18 +381,18 @@ class NaoVector {
     }
 
     private:
-        void _reallocate_to(size_t size) {
-            size = NaoMath::round_up(size, data_alignment);
+    void _reallocate_to(size_t size) {
+        size = NaoMath::round_up(size, data_alignment);
 
-            if (_m_allocated < size) {
-                T* old_data = _m_data;
+        if (_m_allocated < size) {
+            T* old_data = _m_data;
 
-                _m_allocated = size;
-                _m_data = new T[_m_allocated]();
-                _m_end = std::copy(old_data, _m_end, _m_data);
-                delete old_data;
-            }
+            _m_allocated = size;
+            _m_data = new T[_m_allocated]();
+            _m_end = std::move(old_data, _m_end, _m_data);
+            delete[] old_data;
         }
+    }
 
     T* _m_data;
     size_type _m_size;
