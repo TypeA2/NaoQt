@@ -38,7 +38,7 @@ class LIBNAO_API NaoVariant {
     NaoVariant& operator=(NaoVariant&& other) noexcept;
     NaoVariant& operator=(const NaoVariant& other);
 
-    NaoVariant();
+    explicit NaoVariant();
     NaoVariant(bool val);
     NaoVariant(int8_t n);
     NaoVariant(uint8_t n);
