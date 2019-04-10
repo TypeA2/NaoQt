@@ -171,7 +171,7 @@ bool UTFReader::_parse() {
         }
 
         if (field.flags & ConstVal) {
-            RowField temp_row { field.flags & 0x0F, 0 };
+            RowField temp_row { field.flags & 0x0F, 0, NaoVariant() };
 
             read_value(temp_row);
 
