@@ -177,6 +177,8 @@ bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
     m_current_object = new_object;
     m_current_plugin = PluginManager.enter_plugin(m_current_object);
 
+    nlog << "Entering target using" << ("\"" + m_current_plugin->DisplayName() + "\"");
+
     if (!m_current_plugin->Enter(m_current_object)) {
         nerr << "Enter failed";
         return false;
