@@ -22,11 +22,26 @@
 #include "Containers/NaoVariant.h"
 #include "Containers/NaoString.h"
 #include "Containers/NaoVector.h"
+#include "Containers/NaoEndianInteger.h"
 
 class NaoIO;
 
 class LIBNAO_API NaoUTFReader {
     public:
+
+    struct UTFHeader {
+        char fourcc[4];
+        uint32_be table_size;
+        uint8_t unused1;
+        uint8_t encoding;
+        uint16_be rows_start;
+        uint32_be strings_start;
+        uint32_be data_start;
+        uint32_be table_name_offset;
+        uint16_be field_count;
+        uint16_be row_align;
+        uint32_be row_count;
+    };
 
     struct RowValue {
         int32_t type;

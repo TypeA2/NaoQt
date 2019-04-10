@@ -69,13 +69,12 @@ void NaoCPKReader::_read_archive() {
             ? toc_offset : cpk.get_data(0, "ContentOffset").as_int64();
 
         _m_io->seek(cpk.get_data(0, "TocOffset").as_int64() + 16);
-
         NaoUTFReader files(_m_io);
 
         NaoVector<NaoString> dirs;
 
         _m_files.reserve(files.row_count());
-        for (uint16_t i = 0; i < files.row_count(); ++i) {
+        for (uint32_t i = 0; i < files.row_count(); ++i) {
             NaoObject::File file{
                 nullptr,
                 files.get_data(i, "FileSize").as_int64(),

@@ -28,19 +28,20 @@ class NaoUTFReader::NaoUTFReaderPrivate {
 
     NaoIO* io;
 
+    UTFHeader header;
+
     NaoVector<Field> fields;
     NaoVector<Row> rows;
-
-    uint32_t strings_start;
 };
 
 NaoUTFReader::NaoUTFReader(NaoIO* io)
     : d_ptr(new NaoUTFReaderPrivate()) {
+    
     if (!io->is_open() && !io->open() && !io->is_open()) {
         nerr << "IO not open";
         throw NaoDecodingException("IO not open");
     }
-
+    
     if (io->read(4) != NaoBytes("@UTF", 4)) {
         io->seekc(8);
 
@@ -51,16 +52,17 @@ NaoUTFReader::NaoUTFReader(NaoIO* io)
     }
 
     uint32_t size = io->read_uint(NaoIO::BE) + 8;
-
+    
     if (!io->seekc(-8)) {
         nerr << "Failed to seek back";
         throw NaoDecodingException("Failed to seek back");
     }
 
+    
     d_ptr->io = new NaoMemoryIO(io->read(size));
     d_ptr->io->open();
     d_ptr->io->set_default_byte_order(NaoIO::BE);
-
+    
     _parse();
 }
 
@@ -69,10 +71,8 @@ NaoUTFReader::~NaoUTFReader() {
 }
 
 void NaoUTFReader::_parse() {
-    d_ptr->io->seekc(8);
-
-    N_UNUSED uint32_t table_size = d_ptr->io->read_uint();
-    d_ptr->io->seekc(1); // table size
+    /*d_ptr->io->seekc(8); // Header + size
+    d_ptr->io->seekc(1); // unused byte
     uint8_t encoding = d_ptr->io->read_uchar(); // Shift-JIS: 0, else UTF-8
     uint16_t rows_start = d_ptr->io->read_ushort() + 8;
     d_ptr->strings_start = d_ptr->io->read_uint() + 8;
@@ -80,11 +80,20 @@ void NaoUTFReader::_parse() {
     N_UNUSED uint32_t table_name_offset = d_ptr->io->read_uint() + 8;
     uint16_t field_count = d_ptr->io->read_ushort();
     N_UNUSED uint16_t row_align = d_ptr->io->read_ushort();
-    uint32_t row_count = d_ptr->io->read_uint();
+    uint32_t row_count = d_ptr->io->read_uint();*/
+    d_ptr->io->read(reinterpret_cast<char*>(&d_ptr->header), sizeof(UTFHeader));
+    UTFHeader& header = d_ptr->header;
 
-    d_ptr->fields.reserve(field_count);
+    header.rows_start += 8;
+    header.strings_start += 8;
+    header.data_start += 8;
+    header.table_name_offset += 8;
 
-    auto read_val = [this, data_start, encoding](uint8_t type, NaoVariant & field) {
+    d_ptr->fields.reserve(header.field_count);
+
+    
+
+    auto read_val = [this, header](uint8_t type, NaoVariant & field) {
         switch (type) {
             case UChar:   field = d_ptr->io->read_uchar();  break;
             case SChar:   field = d_ptr->io->read_char();   break;
@@ -100,9 +109,9 @@ void NaoUTFReader::_parse() {
             {
                 uint32_t offset = d_ptr->io->read_uint();
                 int64_t current = d_ptr->io->pos();
-                d_ptr->io->seek(d_ptr->strings_start + offset);
+                d_ptr->io->seek(header.strings_start + offset);
 
-                field = (encoding ?
+                field = (header.encoding ?
                     NaoString::fromShiftJIS : NaoString::fromUtf8)(d_ptr->io->read_cstring());
 
                 d_ptr->io->seek(current);
@@ -114,7 +123,7 @@ void NaoUTFReader::_parse() {
                 uint32_t size = d_ptr->io->read_uint();
                 int64_t current = d_ptr->io->pos();
 
-                d_ptr->io->seek(data_start + offset);
+                d_ptr->io->seek(header.data_start + offset);
                 field = d_ptr->io->read(size);
 
                 d_ptr->io->seek(current);
@@ -124,21 +133,35 @@ void NaoUTFReader::_parse() {
         }
     };
 
-    for (uint16_t i = 0; i < field_count; ++i) {
-        Field field = {
+    ndebug << 1;
+    
+    for (uint16_t i = 0; i < header.field_count; ++i) {
+        /*d_ptr->fields.push_back({
             d_ptr->io->read_uchar(),
             0,
             NaoString(),
             NaoVariant()
-        };
+            });*/
+
+        Field field;
+        field.flags = d_ptr->io->read_uchar();
 
         if (field.flags & HasName) {
             field.name_pos = d_ptr->io->read_uint();
 
             int64_t current = d_ptr->io->pos();
-            d_ptr->io->seek(d_ptr->strings_start + field.name_pos);
+
+            if (!d_ptr->io->seek(header.strings_start + field.name_pos)) {
+                nerr << "Could not seek to strings";
+                throw NaoDecodingException("Could not seek to strings");
+            }
+
             field.name = d_ptr->io->read_cstring();
-            d_ptr->io->seek(current);
+
+            if (!d_ptr->io->seek(current)) {
+                nerr << "Could not seek back";
+                throw NaoDecodingException("Could not seek back");
+            }
         }
 
         if (field.flags & ConstVal) {
@@ -146,21 +169,18 @@ void NaoUTFReader::_parse() {
         }
 
         d_ptr->fields.push_back(field);
+        
     }
+    
+    d_ptr->rows.reserve(header.row_count);
+    
+    d_ptr->io->seek(header.rows_start);
 
-    d_ptr->rows.reserve(row_count);
+    for (uint32_t j = 0; j < header.row_count; ++j) {
+        Row row(header.field_count);
 
-    d_ptr->io->seek(rows_start);
-
-    for (uint32_t j = 0; j < row_count; ++j) {
-        Row row(field_count);
-
-        for (uint16_t i = 0; i < field_count; ++i) {
-            RowValue val {
-                0,
-                0,
-                NaoVariant()
-            };
+        for (uint16_t i = 0; i < header.field_count; ++i) {
+            RowValue& val = row.at(i);
 
             Field& field = d_ptr->fields.at(i);
 
@@ -168,7 +188,6 @@ void NaoUTFReader::_parse() {
 
             if (flag & ConstVal) {
                 val.val = field.const_val;
-                row[i] = val;
                 continue;
             }
 
@@ -178,8 +197,6 @@ void NaoUTFReader::_parse() {
 
                 read_val(val.type, val.val);
             }
-
-            row[i] = val;
         }
 
         d_ptr->rows.push_back(row);
