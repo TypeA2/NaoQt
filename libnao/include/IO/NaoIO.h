@@ -30,7 +30,7 @@ class LIBNAO_API NaoIO {
     virtual ~NaoIO() = 0;
 
     // Returns the position in the stream
-    virtual int64_t pos() const = 0;
+    N_NODISCARD virtual int64_t pos() const = 0;
 
     // Seeks from a given position
     enum SeekDir {
@@ -49,9 +49,9 @@ class LIBNAO_API NaoIO {
     virtual int64_t read(char* buf, int64_t size) = 0;
     int64_t read(unsigned char* buf, int64_t size);
     int64_t read(signed char* buf, int64_t size);
-    NaoBytes read(size_t size);
-    NaoBytes read_singleshot(size_t size);
-    NaoBytes read_all();
+    N_NODISCARD NaoBytes read(size_t size);
+    N_NODISCARD NaoBytes read_singleshot(size_t size);
+    N_NODISCARD NaoBytes read_all();
 
     // Writes size bytes from buf to the underlying device
     // Returns the number of bytes actually written, or -1 on error
@@ -61,7 +61,7 @@ class LIBNAO_API NaoIO {
     virtual bool flush() = 0;
 
     // Returns the total size of the underlying device
-    virtual int64_t size() const;
+    N_NODISCARD virtual int64_t size() const;
 
     // Open the device for reading, writing or both
     enum OpenMode : uint8_t {
@@ -78,14 +78,14 @@ class LIBNAO_API NaoIO {
 
     // Inherited classes overriding this must call base function as well
     virtual bool open(OpenMode mode = ReadOnly);
-    virtual OpenMode open_mode() const;
+    N_NODISCARD virtual OpenMode open_mode() const;
 
     // Same as for open()
     virtual void close();
 
     // Returns if the device is opened in mode,
     // or if it's open at all if mode == Closed
-    virtual bool is_open(OpenMode mode = Closed) const;
+    N_NODISCARD virtual bool is_open(OpenMode mode = Closed) const;
 
 #pragma region Binary Reading
 
@@ -96,7 +96,7 @@ class LIBNAO_API NaoIO {
     };
 
     void set_default_byte_order(ByteOrder order);
-    ByteOrder default_byte_order() const;
+    N_NODISCARD ByteOrder default_byte_order() const;
 
     uint8_t read_uchar();
     uint16_t read_ushort(ByteOrder order = Default);

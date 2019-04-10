@@ -141,7 +141,7 @@ uint8_t NaoIO::read_uchar() {
 }
 
 uint16_t NaoIO::read_ushort(ByteOrder order) {
-    char val[2] { };
+    uint8_t val[2]{ };
 
     read(val, 2);
 
@@ -149,11 +149,11 @@ uint16_t NaoIO::read_ushort(ByteOrder order) {
 
     return (order == LE)
         ? (*reinterpret_cast<uint16_t*>(val))
-        : (uint16_t(val[0]) | (uint16_t(val[1]) << 8));
+        : (uint16_t(val[1]) | (uint16_t(val[0]) << 8));
 }
 
 uint32_t NaoIO::read_uint(ByteOrder order) {
-    char val[4];
+    uint8_t val[4]{ };
 
     read(val, 4);
 
@@ -161,12 +161,12 @@ uint32_t NaoIO::read_uint(ByteOrder order) {
 
     return (order == LE)
         ? (*reinterpret_cast<uint32_t*>(val))
-        : (uint32_t(val[0]) | (uint32_t(val[1]) << 8)
-            | (uint32_t(val[2]) << 16) | (uint32_t(val[3]) << 24));
+        : (uint32_t(val[3]) | (uint32_t(val[2]) << 8)
+            | (uint32_t(val[1]) << 16) | (uint32_t(val[0]) << 24));
 }
 
 uint64_t NaoIO::read_ulong(ByteOrder order) {
-    char val[8];
+    uint8_t val[8]{ };
 
     read(val, 8);
 
@@ -174,10 +174,10 @@ uint64_t NaoIO::read_ulong(ByteOrder order) {
 
     return (order == LE)
         ? (*reinterpret_cast<uint64_t*>(val))
-        : (uint64_t(val[0]) | (uint64_t(val[1]) << 8)
-            | (uint64_t(val[2]) << 16) | (uint64_t(val[3]) << 24)
-            | (uint64_t(val[4]) << 32) | (uint64_t(val[5]) << 40)
-            | (uint64_t(val[6]) << 48) | (uint64_t(val[7]) << 56));
+        : (uint64_t(val[7]) | (uint64_t(val[6]) << 8)
+            | (uint64_t(val[5]) << 16) | (uint64_t(val[4]) << 24)
+            | (uint64_t(val[3]) << 32) | (uint64_t(val[2]) << 40)
+            | (uint64_t(val[1]) << 48) | (uint64_t(val[0]) << 56));
 }
 
 int8_t NaoIO::read_char() {
@@ -189,7 +189,7 @@ int8_t NaoIO::read_char() {
 }
 
 int16_t NaoIO::read_short(ByteOrder order) {
-    char val[2] { };
+    uint8_t val[2]{ };
 
     read(val, 2);
 
@@ -197,11 +197,11 @@ int16_t NaoIO::read_short(ByteOrder order) {
 
     return (order == LE)
         ? (*reinterpret_cast<int16_t*>(val))
-        : (uint16_t(val[0]) | (uint16_t(val[1]) << 8));
+        : (uint16_t(val[1]) | (uint16_t(val[0]) << 8));
 }
 
 int32_t NaoIO::read_int(ByteOrder order) {
-    char val[4];
+    uint8_t val[4]{ };
 
     read(val, 4);
 
@@ -209,12 +209,12 @@ int32_t NaoIO::read_int(ByteOrder order) {
 
     return (order == LE)
         ? (*reinterpret_cast<int32_t*>(val))
-        : (uint32_t(val[0]) | (uint32_t(val[1]) << 8)
-            | (uint32_t(val[2]) << 16) | (uint32_t(val[3]) << 24));
+        : (uint32_t(val[3]) | (uint32_t(val[2]) << 8)
+            | (uint32_t(val[1]) << 16) | (uint32_t(val[0]) << 24));
 }
 
 int64_t NaoIO::read_long(ByteOrder order) {
-    char val[8];
+    uint8_t val[8]{ };
 
     read(val, 8);
 
@@ -222,14 +222,14 @@ int64_t NaoIO::read_long(ByteOrder order) {
 
     return (order == LE)
         ? (*reinterpret_cast<int64_t*>(val))
-        : (uint64_t(val[0]) | (uint64_t(val[1]) << 8)
-            | (uint64_t(val[2]) << 16) | (uint64_t(val[3]) << 24)
-            | (uint64_t(val[4]) << 32) | (uint64_t(val[5]) << 40)
-            | (uint64_t(val[6]) << 48) | (uint64_t(val[7]) << 56));
+        : (uint64_t(val[7]) | (uint64_t(val[6]) << 8)
+            | (uint64_t(val[5]) << 16) | (uint64_t(val[4]) << 24)
+            | (uint64_t(val[3]) << 32) | (uint64_t(val[2]) << 40)
+            | (uint64_t(val[1]) << 48) | (uint64_t(val[0]) << 56));
 }
 
 float NaoIO::read_float(ByteOrder order) {
-    uint8_t val[4];
+    uint8_t val[4]{ };
 
     read(val, 4);
 
@@ -237,12 +237,12 @@ float NaoIO::read_float(ByteOrder order) {
 
     return (order == LE)
         ? (*reinterpret_cast<float*>(val))
-        : (uint32_t(val[0]) | (uint32_t(val[1]) << 8)
-            | (uint32_t(val[2]) << 16) | (uint32_t(val[3]) << 24));
+        : (uint32_t(val[3]) | (uint32_t(val[2]) << 8)
+            | (uint32_t(val[1]) << 16) | (uint32_t(val[0]) << 24));
 }
 
 double NaoIO::read_double(ByteOrder order) {
-    uint8_t val[8];
+    uint8_t val[8]{ };
 
     read(val, 8);
 
@@ -250,10 +250,10 @@ double NaoIO::read_double(ByteOrder order) {
 
     return (order == LE)
         ? (*reinterpret_cast<double*>(val))
-        : (uint64_t(val[0]) | (uint64_t(val[1]) << 8)
-            | (uint64_t(val[2]) << 16) | (uint64_t(val[3]) << 24)
-            | (uint64_t(val[4]) << 32) | (uint64_t(val[5]) << 40)
-            | (uint64_t(val[6]) << 48) | (uint64_t(val[7]) << 56));
+        : (uint64_t(val[7]) | (uint64_t(val[6]) << 8)
+            | (uint64_t(val[5]) << 16) | (uint64_t(val[4]) << 24)
+            | (uint64_t(val[3]) << 32) | (uint64_t(val[2]) << 40)
+            | (uint64_t(val[1]) << 48) | (uint64_t(val[0]) << 56));
 }
 
 
