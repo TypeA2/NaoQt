@@ -337,6 +337,10 @@ bool NaoString::starts_with(const NaoString& other) const noexcept {
     char const* this_data = _m_data;
     char const* other_data = other._m_data;
 
+    if (*other_data == '\0') {
+        return true;
+    }
+
     while (*other_data != '\0' && *this_data != '\0') {
         if (*other_data != *this_data) {
             return false;
@@ -351,6 +355,10 @@ bool NaoString::starts_with(const NaoString& other) const noexcept {
 
 bool NaoString::starts_with(const char* other) const noexcept {
     char const* this_data = _m_data;
+
+    if (*other == '\0') {
+        return true;
+    }
 
     while (*other != '\0' && *this_data != '\0') {
         if (*other != *this_data) {
