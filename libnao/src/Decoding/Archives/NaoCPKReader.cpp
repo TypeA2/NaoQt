@@ -92,13 +92,50 @@ void NaoCPKReader::_read_archive() {
 
             NaoString dir = files.get_data(i, "DirName").as_string();
             file.name = (std::empty(dir) ? NaoString() : dir + '/') + files.get_data(i, "FileName").as_string();
+            file.name.replace('/', N_PATHSEP);
 
             _m_files.push_back(new NaoObject(file));
 
-            if (!dirs.contains(dir)) {
+            if (!std::empty(dir) && !dirs.contains(dir)) {
                 dirs.push_back(dir);
+                dir.replace('/', N_PATHSEP);
                 _m_files.push_back(new NaoObject(NaoObject::Dir{ dir }));
             }
         }
     }
+
+    _resolve_structure();
 }
+
+void NaoCPKReader::_resolve_structure() {
+#if 0
+    NaoVector<NaoObject*> dirs;
+    std::copy_if(std::begin(_m_files), std::end(_m_files),
+        std::back_inserter(dirs), [](NaoObject * obj) -> bool { return obj->is_dir(); });
+
+    for (NaoObject* dir : dirs) {
+        //ndebug << "dir" << dir->name();
+        for (NaoObject* file : _m_files) {
+            if (file->is_dir()) {
+                continue;
+            }
+
+            //ndebug << file->name() << (file->name().starts_with(dir->name())
+            //    && !file->name().substr(std::size(dir->name()) + 1).contains(N_PATHSEP));
+
+            if (file->name().starts_with(dir->name())
+                && !file->name().substr(std::size(dir->name()) + 1).contains(N_PATHSEP)) {
+                //ndebug << "  child" << file->name();
+                dir->add_child(file);
+
+                _m_files.erase(std::find(std::begin(_m_files), std::end(_m_files), file));
+            }
+        }
+
+        ndebug << _m_files.size();
+    }
+
+    ndebug << _m_files.size();
+#endif
+}
+

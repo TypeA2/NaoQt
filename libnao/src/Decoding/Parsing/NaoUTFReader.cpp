@@ -132,17 +132,8 @@ void NaoUTFReader::_parse() {
             default: break;
         }
     };
-
-    ndebug << 1;
     
     for (uint16_t i = 0; i < header.field_count; ++i) {
-        /*d_ptr->fields.push_back({
-            d_ptr->io->read_uchar(),
-            0,
-            NaoString(),
-            NaoVariant()
-            });*/
-
         Field field;
         field.flags = d_ptr->io->read_uchar();
 
