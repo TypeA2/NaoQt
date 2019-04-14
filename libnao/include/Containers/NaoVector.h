@@ -358,6 +358,13 @@ class NaoVector {
         return (last < _m_end) ? _m_data + std::distance(cbegin(), last) : _m_end;
     }
 
+    iterator erase(const_iterator pos) {
+        _m_end = std::copy(const_iterator(pos + 1), cend(), iterator(pos));
+        --_m_size;
+
+        return _m_data + std::distance(cbegin(), pos);
+    }
+
 #pragma endregion
 
     N_NODISCARD size_type index_of(const T& val) const {
