@@ -66,7 +66,8 @@ NaoString Plugin_CPK::AuthorDescription() const {
 #pragma region Description
 
 bool Plugin_CPK::HasDescription(NaoObject* object) {
-    return CanEnter(object);
+    return !object->is_dir()
+        && object->file_ref().io->read_singleshot(4) == NaoBytes("CPK ", 4);
 }
 
 bool Plugin_CPK::PrioritiseDescription() const {
@@ -89,8 +90,8 @@ bool Plugin_CPK::CanEnter(NaoObject* object) {
     }
 
     // Is a known child
-    if (std::find(std::begin(_m_children), std::end(_m_children), object)
-        != std::end(_m_children)) {
+    if (_m_children.contains(object)) {
+        ndebug << "enter child" << object->name();
         return true;
     }
 
@@ -142,6 +143,10 @@ bool Plugin_CPK::Enter(NaoObject* object) {
     const NaoString& subpath = object->name();
    
     for (NaoObject* file : _m_children) {
+        if (file == object) {
+            continue;
+        }
+
         if (file->name().starts_with(subpath)
             && !file->name().substr(std::size(subpath) + 1).contains(N_PATHSEP)) {
             object->add_child(file);
@@ -158,7 +163,6 @@ bool Plugin_CPK::ShouldLeave(NaoObject* object) {
 }
 
 bool Plugin_CPK::Leave(NaoObject* object) {
-    ndebug << "Leave" << object->name();
     return true;
 }
 
@@ -192,16 +196,16 @@ bool Plugin_CPK::MoveEvent(MoveEventArgs* args) {
     auto [from, to] = *args;
 
     if (_m_state) {
+        // Exiting this archive, free up everything
         if (!(to->name().starts_with(from->name()))) {
+            nlog << "Leaving archive";
+
             _m_state = false;
 
             for (NaoObject* child : _m_children) {
                 if (child == from) {
-                    ndebug << "skip" << child->name();
                     continue;
                 }
-
-                ndebug << "clear" << child->name();
 
                 delete child;
             }
@@ -211,16 +215,29 @@ bool Plugin_CPK::MoveEvent(MoveEventArgs* args) {
             (void) _m_root->take_children();
 
             if (from != _m_root) {
-                ndebug << "clear root" << from->name();
                 delete _m_root;
             }
 
+            _m_state = false;
+
             return true;
         }
+
+        ndebug << "From:" << from->name();
+        ndebug << "To:" << to->name();
         
     }
 
     return true;
+}
+
+bool Plugin_CPK::ProvidesNewRoot(NaoObject* from, NaoObject* to) {
+    return _m_state && _m_children.contains(to);
+}
+
+NaoObject* Plugin_CPK::NewRoot(NaoObject* from, NaoObject* to) {
+    (void) from->take_children();
+    return to;
 }
 
 #pragma endregion

@@ -52,6 +52,9 @@ class Plugin_CPK final : public NaoPlugin {
     N_NODISCARD Event SubscribedEvents() const override;
     bool TriggerEvent(Event event, EventArgs* args) override;
 
+    N_NODISCARD bool ProvidesNewRoot(NaoObject* from, NaoObject* to) override;
+    N_NODISCARD NaoObject* NewRoot(NaoObject* from, NaoObject* to) override;
+
     private:
     NaoObject* _m_root;
     bool _m_state;
@@ -59,34 +62,3 @@ class Plugin_CPK final : public NaoPlugin {
 
     bool MoveEvent(MoveEventArgs* args);
 };
-/*
-namespace Plugin {
-    namespace Description {
-        LIBNAO_PLUGIN_DECL bool prioritise_description();
-        LIBNAO_PLUGIN_DECL NaoString description();
-    }
-
-    namespace Capabilities {
-        LIBNAO_PLUGIN_DECL bool supports(NaoObject* object);
-        LIBNAO_PLUGIN_DECL bool populatable(NaoObject* object);
-        LIBNAO_PLUGIN_DECL bool decodable(N_UNUSED NaoObject* object);
-        LIBNAO_PLUGIN_DECL bool can_move(NaoObject* from, NaoObject* to);
-    }
-
-    namespace Function {
-        LIBNAO_PLUGIN_DECL bool populate(NaoObject* object);
-        LIBNAO_PLUGIN_DECL bool decode(N_UNUSED NaoObject* object, N_UNUSED NaoIO* out);
-        LIBNAO_PLUGIN_DECL bool move(NaoObject*& from, NaoObject* to);
-    }
-
-    namespace ContextMenu {
-        LIBNAO_PLUGIN_DECL bool has_context_menu(NaoObject* object);
-        LIBNAO_PLUGIN_DECL NaoPlugin::ContextMenu::type context_menu(NaoObject* object);
-    }
-
-    namespace Extraction {
-        LIBNAO_PLUGIN_DECL bool extract_single_file(NaoObject* object);
-        LIBNAO_PLUGIN_DECL bool extract_all_files(NaoObject* object);
-    }
-}
-*/
