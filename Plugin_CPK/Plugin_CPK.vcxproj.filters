@@ -9,25 +9,10 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Headers\Readers">
-      <UniqueIdentifier>{1c69b635-2b62-47c1-9900-f079dc13e8b0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Sources\Readers">
-      <UniqueIdentifier>{6aaf1e92-b757-4ea5-be7f-4af2a441a906}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Plugin_CPK.cpp">
       <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\CPKManager.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Readers\CPKReader.cpp">
-      <Filter>Sources\Readers</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Readers\UTFReader.cpp">
-      <Filter>Sources\Readers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -37,15 +22,6 @@
   <ItemGroup>
     <ClInclude Include="include\Plugin_CPK.h">
       <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="include\CPKManager.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Readers\CPKReader.h">
-      <Filter>Headers\Readers</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Readers\UTFReader.h">
-      <Filter>Headers\Readers</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

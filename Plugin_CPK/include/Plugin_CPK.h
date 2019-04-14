@@ -20,6 +20,7 @@
 #include <libnao.h>
 
 #include <Plugin/NaoPlugin.h>
+#include <Containers/NaoVector.h>
 
 LIBNAO_PLUGIN_CALL LIBNAO_PLUGIN_DECL NaoPlugin* GetNaoPlugin();
 
@@ -48,8 +49,15 @@ class Plugin_CPK final : public NaoPlugin {
     N_NODISCARD bool HasContextMenu(NaoObject* object) override;
     //N_NODISCARD NaoVector<NaoAction*> ContextMenu(NaoObject* object) override;
 
+    N_NODISCARD Event SubscribedEvents() const override;
+    bool TriggerEvent(Event event, EventArgs* args) override;
+
     private:
     NaoObject* _m_root;
+    bool _m_state;
+    NaoVector<NaoObject*> _m_children;
+
+    bool MoveEvent(MoveEventArgs* args);
 };
 /*
 namespace Plugin {

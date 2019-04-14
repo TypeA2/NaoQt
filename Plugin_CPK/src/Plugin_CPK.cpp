@@ -17,8 +17,6 @@
 
 #include "Plugin_CPK.h"
 
-#include "CPKManager.h"
-
 #define N_LOG_ID "Plugin_CPK"
 #include <Logging/NaoLogging.h>
 #include <NaoObject.h>
@@ -26,12 +24,6 @@
 #include <Decoding/Archives/NaoCPKReader.h>
 #include <Decoding/NaoDecodingException.h>
 #include <Plugin/NaoPluginManager.h>
-
-/* TODO: THEORY
- *  - Global state management class
- *  - Release memory when leaving cpk
- *  - Keep information about file in memory as long as needed
- */
 
 NaoPlugin* GetNaoPlugin() {
     return new Plugin_CPK();
@@ -90,54 +82,79 @@ NaoString Plugin_CPK::Description() const {
 #pragma region Actions 
 
 bool Plugin_CPK::CanEnter(NaoObject* object) {
-    ndebug << object->name();
     // Is a CPK archive
-    return !object->is_dir()
-        && object->file_ref().io->read_singleshot(4) == NaoBytes("CPK ", 4);
+    if (!object->is_dir()
+        && object->file_ref().io->read_singleshot(4) == NaoBytes("CPK ", 4)) {
+        return true;
+    }
+
+    // Is a known child
+    if (std::find(std::begin(_m_children), std::end(_m_children), object)
+        != std::end(_m_children)) {
+        return true;
+    }
+
+    return false;
 }
 
 bool Plugin_CPK::Enter(NaoObject* object) {
-    NaoIO* io = object->file_ref().io;
+    if (!_m_state) {
+        NaoIO* io = object->file_ref().io;
 
-    NaoCPKReader* reader = nullptr;
-    try {
-        reader = new NaoCPKReader(io);
-    } catch (const NaoDecodingException& e) {
-        nerr << e.what();
-        return false;
-    }
-
-    int64_t subsequent_errors = 0;
-
-    for (NaoObject* file : reader->take_files()) {
-        file->file_ref().name = object->name() + N_PATHSEP + file->name();
-
-        if (!PluginManager.set_description(file)) {
-            if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-                nwarn << "Failed to set description for"
-                    << file->name();
-            }
-
-            ++subsequent_errors;
+        NaoCPKReader* reader = nullptr;
+        try {
+            reader = new NaoCPKReader(io);
+        } catch (const NaoDecodingException & e) {
+            nerr << e.what();
+            return false;
         }
 
-        object->add_child(file);
+        int64_t subsequent_errors = 0;
+
+        for (NaoObject* file : reader->take_files()) {
+            file->set_name(object->name() + N_PATHSEP + file->name());
+
+            if (!std::empty(file->description()) &&
+                !PluginManager.set_description(file)) {
+
+                if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
+                    nwarn << "Failed to set description for"
+                        << file->name();
+                }
+
+                ++subsequent_errors;
+            }
+
+            _m_children.push_back(file);
+        }
+
+        if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
+            nwarn << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
+                << "messages suppressed.";
+        }
+
+        delete reader;
+
+        _m_root = object;
+        _m_state = true;
     }
-
-    if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-        nwarn << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
-            << "messages suppressed.";
+    
+    const NaoString& subpath = object->name();
+   
+    for (NaoObject* file : _m_children) {
+        if (file->name().starts_with(subpath)
+            && !file->name().substr(std::size(subpath) + 1).contains(N_PATHSEP)) {
+            object->add_child(file);
+        }
     }
-
-    delete reader;
-
-    _m_root = object;
 
     return true;
 }
 
 bool Plugin_CPK::ShouldLeave(NaoObject* object) {
-    return object->is_child_of(_m_root);
+    ndebug << object->name();
+
+    return object->is_child_of(_m_root) || object == _m_root;
 }
 
 bool Plugin_CPK::Leave(NaoObject* object) {
@@ -147,6 +164,63 @@ bool Plugin_CPK::Leave(NaoObject* object) {
 
 bool Plugin_CPK::HasContextMenu(NaoObject* object) {
     return false;
+}
+
+NaoPlugin::Event Plugin_CPK::SubscribedEvents() const {
+    return Move;
+}
+
+bool Plugin_CPK::TriggerEvent(Event event, EventArgs* args) {
+    if (!args) {
+        return false;
+    }
+
+    switch (event) {
+        case Move:
+            return MoveEvent(static_cast<MoveEventArgs*>(args));
+
+        default:
+            return false;
+    }
+}
+
+bool Plugin_CPK::MoveEvent(MoveEventArgs* args) {
+    if (!args->from || !args->to) {
+        return false;
+    }
+
+    auto [from, to] = *args;
+
+    if (_m_state) {
+        if (!(to->name().starts_with(from->name()))) {
+            _m_state = false;
+
+            for (NaoObject* child : _m_children) {
+                if (child == from) {
+                    ndebug << "skip" << child->name();
+                    continue;
+                }
+
+                ndebug << "clear" << child->name();
+
+                delete child;
+            }
+
+            _m_children.clear();
+
+            (void) _m_root->take_children();
+
+            if (from != _m_root) {
+                ndebug << "clear root" << from->name();
+                delete _m_root;
+            }
+
+            return true;
+        }
+        
+    }
+
+    return true;
 }
 
 #pragma endregion
