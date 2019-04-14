@@ -36,7 +36,7 @@ NaoObject::NaoObject(const File& file, NaoObject* parent)
 
 NaoObject::NaoObject(const Dir& dir, NaoObject* parent)
     : _m_is_dir(true)
-    , _m_file({ nullptr, 0, 0, false, NaoString() })
+    , _m_file({ })
     , _m_dir(dir)
     , _m_flags(0ui64)
     , _m_parent(parent) {
@@ -130,6 +130,10 @@ NaoObject::Dir NaoObject::dir() const {
 
 NaoObject::Dir& NaoObject::dir_ref() {
     return _m_dir;
+}
+
+void NaoObject::set_name(const NaoString& name) {
+    (_m_is_dir ? _m_dir.name : _m_file.name) = name;
 }
 
 const NaoString& NaoObject::name() const {

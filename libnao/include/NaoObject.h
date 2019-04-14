@@ -69,6 +69,7 @@ class LIBNAO_API NaoObject {
     N_NODISCARD Dir dir() const;
     Dir& dir_ref();
 
+    void set_name(const NaoString& name);
     N_NODISCARD const NaoString& name() const;
 
     void set_description(const NaoString& desc);
