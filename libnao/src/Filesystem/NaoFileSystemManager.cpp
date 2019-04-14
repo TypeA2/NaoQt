@@ -180,8 +180,19 @@ bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
 
     PluginManager.trigger_event(NaoPlugin::Move, &args);
 
-    delete m_current_object;
-    m_current_object = new_object;
+    if (m_current_plugin
+        && m_current_plugin->ProvidesNewRoot(m_current_object, new_object)) {
+        nlog << "Fetching new root from current plugin";
+        if (m_current_object = m_current_plugin->NewRoot(
+            m_current_object, new_object); !m_current_object) {
+            nerr << "Could not get new root";
+            return false;
+        }
+    } else {
+        delete m_current_object;
+        m_current_object = new_object;
+    }
+
     m_current_plugin = PluginManager.enter_plugin(m_current_object);
 
     nlog << "Entering target using" << ("\"" + m_current_plugin->DisplayName() + "\"");
@@ -233,7 +244,6 @@ NaoObject* NaoFileSystemManager::NFSMPrivate::_try_locate_child(const NaoString&
 
         for (NaoObject* child : m_current_object->children()) {
             if (child->name() == path) {
-                nlog << "Found child";
                 return child;
             }
         }

@@ -73,6 +73,13 @@ bool NaoPlugin::TriggerEvent(Event event, EventArgs* args) {
     return false;
 }
 
+bool NaoPlugin::ProvidesNewRoot(NaoObject* from, NaoObject* to) {
+    return false;
+}
+
+NaoObject* NaoPlugin::NewRoot(NaoObject* from, NaoObject* to) {
+    return nullptr;
+}
 
 #pragma region NaoAction
 

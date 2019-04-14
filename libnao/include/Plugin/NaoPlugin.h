@@ -85,9 +85,12 @@ class LIBNAO_API NaoPlugin {
     N_NODISCARD virtual NaoVector<NaoAction*> ContextMenu(NaoObject* object);
 
     // Event subscribers
-
     N_NODISCARD virtual Event SubscribedEvents() const;
     virtual bool TriggerEvent(Event event, EventArgs* args = nullptr);
+
+    // Archives
+    N_NODISCARD virtual bool ProvidesNewRoot(NaoObject* from, NaoObject* to);
+    N_NODISCARD virtual NaoObject* NewRoot(NaoObject* from, NaoObject* to);
 };
 
 class LIBNAO_API NaoAction {
