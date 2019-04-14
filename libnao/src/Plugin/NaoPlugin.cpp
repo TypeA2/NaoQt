@@ -17,6 +17,10 @@
 
 #include "Plugin/NaoPlugin.h"
 
+NaoPlugin::MoveEventArgs::MoveEventArgs(NaoObject* from, NaoObject* to)
+    : from(from), to(to){ }
+
+
 bool NaoPlugin::PrioritiseDescription() const {
     return false;
 }
@@ -60,6 +64,15 @@ bool NaoPlugin::HasContextMenu(NaoObject* object) {
 NaoVector<NaoAction*> NaoPlugin::ContextMenu(NaoObject* object) {
     return { };
 }
+
+NaoPlugin::Event NaoPlugin::SubscribedEvents() const {
+    return None;
+}
+
+bool NaoPlugin::TriggerEvent(Event event, EventArgs* args) {
+    return false;
+}
+
 
 #pragma region NaoAction
 

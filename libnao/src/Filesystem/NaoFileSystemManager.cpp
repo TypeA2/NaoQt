@@ -173,6 +173,13 @@ bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
         m_current_object->remove_child(new_object);
     }
 
+    NaoPlugin::MoveEventArgs args{
+        m_current_object,
+        new_object
+    };
+
+    PluginManager.trigger_event(NaoPlugin::Move, &args);
+
     delete m_current_object;
     m_current_object = new_object;
     m_current_plugin = PluginManager.enter_plugin(m_current_object);

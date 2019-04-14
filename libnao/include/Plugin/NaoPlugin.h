@@ -32,6 +32,24 @@ using PluginFunc = NaoPlugin*(*)();
 
 class LIBNAO_API NaoPlugin {
     public:
+
+    enum Event : uint64_t {
+        None = 0x0,
+        Move = 0x1
+    };
+
+    static constexpr Event AllEvents[] = {
+        Move
+    };
+
+    struct EventArgs { };
+
+    struct MoveEventArgs : EventArgs {
+        MoveEventArgs(NaoObject* from, NaoObject* to);
+        NaoObject* from;
+        NaoObject* to;
+    };
+
     virtual ~NaoPlugin() = default;
 
     // Plugin info
@@ -65,6 +83,11 @@ class LIBNAO_API NaoPlugin {
     // Context menu
     N_NODISCARD virtual bool HasContextMenu(NaoObject* object);
     N_NODISCARD virtual NaoVector<NaoAction*> ContextMenu(NaoObject* object);
+
+    // Event subscribers
+
+    N_NODISCARD virtual Event SubscribedEvents() const;
+    virtual bool TriggerEvent(Event event, EventArgs* args = nullptr);
 };
 
 class LIBNAO_API NaoAction {

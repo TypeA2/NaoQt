@@ -23,6 +23,8 @@
 #include "Plugin/NaoPlugin.h"
 #include "Filesystem/Filesystem.h"
 
+#include <map>
+
 #ifdef N_WINDOWS
 #   define WIN32_LEAN_AND_MEAN
 #   define VC_EXTRALEAN
@@ -63,6 +65,8 @@ class NaoPluginManager::NaoPluginManagerPrivate {
 
     // All errored plugins
     NaoVector<NaoPair<NaoString, NaoString>> m_errored_list;
+
+    std::map<NaoPlugin::Event, NaoVector<NaoPlugin*>> m_event_subscribers;
 
     // If the plugin manager was initialised already
     bool m_initialised = false;
@@ -131,6 +135,15 @@ NaoPlugin* NaoPluginManager::context_menu_plugin(NaoObject* object) const {
 bool NaoPluginManager::set_description(NaoObject* object) {
     return d_ptr->set_description_for_object(object);
 }
+
+void NaoPluginManager::trigger_event(NaoPlugin::Event event, NaoPlugin::EventArgs* args) {
+    for (NaoPlugin* plugin : d_ptr->m_event_subscribers.at(event)) {
+        if (!plugin->TriggerEvent(event, args)) {
+            nerr << "Failed triggering event" << event << "on plugin" << plugin->DisplayName();
+        }
+    }
+}
+
 
 //// Private
 
@@ -215,6 +228,12 @@ bool NaoPluginManager::NaoPluginManagerPrivate::load(const NaoString& plugin_nam
 
         m_plugins.push_back(plugin);
         m_plugins_raw.push_back(plugin.plugin);
+
+        for (NaoPlugin::Event event : NaoPlugin::AllEvents) {
+            if (plugin->SubscribedEvents() & event) {
+                m_event_subscribers[event].push_back(plugin.plugin);
+            }
+        }
 
         nlog << "Loaded plugin" << fs::path(plugin_name).filename()
             << ("(\"" + plugin->Name() + "\")");
