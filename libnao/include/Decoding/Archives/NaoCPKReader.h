@@ -34,6 +34,7 @@ class LIBNAO_API NaoCPKReader {
 
     private:
     void _read_archive();
+    void _resolve_structure();
 
     NaoIO* _m_io;
     NaoVector<NaoObject*> _m_files;
