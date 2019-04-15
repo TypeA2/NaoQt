@@ -89,8 +89,6 @@ bool Plugin_DiskDirectory::Enter(NaoObject* object) {
     object->set_description(Description());
     NaoString path_str;
 
-    int64_t subsequent_errors = 0;
-
     for (const fs::directory_entry& entry : fs::directory_iterator(object->name())) {
         path_str = entry.path();
 
@@ -123,8 +121,7 @@ bool Plugin_DiskDirectory::Enter(NaoObject* object) {
         if (fs::is_directory(path_str)) {
             new_object = new NaoObject({ path_str }, object);
             new_object->set_description(Description());
-        }
-        else if (is_regular_file(entry.path())) {
+        } else if (is_regular_file(entry.path())) {
 
 #ifdef N_WINDOWS
 
@@ -144,20 +141,10 @@ bool Plugin_DiskDirectory::Enter(NaoObject* object) {
                 path_str
                 }, object);
 
-            if (!PluginManager.set_description(new_object)) {
-                if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-                    nwarn << "Failed to set description for" << new_object->name();
-                }
-
-                ++subsequent_errors;
-            }
+            PluginManager.set_description(new_object);
         }
     }
 
-    if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-        nwarn << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
-            << " description messages suppressed.";
-    }
 
     return true;
 }
