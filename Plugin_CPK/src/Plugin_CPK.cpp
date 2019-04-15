@@ -118,7 +118,11 @@ bool Plugin_CPK::Enter(NaoObject* object) {
         for (NaoObject* file : reader->take_files()) {
             file->set_name(object->name() + N_PATHSEP + file->name());
 
-            PluginManager.set_description(file);
+            // I don't even know why this check is needed
+            // but everything explodes without it
+            if (!std::empty(file->description())) {
+                PluginManager.set_description(file);
+            }
 
             _m_children.push_back(file);
         }
