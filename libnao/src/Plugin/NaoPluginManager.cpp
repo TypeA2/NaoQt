@@ -132,6 +132,27 @@ NaoPlugin* NaoPluginManager::context_menu_plugin(NaoObject* object) const {
 	return d_ptr->context_menu_plugin(object);
 }
 
+NaoPlugin* NaoPluginManager::child_plugin(const NaoString& name) const {
+    for (NaoPlugin* plugin : d_ptr->m_plugins_raw) {
+        if (plugin->ProvidesChild(name)) {
+            return plugin;
+        }
+    }
+
+    return nullptr;
+}
+
+NaoPlugin* NaoPluginManager::root_plugin(NaoObject* from, NaoObject* to) const {
+    for (NaoPlugin* plugin : d_ptr->m_plugins_raw) {
+        if (plugin->ProvidesNewRoot(from, to)) {
+            return plugin;
+        }
+    }
+
+    return nullptr;
+}
+
+
 bool NaoPluginManager::set_description(NaoObject* object) {
     return d_ptr->set_description_for_object(object);
 }
