@@ -81,6 +81,14 @@ NaoObject* NaoPlugin::NewRoot(NaoObject* from, NaoObject* to) {
     return nullptr;
 }
 
+bool NaoPlugin::ProvidesChild(const NaoString& name) {
+    return false;
+}
+
+NaoObject* NaoPlugin::GetChild(const NaoString& name) {
+    return nullptr;
+}
+
 #pragma region NaoAction
 
 NaoAction::NaoAction(NaoPlugin* parent)

@@ -91,6 +91,9 @@ class LIBNAO_API NaoPlugin {
     // Archives
     N_NODISCARD virtual bool ProvidesNewRoot(NaoObject* from, NaoObject* to);
     N_NODISCARD virtual NaoObject* NewRoot(NaoObject* from, NaoObject* to);
+
+    N_NODISCARD virtual bool ProvidesChild(const NaoString& name);
+    N_NODISCARD virtual NaoObject* GetChild(const NaoString& name);
 };
 
 class LIBNAO_API NaoAction {
