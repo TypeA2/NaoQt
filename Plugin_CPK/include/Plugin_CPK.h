@@ -55,6 +55,9 @@ class Plugin_CPK final : public NaoPlugin {
     N_NODISCARD bool ProvidesNewRoot(NaoObject* from, NaoObject* to) override;
     N_NODISCARD NaoObject* NewRoot(NaoObject* from, NaoObject* to) override;
 
+    N_NODISCARD bool ProvidesChild(const NaoString& name) override;
+    N_NODISCARD NaoObject* GetChild(const NaoString& name) override;
+
     private:
     NaoObject* _m_root;
     bool _m_state;

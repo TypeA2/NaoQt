@@ -83,19 +83,24 @@ NaoString Plugin_CPK::Description() const {
 #pragma region Actions 
 
 bool Plugin_CPK::CanEnter(NaoObject* object) {
+    if (_m_state) {
+        // Is root
+        if (object->name() == _m_root->name()) {
+            return true;
+;       }
+
+        // Is a known child
+        for (NaoObject* child : _m_children) {
+            if (child->is_dir()
+                && child->name() == object->name()) {
+                return true;
+            }
+        }
+    }
+
     // Is a CPK archive
-    if (!object->is_dir()
-        && object->file_ref().io->read_singleshot(4) == NaoBytes("CPK ", 4)) {
-        return true;
-    }
-
-    // Is a known child
-    if (_m_children.contains(object)) {
-        ndebug << "enter child" << object->name();
-        return true;
-    }
-
-    return false;
+    return !object->is_dir()
+        && object->file_ref().io->read_singleshot(4) == NaoBytes("CPK ", 4);
 }
 
 bool Plugin_CPK::Enter(NaoObject* object) {
@@ -110,28 +115,12 @@ bool Plugin_CPK::Enter(NaoObject* object) {
             return false;
         }
 
-        int64_t subsequent_errors = 0;
-
         for (NaoObject* file : reader->take_files()) {
             file->set_name(object->name() + N_PATHSEP + file->name());
 
-            if (!std::empty(file->description()) &&
-                !PluginManager.set_description(file)) {
-
-                if (subsequent_errors < N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-                    nwarn << "Failed to set description for"
-                        << file->name();
-                }
-
-                ++subsequent_errors;
-            }
+            PluginManager.set_description(file);
 
             _m_children.push_back(file);
-        }
-
-        if (subsequent_errors > N_SUBSEQUENT_ERRMSG_LIMIT_HINT) {
-            nwarn << (subsequent_errors - N_SUBSEQUENT_ERRMSG_LIMIT_HINT)
-                << "messages suppressed.";
         }
 
         delete reader;
@@ -157,8 +146,6 @@ bool Plugin_CPK::Enter(NaoObject* object) {
 }
 
 bool Plugin_CPK::ShouldLeave(NaoObject* object) {
-    ndebug << object->name();
-
     return object->is_child_of(_m_root) || object == _m_root;
 }
 
@@ -197,7 +184,7 @@ bool Plugin_CPK::MoveEvent(MoveEventArgs* args) {
 
     if (_m_state) {
         // Exiting this archive, free up everything
-        if (!(to->name().starts_with(from->name()))) {
+        if (!(to->name().starts_with(_m_root->name()))) {
             nlog << "Leaving archive";
 
             _m_state = false;
@@ -206,7 +193,7 @@ bool Plugin_CPK::MoveEvent(MoveEventArgs* args) {
                 if (child == from) {
                     continue;
                 }
-
+                
                 delete child;
             }
 
@@ -222,9 +209,6 @@ bool Plugin_CPK::MoveEvent(MoveEventArgs* args) {
 
             return true;
         }
-
-        ndebug << "From:" << from->name();
-        ndebug << "To:" << to->name();
         
     }
 
@@ -232,13 +216,71 @@ bool Plugin_CPK::MoveEvent(MoveEventArgs* args) {
 }
 
 bool Plugin_CPK::ProvidesNewRoot(NaoObject* from, NaoObject* to) {
-    return _m_state && _m_children.contains(to);
+    if (!_m_state) {
+        return false;
+    }
+
+    if (to->name() == _m_root->name()) {
+        return true;
+    }
+
+    for (NaoObject* child : _m_children) {
+        if (child->name() == to->name()) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 NaoObject* Plugin_CPK::NewRoot(NaoObject* from, NaoObject* to) {
     (void) from->take_children();
+
+    if (to->name() == _m_root->name()) {
+        return _m_root;
+    }
+
+    for (NaoObject* child : _m_children) {
+        if (child->name() == to->name()) {
+            return child;
+        }
+    }
+
     return to;
 }
+
+bool Plugin_CPK::ProvidesChild(const NaoString& name) {
+    if (!_m_state) {
+        return false;
+    }
+
+    if (_m_root->name() == name) {
+        return true;
+    }
+
+    for (NaoObject* child : _m_children) {
+        if (child->name() == name) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+NaoObject* Plugin_CPK::GetChild(const NaoString& name) {
+    if (_m_root->name() == name) {
+        return _m_root;
+    }
+
+    for (NaoObject* child : _m_children) {
+        if (child->name() == name) {
+            return child;
+        }
+    }
+
+    return nullptr;
+}
+
 
 #pragma endregion
 /*
