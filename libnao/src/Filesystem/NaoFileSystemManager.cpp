@@ -183,12 +183,21 @@ bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
     if (m_current_plugin
         && m_current_plugin->ProvidesNewRoot(m_current_object, new_object)) {
         nlog << "Fetching new root from current plugin";
+
         if (m_current_object = m_current_plugin->NewRoot(
             m_current_object, new_object); !m_current_object) {
             nerr << "Could not get new root";
             return false;
         }
+    } else if (NaoPlugin* root_plugin = PluginManager.root_plugin(m_current_object, new_object)) {
+        nlog << "Fetching new root from new plugin" << root_plugin->DisplayName();
+
+        if (m_current_object = root_plugin->NewRoot(m_current_object, new_object); !m_current_object) {
+            nerr << "Could not get new root";
+            return false;
+        }
     } else {
+        nlog << "Deleting current object";
         delete m_current_object;
         m_current_object = new_object;
     }
@@ -235,7 +244,6 @@ NaoObject* NaoFileSystemManager::NFSMPrivate::_try_locate_child(const NaoString&
     nlog << "Attempting to locate existing child";
 
     // Assign a child object if possible, else create a new one
-
     if (m_current_object) {
         if (m_current_object->name() == path) {
             nlog << "Child is self";
@@ -247,6 +255,18 @@ NaoObject* NaoFileSystemManager::NFSMPrivate::_try_locate_child(const NaoString&
                 return child;
             }
         }
+    }
+
+    // Use plugin if applicable
+    if (m_current_plugin
+        && m_current_plugin->ProvidesChild(path)) {
+        nlog << "Child provided by plugin";
+        return m_current_plugin->GetChild(path);
+    }
+
+    if (NaoPlugin* plugin = PluginManager.child_plugin(path)) {
+        nlog << "Child provided by plugin" << plugin->DisplayName();
+        return plugin->GetChild(path);
     }
 
     nlog << "Constructing new object instead";
