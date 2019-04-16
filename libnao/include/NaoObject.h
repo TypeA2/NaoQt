@@ -84,6 +84,10 @@ class LIBNAO_API NaoObject {
 
     N_NODISCARD bool is_child_of(NaoObject* search) const;
 
+    N_NODISCARD bool direct_child_of(NaoObject* object) const;
+    N_NODISCARD bool direct_child_of(const NaoString& name) const;
+
+    N_NODISCARD NaoString top_existing_dir() const;
 
     private:
     void _attach_parent();

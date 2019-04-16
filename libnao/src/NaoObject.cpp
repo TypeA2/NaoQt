@@ -44,7 +44,6 @@ NaoObject::NaoObject(const Dir& dir, NaoObject* parent)
 }
 
 NaoObject::~NaoObject() {
-    //ndebug << "=== Deleting" << name();
     for (NaoObject* child : _m_children) {
         delete child;
     }
@@ -181,6 +180,34 @@ bool NaoObject::is_child_of(NaoObject* search) const {
     }
 
     return false;
+}
+
+bool NaoObject::direct_child_of(NaoObject* object) const {
+    return name().starts_with(object->name())
+        && !name().substr(std::size(object->name()) + 1).contains(N_PATHSEP);
+}
+
+bool NaoObject::direct_child_of(const NaoString& name) const {
+    return this->name().starts_with(name)
+        && !this->name().substr(std::size(name) + 1).contains(N_PATHSEP);
+}
+
+NaoString NaoObject::top_existing_dir() const {
+    NaoString next_path;
+    NaoString new_path = name();
+
+    while (!fs::is_directory(next_path)) {
+        next_path = new_path.substr(0, new_path.last_index_of(N_PATHSEP));
+
+        if (next_path == new_path) {
+            nerr << "No existing directory found";
+            return NaoString();
+        }
+
+        new_path = next_path;
+    }
+
+    return new_path;
 }
 
 void NaoObject::_attach_parent() {
