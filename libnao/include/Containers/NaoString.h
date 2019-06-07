@@ -17,13 +17,19 @@
 
 #pragma once
 
+/**
+ * \file NaoString.h
+ * 
+ * \brief Contains NaoString and helper classes
+ * 
+ * Contains the NaoString class, the helper class NaoWStringConst
+ * and implementations for optional functionalities.
+ * 
+ */
+
 #include "libnao.h"
 
 #include "Filesystem/Filesystem.h"
-
-#include "Functionality/NaoMath.h"
-
-#include <sstream>
 
 #ifdef QT_VERSION
 #   define NAOSTRING_QT_EXTENSIONS
@@ -31,25 +37,71 @@
 #   include "Functionality/NaoMath.h"
 #endif
 
+/**
+ * \ingroup containers
+ * 
+ * \brief Encapsulates a wide (UTF-16) string.
+ * 
+ * Temporary class to take ownership of a `wchar*` wide string,
+ * and deallocates it at the end of it's lifetime.
+ */
 class LIBNAO_API NaoWStringConst {
     public:
+    /**
+     * \brief Takes ownership of an existing wide string.
+     * 
+     * \param[in] str The wide string to take ownership of.
+     * 
+     * No checks are done on the string, the pointer is merely stored.
+     */
     NaoWStringConst(wchar_t* str);
+
+    /**
+     * \brief Deallocates the string
+     */
     ~NaoWStringConst();
 
-    operator wchar_t*() const;
-    N_NODISCARD wchar_t* data() const;
+    /**
+     * \brief Access the owned wide string
+     * \name String access
+     * \{
+     */
+    operator const wchar_t*() const;
+    N_NODISCARD const wchar_t* data() const;
     N_NODISCARD const wchar_t* utf16() const;
     N_NODISCARD const wchar_t* c_str() const;
+    /**
+     * \}
+     */
 
     private:
+    /**
+     * \brief The held wide string.
+     */
     wchar_t* _m_data;
 };
 
+/**
+ * \ingroup containers
+ * 
+ * \brief Encapsulates a C-string
+ * 
+ * Generic string class. Does not care about encoding specifically,
+ * as long as code units fit into 1 byte, but expects UTF-8.
+ * 
+ * \note Does not check for encoding, size() returns number of bytes
+ * stored and expects UTF-8 when converting to UTF-16.
+ */
 class LIBNAO_API NaoString {
     public:
 
 #pragma region Types
 
+    /**
+     * \brief Type aliases to make the STL happy.
+     * \name Typedefs
+     * \{
+     */
     using reference = char & ;
     using const_reference = const char &;
     using pointer = char * ;
@@ -58,51 +110,143 @@ class LIBNAO_API NaoString {
     using const_iterator = const char *;
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+    /**
+     * \}
+     */
 
+    // Config values
+    /**
+     * \brief Default value for a null character.
+     */
     static constexpr char null_value = char();
+
+    /**
+     * \brief Memory will be allocated in blocks of this size.
+     */
     static constexpr size_t data_alignment = 16 * sizeof(char);
 
 #pragma endregion 
 
 #pragma region Constructors
+
+    /**
+     * \brief Empty constructor
+     * 
+     * Allocates the default amount of bytes, all to 0.
+     */
     NaoString();
 
+    /**
+     * \brief Construct from a C-string.
+     * \param[in] str Null-terminated C-string.
+     * 
+     * Takes the string length as returned by strlen() and copies
+     * that number of bytes from the source buffer to the internal buffer.
+     */
     NaoString(const char* str);
 
+    /**
+     * \brief Constructs from a single character.
+     * \param[in] c The initial single character value.
+     * 
+     * Allocates the default amount of bytes and sets the value
+     * of the first byte to the value of the given character
+     */
     NaoString(char c);
 
+    /**
+     * \brief Copy constructor
+     * \param[in] other - The instance to copy from.
+     * 
+     * Copies parameters from the source instance and also copies it's buffer.
+     */
     NaoString(const NaoString& other);
 
+    /**
+     * \brief Move constructor
+     * \param[in] other The instance to move from.
+     * 
+     * Moves the contents to this new instance.
+     */
     NaoString(NaoString&& other) noexcept;
 
 #pragma endregion 
 
 #pragma region Assignment operators
 
+    /**
+     * \brief Assign from a C-string
+     * \param[in] str - Null-terminated C-string to copy from.
+     * 
+     * Assigns from an existing C-string, discarding the current contents.
+     */
     NaoString& operator=(const char* str);
 
+    /**
+     * \brief Assign from another NaoString
+     * \param[in] other - The NaoString to copy from
+     * 
+     * Copies all information and data from the source string.
+     */
     NaoString& operator=(const NaoString& other);
 
 #pragma endregion
 
-#pragma region Conversion operators
+#pragma region Conversion
 
+    /**
+     * \brief C-string implicit conversion.
+     * Implicit conversion to access the character data.
+     * Behaviour is identical to c_str().
+     */
     operator const char*() const;
 
-#pragma endregion
-
-#pragma region Conversion functions
-
+    /**
+     * \brief Access the underlying null-terminated C-string.
+     * \return Pointer to the null-terminated character array
+     * containing the string.
+     */
     N_NODISCARD const char* c_str() const;
+
+    // Convert to UTF-16 and return as a temorary NaoWStringConst
     N_NODISCARD NaoWStringConst utf16() const;
 
 #pragma endregion 
 
 #pragma region Comparison functions and operators
 
+    /**
+     * \brief Compare to another NaoString.
+     * \param[in] other The string to compare to.
+     * \return Whether the string contents are equal.
+     */
     bool operator==(const NaoString& other) const;
+
+    /**
+     * \brief Compare to a C-string
+     * \param[in] other The null-terminated C-string to compare to.
+     * \return Whether the string contents are equal.
+     */
     bool operator==(const char* other) const;
-    bool operator==(char other)const ;
+
+    /**
+     * \brief Compare to a single character
+     * \param[in] other The character to compare to.
+     * \return Whether the string is equal to the character
+     */
+    bool operator==(char other) const;
+
+    /**
+     * \name Negative comparison operators
+     * Returns the negated value of the positive counterpart.
+     * \{
+     */
+    bool operator!=(const NaoString& other) const;
+    bool operator!=(const char* other) const;
+    bool operator!=(char other) const;
+    /**
+     * \}
+     */
 
 #pragma endregion 
 
@@ -118,6 +262,9 @@ class LIBNAO_API NaoString {
 
 #pragma region General functions
 
+    /**
+     * \brief test
+     */
     N_NODISCARD size_t size() const noexcept;
 
     N_NODISCARD bool empty() const noexcept;
@@ -145,9 +292,10 @@ class LIBNAO_API NaoString {
 
     void _reallocate_to(size_t size);
 
-    char* _m_data;
     size_t _m_size;
     size_t _m_allocated;
+
+    char* _m_data;
 
     iterator _m_end;
 

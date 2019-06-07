@@ -17,6 +17,13 @@
 
 #pragma once
 
+// Doxygen setup stuff
+/**
+ * \defgroup containers Containers
+ * All container classes.
+ * 
+ */
+
 #include <cstdint>
 
 #ifndef _WIN64

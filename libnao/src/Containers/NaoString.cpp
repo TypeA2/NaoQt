@@ -21,6 +21,8 @@
 #include "Logging/NaoLogging.h"
 #include "Functionality/NaoMath.h"
 
+#include <sstream>
+
 #ifdef N_WINDOWS
 #   define WIN32_LEAN_AND_MEAN
 #   define VC_EXTRALEAN
@@ -31,20 +33,23 @@
 
 #pragma region NaoWString
 
+// Create from a wchar_t*
 NaoWStringConst::NaoWStringConst(wchar_t* str) 
     : _m_data(str) {
 
 }
 
+// Delete after use
 NaoWStringConst::~NaoWStringConst() {
     delete[] _m_data;
 }
 
-NaoWStringConst::operator wchar_t*() const {
+// String access
+NaoWStringConst::operator const wchar_t*() const {
     return _m_data;
 }
 
-wchar_t* NaoWStringConst::data() const {
+const wchar_t* NaoWStringConst::data() const {
     return _m_data;
 }
 
@@ -61,44 +66,49 @@ const wchar_t* NaoWStringConst::c_str() const {
 
 #pragma region Constructors
 
-NaoString::NaoString() {
-    _m_size = 0;
-    _m_allocated = data_alignment;
+// Empty constructor
+NaoString::NaoString()
+    : _m_size(0) // 0 length
+    , _m_allocated(data_alignment) // Default allocated amount
+    , _m_data(new char[_m_allocated]()) // Allocate bytes
+    , _m_end(_m_data) // Assign end iterator
+{ } 
 
-    _m_data = new char[_m_allocated]();
-    _m_end = _m_data;
-}
+// Construct from a C-string
+NaoString::NaoString(const char* str)
+    : _m_size(strlen(str)) // The string's length is our length
+    , _m_allocated(NaoMath::round_up(_m_size, data_alignment))
+    , _m_data(new char[_m_allocated]())
+    , _m_end(std::copy(str, str + _m_size, _m_data)) // Copy the string and assign the end iterator
+{ }
 
-NaoString::NaoString(const char* str) {
-    _m_size = strlen(str);
-    _m_allocated = NaoMath::round_up(_m_size, data_alignment);
+// Construct from a single char
+NaoString::NaoString(char c)
+    : _m_size(1) // Always size 1
+    , _m_allocated(data_alignment)
+    , _m_data(new char[_m_allocated]())
+    , _m_end(_m_data + 1) {
 
-    _m_data = new char[_m_allocated]();
-
-    _m_end = std::copy(str, str + _m_size, _m_data);
-}
-
-NaoString::NaoString(char c) {
-    _m_size = 1;
-    _m_allocated = data_alignment;
-    _m_data = new char[_m_allocated]();
+    // Fill the first character
     *_m_data = c;
-    _m_end = _m_data + 1;
 }
 
-NaoString::NaoString(const NaoString& other) {
-    _m_size = other._m_size;
-    _m_allocated = other._m_allocated;
-    _m_data = new char[_m_allocated]();
-    _m_end = std::copy(other._m_data, other._m_end, _m_data);
-}
+// Copy constructor
+NaoString::NaoString(const NaoString& other)
+    : _m_size(other._m_size)
+    , _m_allocated(other._m_allocated)
+    , _m_data(new char[_m_allocated]())
+    , _m_end(std::copy(other._m_data, other._m_end, _m_data))
+{ }
 
-NaoString::NaoString(NaoString&& other) noexcept {
-    _m_data = other._m_data;
-    _m_size = other._m_size;
-    _m_allocated = other._m_allocated;
-    _m_end = other._m_end;
+// Move constructor
+NaoString::NaoString(NaoString&& other) noexcept
+    : _m_data(other._m_data)
+    , _m_size(other._m_size)
+    , _m_allocated(other._m_allocated)
+    , _m_end(other._m_end) {
 
+    // Discard source object
     other._m_data = nullptr;
     other._m_size = 0;
     other._m_allocated = 0;
@@ -109,11 +119,14 @@ NaoString::NaoString(NaoString&& other) noexcept {
 
 #pragma region Assignment operators
 
+// Assign from a C-string
 NaoString& NaoString::operator=(const char* str) {
+    // Delete existing string
     if (_m_allocated) {
         delete[] _m_data;
     }
 
+    // Allocate and copy new string
     _m_size = strlen(str);
     _m_allocated = NaoMath::round_up(_m_size, data_alignment);
     _m_data = new char[_m_allocated]();
@@ -122,11 +135,14 @@ NaoString& NaoString::operator=(const char* str) {
     return *this;
 }
 
+// Assign from another NaoString
 NaoString& NaoString::operator=(const NaoString& other) {
+    // Delete existing string
     if (_m_allocated) {
         delete[] _m_data;
     }
 
+    // Copy size and allocated amount of bytes and copy data
     _m_size = other._m_size;
     _m_allocated = other._m_allocated;
     _m_data = new char[_m_allocated]();
@@ -137,30 +153,38 @@ NaoString& NaoString::operator=(const NaoString& other) {
 
 #pragma endregion
 
-#pragma region Conversion operators
+#pragma region Conversion
 
 NaoString::operator const char*() const {
+    // Just access the data
     return _m_data;
 }
-
-#pragma endregion 
-
-#pragma region Conversion functions
 
 const char* NaoString::c_str() const {
+    // Access data here too
     return _m_data;
 }
 
+// Access as UTF-16
 NaoWStringConst NaoString::utf16() const {
-
+    // Windows conversion function
 #ifdef N_WINDOWS
-    const int target_size = MultiByteToWideChar(CP_UTF8, MB_COMPOSITE, _m_data, -1, nullptr, 0);
+    // Get the resulting string size (including null terminator)
+    int target_size = MultiByteToWideChar(CP_UTF8, 
+        MB_COMPOSITE, _m_data, -1, nullptr, 0);
+
+    // Allocate memory
     wchar_t* wstring = new wchar_t[target_size]();
 
-    if (!MultiByteToWideChar(CP_UTF8, MB_COMPOSITE, _m_data, -1, wstring, target_size)) {
+    // Perform conversion
+    if (!MultiByteToWideChar(CP_UTF8, 
+        MB_COMPOSITE, _m_data, -1, wstring, target_size)) {
+
+        // Return null string if not successful
         return NaoWStringConst(nullptr);
     }
 
+    // Else return the WString
     return wstring;
 #endif
 
@@ -170,19 +194,37 @@ NaoWStringConst NaoString::utf16() const {
 
 #pragma region Comparison functions and operators
 
+// Compare to a NaoString
 bool NaoString::operator==(const NaoString& other) const {
+    // Make sure the size matches and all filled data matches (allocated amount can differ)
     return (_m_size == std::size(other))
         && std::equal(_m_data, _m_end, std::begin(other));
 }
 
 bool NaoString::operator==(const char* other) const {
+    // C-string length and data should be the same
     return (_m_size == std::strlen(other))
         && std::equal(_m_data, _m_end, other);
 }
 
 bool NaoString::operator==(char other) const {
+    // Size can only be 1 and the first character must match
     return (_m_size == 1)
         && *_m_data == other;
+}
+
+// Just negate operator== for these
+
+bool NaoString::operator!=(const NaoString& other) const {
+    return !operator==(other);
+}
+
+bool NaoString::operator!=(const char* other) const {
+    return !operator==(other);
+}
+
+bool NaoString::operator!=(char other) const {
+    return !operator==(other);
 }
 
 #pragma endregion 
