@@ -237,16 +237,11 @@ class LIBNAO_API NaoString {
     bool operator==(char other) const;
 
     /**
-     * \name Negative comparison operators
-     * Returns the negated value of the positive counterpart.
-     * \{
+     * \brief Returns the negative variant of the comparison
      */
     bool operator!=(const NaoString& other) const;
     bool operator!=(const char* other) const;
     bool operator!=(char other) const;
-    /**
-     * \}
-     */
 
 #pragma endregion 
 
