@@ -229,9 +229,10 @@ namespace DesktopUtils {
 
         IShellItem* default_dir_item = nullptr;
 
+        ndebug << default_path;
+
         hr = SHCreateItemFromParsingName(default_path.utf16(), nullptr, 
             IID_IShellItem, reinterpret_cast<void**>(&default_dir_item));
-
 
         if (FAILED(hr)) {
             nerr << "SHCreateItemFromParsingName failed";

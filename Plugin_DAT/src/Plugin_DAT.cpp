@@ -164,8 +164,12 @@ NaoString ExtractAllAction::ActionName() {
 bool ExtractAllAction::Execute(NaoObject* object) {
     NaoString fname = fs::path(object->name()).filename();
 
+    ndebug << object->top_existing_dir();
+
+//#error SHGetFileInfo() timed out for  D:\Games\Steam\SteamApps\common\NieRAutomata\data\data000.cpk\core\coreeff.dat
+
     NaoString target = DesktopUtils::save_as_dir(
-        fs::path(object->name()).parent_path(),
+        object->top_existing_dir(),
         "",
         "Select target folder");
 

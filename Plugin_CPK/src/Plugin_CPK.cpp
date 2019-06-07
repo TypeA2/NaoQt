@@ -140,8 +140,7 @@ bool Plugin_CPK::Enter(NaoObject* object) {
             continue;
         }
 
-        if (file->name().starts_with(subpath)
-            && !file->name().substr(std::size(subpath) + 1).contains(N_PATHSEP)) {
+        if (file->direct_child_of(subpath)) {
             object->add_child(file);
         }
     }
@@ -284,7 +283,6 @@ NaoObject* Plugin_CPK::GetChild(const NaoString& name) {
 
     return nullptr;
 }
-
 
 #pragma endregion
 /*

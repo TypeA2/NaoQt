@@ -233,8 +233,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="libnao.licenseheader" />
     <None Include="cpp.hint" />
+    <None Include="libnao.licenseheader" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource\libnao.rc">

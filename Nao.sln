@@ -28,6 +28,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Plugin_CPK", "Plugin_CPK\Pl
 		{AA8269E4-9123-4F7E-99FC-7D2567CABD2A} = {AA8269E4-9123-4F7E-99FC-7D2567CABD2A}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnao_tests", "libnao_tests\libnao_tests.vcxproj", "{CB74AFAB-D425-4653-A55C-C3BF5A0501C4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AA8269E4-9123-4F7E-99FC-7D2567CABD2A} = {AA8269E4-9123-4F7E-99FC-7D2567CABD2A}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -54,6 +59,10 @@ Global
 		{88D269C5-8F98-4755-BD2C-CAC6D25E78D5}.Debug|x64.Build.0 = Debug|x64
 		{88D269C5-8F98-4755-BD2C-CAC6D25E78D5}.Release|x64.ActiveCfg = Release|x64
 		{88D269C5-8F98-4755-BD2C-CAC6D25E78D5}.Release|x64.Build.0 = Release|x64
+		{CB74AFAB-D425-4653-A55C-C3BF5A0501C4}.Debug|x64.ActiveCfg = Debug|x64
+		{CB74AFAB-D425-4653-A55C-C3BF5A0501C4}.Debug|x64.Build.0 = Debug|x64
+		{CB74AFAB-D425-4653-A55C-C3BF5A0501C4}.Release|x64.ActiveCfg = Release|x64
+		{CB74AFAB-D425-4653-A55C-C3BF5A0501C4}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
