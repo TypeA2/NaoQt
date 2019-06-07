@@ -23,6 +23,9 @@ class TestNaoString : public QObject {
     Q_OBJECT
 
     private slots:
+    void constructors();
+    void comparison_operators();
     void assignment_operators();
     void conversion_operators();
+   
 };

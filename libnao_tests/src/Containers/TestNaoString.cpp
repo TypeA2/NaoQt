@@ -19,6 +19,34 @@
 
 #include <Containers/NaoString.h>
 
+void TestNaoString::constructors() {
+    QCOMPARE(NaoString(), "");
+    QCOMPARE(NaoString("Foo"), "Foo");
+    QCOMPARE(NaoString('X'), "X");
+
+    NaoString src("Bar");
+    NaoString tgt(std::move(src));
+
+    QCOMPARE(tgt, "Bar");
+
+    // ReSharper disable once bugprone-use-after-move
+    QCOMPARE(src.data(), nullptr);
+}
+
+void TestNaoString::comparison_operators() {
+    QCOMPARE(NaoString("FooBar"), "FooBar");
+
+    QCOMPARE(NaoString("Foo"), NaoString("Foo"));
+
+    QVERIFY(!(NaoString("Bar") == NaoString("Baz")));
+    QVERIFY(!(NaoString("Foo") != NaoString("Foo")));
+    QVERIFY(NaoString("Foo") != NaoString("Bar"));
+    QVERIFY(!(NaoString("Y") != 'Y'));
+
+    QCOMPARE(NaoString("A"), 'A');
+}
+
+
 void TestNaoString::assignment_operators() {
     // Nothing should go wrong here
 
@@ -37,6 +65,9 @@ void TestNaoString::assignment_operators() {
 }
 
 void TestNaoString::conversion_operators() {
+    // Make ReSharper shut up
+    Q_UNUSED(this);
+
     // char* access and UTF-16 conversion
     // Also checks for null terminator
 
