@@ -232,29 +232,42 @@ bool NaoString::operator!=(char other) const {
 #pragma region Append functions
 
 NaoString& NaoString::append(const NaoString& other) {
+    // Allocate enough bytes
     _reallocate_to(_m_size + other._m_size);
 
+    // Copy new string contents
     _m_end = std::copy(other._m_data, other._m_end, _m_end);
+
+    // Resize
     _m_size += other._m_size;
 
     return *this;
 }
 
 NaoString& NaoString::append(const NaoString& other, size_t n) {
+    // Can only add so many characters from the source
+    if (n > std::size(other)) {
+        throw std::out_of_range("attempted to append too many characters");
+    }
+
+    // Allocate space
     _reallocate_to(_m_size + n);
 
+    // Copy characters and update size
     _m_end = std::copy_n(other._m_data, n, _m_end);
     _m_size += n;
 
     return *this;
 }
 
-
 NaoString& NaoString::append(const char* other) {
+    // String length to append
     size_t str_length = strlen(other);
 
+    // Allocate enough space
     _reallocate_to(_m_size + str_length);
 
+    // Copy characters
     _m_end = std::copy(other, other + str_length, _m_end);
     _m_size += str_length;
 
@@ -262,8 +275,15 @@ NaoString& NaoString::append(const char* other) {
 }
 
 NaoString& NaoString::append(const char* other, size_t n) {
+    // Can only append so many characters
+    if (n > strlen(other)) {
+        throw std::out_of_range("attempted to append too many characters");
+    }
+
+    // Allocate space
     _reallocate_to(_m_size + n);
 
+    // Copy characters
     _m_end = std::copy_n(other, n, _m_end);
     _m_size += n;
 
@@ -271,10 +291,13 @@ NaoString& NaoString::append(const char* other, size_t n) {
 }
 
 NaoString& NaoString::append(char other) {
+    // Allocate 1 more byte
     _reallocate_to(_m_size + 1);
 
+    // Set the last byte
     *_m_end = other;
 
+    // Move end markers
     ++_m_end;
     ++_m_size;
 
@@ -349,14 +372,22 @@ NaoString::iterator NaoString::erase(const_iterator first, const_iterator last) 
 #pragma endregion
 
 void NaoString::_reallocate_to(size_t size) {
+    // Round up
     size = NaoMath::round_up(size, data_alignment);
 
+    // If the new size is larger than the old one
     if (_m_allocated < size) {
+        // Store the old buffer pointer
         char* old_data = _m_data;
 
+        // Allocate the new buffer
         _m_allocated = size;
         _m_data = new char[_m_allocated]();
+
+        // Copy contents
         _m_end = std::copy(old_data, _m_end, _m_data);
+
+        // Free old buffer
         delete old_data;
     }
 }

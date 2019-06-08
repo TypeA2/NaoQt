@@ -203,12 +203,20 @@ class LIBNAO_API NaoString {
 
     /**
      * \brief Access the underlying null-terminated C-string.
-     * \return Pointer to the null-terminated character array
+     * \return Pointer to the null-terminated character array.
      * containing the string.
      */
     N_NODISCARD const char* c_str() const;
 
-    // Convert to UTF-16 and return as a temorary NaoWStringConst
+    /**
+     * \brief Convert to UTF-16.
+     * \return A temporary NaoWStringConst instance.
+     * \note Expects the source string to be in UTF-8 encoding.
+     * 
+     * Uses a (possibly native) function to convert the existing UTF-8
+     * string to UTF-16, and wraps the buffer in a NaoWStringConst,
+     * so it gets freed after use.
+     */
     N_NODISCARD NaoWStringConst utf16() const;
 
 #pragma endregion 
@@ -223,7 +231,7 @@ class LIBNAO_API NaoString {
     bool operator==(const NaoString& other) const;
 
     /**
-     * \brief Compare to a C-string
+     * \brief Compare to a C-string.
      * \param[in] other The null-terminated C-string to compare to.
      * \return Whether the string contents are equal.
      */
@@ -232,34 +240,70 @@ class LIBNAO_API NaoString {
     /**
      * \brief Compare to a single character
      * \param[in] other The character to compare to.
-     * \return Whether the string is equal to the character
+     * \return Whether the string is equal to the character.
      */
     bool operator==(char other) const;
 
     /**
-     * \brief Returns the negative variant of the comparison
+     * \brief Returns the negative variant of the comparison.
      */
     bool operator!=(const NaoString& other) const;
+
+    /**
+     * \copybrief operator!=(const NaoString&) const
+     */
     bool operator!=(const char* other) const;
+
+    /**
+     * \copybrief operator!=(const NaoString&) const
+     */
     bool operator!=(char other) const;
 
 #pragma endregion 
 
 #pragma region Append functions
 
+    /**
+     * \brief Appends another NaoString to this string.
+     * \param[in] other The string to append.
+     * \return Reference to current object (`*this`).
+     */
     NaoString& append(const NaoString& other);
+
+    /**
+     * \brief Appends `n` characters from another NaoString to this string.
+     * \param[in] other The source string to append.
+     * \param[in] n The number of characters to append.
+     * \return Reference to current object.
+     */
     NaoString& append(const NaoString& other, size_t n);
+
+    /**
+     * \brief Appends a C-string to this string.
+     * \param[in] other The null-terminated C-string to append.
+     * \return Reference to current object.
+     */
     NaoString& append(const char* other);
+
+    /**
+     * \brief Appends `n` characters from a C-string to this string.
+     * \param[in] other The null-terminated C-string to append.
+     * \param[in] n The number of characters to copy.
+     * \return Reference to current object.
+     */
     NaoString& append(const char* other, size_t n);
+
+    /**
+     * \brief Appends a single character to this string
+     * \param[in] other The character to append
+     * \return Reference to current object
+     */
     NaoString& append(char other);
 
 #pragma endregion
 
 #pragma region General functions
 
-    /**
-     * \brief test
-     */
     N_NODISCARD size_t size() const noexcept;
 
     N_NODISCARD bool empty() const noexcept;
@@ -279,12 +323,20 @@ class LIBNAO_API NaoString {
     N_NODISCARD const_iterator end() const;
     N_NODISCARD const_iterator cend() const;
 
-    N_NODISCARD iterator erase(const_iterator first, const_iterator last);
+    iterator erase(const_iterator first, const_iterator last);
 
 #pragma endregion
 
     private:
-
+    /**
+     * \brief Reallocates the string to a new, larger buffer
+     * \param[in] size The new target size
+     * 
+     * Rounds up the new `size` to a multiple of `data_alignment`,
+     * then, if this number is larger than the current allocated amount,
+     * allocate the new buffer, copy the old buffer's contents, and
+     * deallocate the old buffer.
+     */
     void _reallocate_to(size_t size);
 
     size_t _m_size;
