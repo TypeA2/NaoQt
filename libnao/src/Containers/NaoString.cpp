@@ -317,6 +317,7 @@ bool NaoString::empty() const noexcept {
 }
 
 void NaoString::clear() noexcept {
+    // Set all bytes to 0
     std::fill_n(_m_data, _m_size, '\0');
 
     _m_end = _m_data;
@@ -324,6 +325,7 @@ void NaoString::clear() noexcept {
 }
 
 void NaoString::reserve(size_t size) {
+    // Grow if needed
     _reallocate_to(size);
 }
 
@@ -332,6 +334,10 @@ size_t NaoString::capacity() const {
 }
 
 char* NaoString::data() {
+    return _m_data;
+}
+
+const char* NaoString::data() const {
     return _m_data;
 }
 

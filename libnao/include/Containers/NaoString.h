@@ -203,8 +203,7 @@ class LIBNAO_API NaoString {
 
     /**
      * \brief Access the underlying null-terminated C-string.
-     * \return Pointer to the null-terminated character array.
-     * containing the string.
+     * \return Pointer to the null-terminated character array containing the string.
      */
     N_NODISCARD const char* c_str() const;
 
@@ -294,9 +293,9 @@ class LIBNAO_API NaoString {
     NaoString& append(const char* other, size_t n);
 
     /**
-     * \brief Appends a single character to this string
-     * \param[in] other The character to append
-     * \return Reference to current object
+     * \brief Appends a single character to this string.
+     * \param[in] other The character to append.
+     * \return Reference to current object.
      */
     NaoString& append(char other);
 
@@ -304,23 +303,86 @@ class LIBNAO_API NaoString {
 
 #pragma region General functions
 
+    /**
+     * \brief Returns the string's size.
+     * \return Number of bytes used by the string.
+     * \note This function does not take encoding into account, and treats.
+     * all strings as if they were ASCII.
+     */
     N_NODISCARD size_t size() const noexcept;
 
+    /**
+     * \brief Returns whether the string is empty (so `size() == 0`).
+     * \return Whether the string is empty.
+     */
     N_NODISCARD bool empty() const noexcept;
 
+    /**
+     * \brief Clears all the string's contents.
+     * \note Sets all bytes to 0, but maintains the allocated amount.
+     */
     void clear() noexcept;
 
+    /**
+     * \brief Reserves memory so the string can grow without reallocating.
+     * \param[in] size The new target size.
+     * \note Does not shrink the allocated buffer, only grow (if needed)
+     */
     void reserve(size_t size);
+
+    /**
+     * \brief Returns the allocated amount of bytes.
+     * \returns The size of the current string buffer.
+     */
     N_NODISCARD size_t capacity() const;
 
+    /**
+     * \copybrief c_str()
+     * \return Pointer to the null-terminated character array containing the string.
+     */
     N_NODISCARD char* data();
 
+    /**
+     * \copybrief data()
+     * \return Pointer to the null-terminated character array containing the string.
+     */
+    N_NODISCARD const char* data() const;
+
+    /**
+     * \brief Returns the begin iterator.
+     * \return Begin iterator for the string.
+     * \note The iterator is just a `char*`
+     */
     N_NODISCARD iterator begin();
+
+    /**
+     * \brief Const version of begin().
+     * \return The const_iterator begin iterator.
+     */
     N_NODISCARD const_iterator begin() const;
+
+    /**
+     * \brief Identical to begin().
+     * \return The const_iterator begin iterator.
+     */
     N_NODISCARD const_iterator cbegin() const;
 
+    /**
+     * \brief Returns the past-the-end iterator.
+     * \return The past-the-end iterator for the string.
+     */
     N_NODISCARD iterator end();
+
+    /**
+     * \brief Const version of end().
+     * \return The const_iterator past-the-end iterator.
+     */
     N_NODISCARD const_iterator end() const;
+
+    /**
+     * \brief Identical to end().
+     * \return The const_iterator past-the-end iterator.
+     */
     N_NODISCARD const_iterator cend() const;
 
     iterator erase(const_iterator first, const_iterator last);
