@@ -27,5 +27,5 @@ class TestNaoString : public QObject {
     void comparison_operators();
     void assignment_operators();
     void conversion_operators();
-   
+    void append();
 };

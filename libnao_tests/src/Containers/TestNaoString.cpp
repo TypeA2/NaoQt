@@ -46,7 +46,6 @@ void TestNaoString::comparison_operators() {
     QCOMPARE(NaoString("A"), 'A');
 }
 
-
 void TestNaoString::assignment_operators() {
     // Nothing should go wrong here
 
@@ -81,3 +80,12 @@ void TestNaoString::conversion_operators() {
     QVERIFY(wmemcmp(str.utf16(), v_l, strlen(v) + 1) == 0);
 }
 
+void TestNaoString::append() {
+    QCOMPARE(NaoString("Foo").append(NaoString("Bar")), "FooBar");
+    QCOMPARE(NaoString("Foo").append(NaoString("BarBaz"), 3), "FooBar");
+    QCOMPARE(NaoString("Foo").append("Bar"), "FooBar");
+    QCOMPARE(NaoString("Foo").append("BarBaz", 3), "FooBar");
+
+    QVERIFY_EXCEPTION_THROWN(NaoString("Foo").append(NaoString("Bar"), 4), std::out_of_range);
+    QVERIFY_EXCEPTION_THROWN(NaoString("Foo").append("Bar", 4), std::out_of_range);
+}
