@@ -89,3 +89,89 @@ void TestNaoString::append() {
     QVERIFY_EXCEPTION_THROWN(NaoString("Foo").append(NaoString("Bar"), 4), std::out_of_range);
     QVERIFY_EXCEPTION_THROWN(NaoString("Foo").append("Bar", 4), std::out_of_range);
 }
+
+void TestNaoString::erase() {
+    NaoString foo("FooBarBazA");
+
+    // Normal erase
+    QCOMPARE(*foo.erase(foo.begin() + 3, foo.begin() + 6), 'A');
+    QCOMPARE(foo, "FooBazA");
+    foo = "FooBarBaz";
+
+    // Erase till end
+    QCOMPARE(foo.erase(foo.begin() + 3, foo.end()), foo.end());
+    QCOMPARE(foo, "Foo");
+    foo = "FooBarBaz";
+
+    // Erase nothing
+    QCOMPARE(foo.erase(foo.begin(), foo.begin()), foo.begin());
+    QCOMPARE(foo, "FooBarBaz");
+
+    // Erase everything
+    QCOMPARE(foo.erase(foo.begin(), foo.end()), foo.end());
+    QVERIFY(foo.empty());
+}
+
+void TestNaoString::starts_ends_with() {
+    Q_UNUSED(this);
+
+    NaoString foo("FooBarBaz");
+
+    QVERIFY(foo.starts_with(NaoString("FooBar")));
+    QVERIFY(foo.starts_with("FooBar"));
+    QVERIFY(foo.starts_with('F'));
+    QVERIFY(foo.starts_with("FooBarBaz"));
+    QVERIFY(foo.starts_with(""));
+    QVERIFY(foo.starts_with(NaoString()));
+    QVERIFY(!foo.starts_with("FooBaz"));
+    QVERIFY(!foo.starts_with('P'));
+    QVERIFY(!NaoString().starts_with('\0'));
+
+    QVERIFY(foo.ends_with(NaoString("BarBaz")));
+    QVERIFY(foo.ends_with("BarBaz"));
+    QVERIFY(foo.ends_with('z'));
+    QVERIFY(foo.ends_with(""));
+    QVERIFY(foo.ends_with(NaoString()));
+    QVERIFY(foo.ends_with("FooBarBaz"));
+    QVERIFY(!foo.ends_with("FooBar"));
+    QVERIFY(!foo.ends_with('B'));
+    QVERIFY(!NaoString().ends_with('\0'));
+}
+
+void TestNaoString::extra_utility() {
+    NaoString foo("FooBarBaz");
+
+    // Entire string
+    QCOMPARE(foo.substr(0), "FooBarBaz");
+
+    // Left
+    QCOMPARE(foo.substr(0, 3), "Foo");
+
+    // Center
+    QCOMPARE(foo.substr(3, 3), "Bar");
+    
+    // Right
+    QCOMPARE(foo.substr(6), "Baz");
+
+    // Empty substring
+    QCOMPARE(foo.substr(0, 0), "");
+
+    QCOMPARE(foo.last_pos_of('B'), foo.begin() + 6);
+    QCOMPARE(foo.last_pos_of('F'), foo.begin());
+    QCOMPARE(foo.last_pos_of('Q'), foo.end());
+
+    QCOMPARE(foo.last_index_of('B'), 6);
+    QCOMPARE(foo.last_index_of('F'), 0);
+    QCOMPARE(foo.last_index_of('Q'), foo.size());
+
+    QVERIFY(foo.contains('F'));
+    QVERIFY(foo.contains('z'));
+    QVERIFY(!foo.contains('Q'));
+
+    QCOMPARE(foo.replace('o', 'e'), 2);
+    QCOMPARE(foo, "FeeBarBaz");
+
+    QCOMPARE(foo.replace('l', 'q'), 0);
+    QCOMPARE(foo, "FeeBarBaz");
+}
+
