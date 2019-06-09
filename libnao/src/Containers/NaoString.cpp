@@ -366,12 +366,17 @@ NaoString::const_iterator NaoString::cend() const {
 }
 
 NaoString::iterator NaoString::erase(const_iterator first, const_iterator last) {
-    _m_end = std::copy(last, cend(), 
+    // Move everything after last to directly have it follow first
+    _m_end = std::move(last, cend(), 
         begin() + std::distance(cbegin(), first));
+
+    // Reduce the total size
     _m_size -= std::distance(first, last);
 
+    // Fill remaining characters with default value
     std::fill_n(_m_end, _m_allocated - std::distance(_m_data, _m_end), null_value);
 
+    // Return iterator at index of last if applicable, else the end iterator
     return (last < _m_end) ? _m_data + std::distance(cbegin(), last) : _m_end;
 }
 
@@ -408,19 +413,28 @@ NaoString::reference NaoString::operator[](size_t i) {
     return _m_data[i];
 }
 
-bool NaoString::starts_with(const NaoString& other) const noexcept {
+NaoString::const_reference NaoString::operator[](size_t i) const {
+    return _m_data[i];
+}
+
+bool NaoString::starts_with(const NaoString& other) const {
+    // Must have at least enough characters
     if (other._m_size > _m_size) {
         return false;
     }
 
+    // Store data pointers
     char const* this_data = _m_data;
     char const* other_data = other._m_data;
 
+    // Always starts with empty string
     if (*other_data == '\0') {
         return true;
     }
 
+    // Check all characters
     while (*other_data != '\0' && *this_data != '\0') {
+        // All characters must match
         if (*other_data != *this_data) {
             return false;
         }
@@ -432,13 +446,15 @@ bool NaoString::starts_with(const NaoString& other) const noexcept {
     return true;
 }
 
-bool NaoString::starts_with(const char* other) const noexcept {
+bool NaoString::starts_with(const char* other) const {
     char const* this_data = _m_data;
 
+    // Emtpy string
     if (*other == '\0') {
         return true;
     }
 
+    // Check all characters
     while (*other != '\0' && *this_data != '\0') {
         if (*other != *this_data) {
             return false;
@@ -451,72 +467,91 @@ bool NaoString::starts_with(const char* other) const noexcept {
     return true;
 }
 
-bool NaoString::starts_with(char ch) const noexcept {
+bool NaoString::starts_with(char ch) const {
+    // Only check first character
     return _m_size > 0 && *_m_data == ch;
 }
 
-bool NaoString::ends_with(const NaoString& other) const noexcept {
+bool NaoString::ends_with(const NaoString& other) const {
+    // Check if the end of this string equals all of the other string
     return std::equal(_m_data + (_m_size - std::size(other)), _m_end, std::begin(other));
 }
 
-bool NaoString::ends_with(const char* other) const noexcept {
+bool NaoString::ends_with(const char* other) const {
+    // Same as with previous overload
     return std::equal(_m_data + (_m_size - std::strlen(other)), _m_end, other);
 }
 
-bool NaoString::ends_with(char ch) const noexcept {
+bool NaoString::ends_with(char ch) const {
+    // Only check last character
     return *(_m_end - 1) == ch;
 }
 
 NaoString NaoString::substr(size_t index, size_t len) const {
+    // Index must be in range
     if (index >= _m_size) {
         throw std::out_of_range("index out of range");
     }
 
+    // Easily check if we need to return the right part
     if (len == size_t(-1) || index + len >= _m_size) {
         return NaoString(_m_data + index);
     }
 
-    NaoString str;
-    return str.append(_m_data + index, len);
+    // Use the append function t ocreate the substring
+    return NaoString().append(_m_data + index, len);
 }
 
-NaoString::iterator NaoString::last_pos_of(char ch) const noexcept {
+NaoString::iterator NaoString::last_pos_of(char ch) const {
+    // Check if size is 1
     if (_m_size == 1) {
         return *_m_data == ch ? _m_data : _m_end;
     }
 
+    // Search from the end
     char* pos = _m_end - 1;
 
     do {
+        // Return position if found
         if (*pos == ch) {
             return pos;
         }
 
         --pos;
 
-    } while (pos != _m_data);
+    } while (pos >= _m_data);
 
+    // Else past-the-end iterator
     return _m_end;
 }
 
-size_t NaoString::last_index_of(char ch) const noexcept {
+size_t NaoString::last_index_of(char ch) const {
+    // Just check the index of the reference
     return std::distance(_m_data, last_pos_of(ch));
 }
 
-bool NaoString::contains(char ch) const noexcept {
+bool NaoString::contains(char ch) const {
+    // Check all characters
     for (iterator it = _m_data; it != _m_end; ++it) {
+        // Return true if found
         if (*it == ch) {
             return true;
         }
     }
 
+    // Not found
     return false;
 }
 
 size_t NaoString::replace(char target, char replace) {
+    // Keep track of characters
     size_t count = 0;
+
+    // All characters
     for (iterator it = _m_data; it != _m_end; ++it) {
+        // If it matches
         if (*it == target) {
+            // Replace it and up count
             *it = replace;
             ++count;
         }

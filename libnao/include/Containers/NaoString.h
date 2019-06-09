@@ -385,6 +385,12 @@ class LIBNAO_API NaoString {
      */
     N_NODISCARD const_iterator cend() const;
 
+    /**
+     * \brief Erases a range of characters.
+     * \param[in] first Iterator pointing to the first character to erase.
+     * \param[in] last Iterator pointing to last character to erase
+     * \return Iterator pointing to the position `last` pointed to, or end().
+     */
     iterator erase(const_iterator first, const_iterator last);
 
 #pragma endregion
@@ -401,35 +407,111 @@ class LIBNAO_API NaoString {
      */
     void _reallocate_to(size_t size);
 
+    // Current size of the string
     size_t _m_size;
+
+    // Total allocated space
     size_t _m_allocated;
 
+    // String buffer
     char* _m_data;
 
+    // Past-the-end iterator
     iterator _m_end;
 
     public:
 
 #pragma region Quality of life improvements
 
+    /**
+     * \brief Creates a deep copy of the string.
+     * \return A deep copy of this string object.
+     */
     N_NODISCARD NaoString copy() const;
 
+    /**
+     * \brief Provides array access to the string characters.
+     * \param[in] i The index of the character to access.
+     * \return A reference to the character at index `i`.
+     */
     N_NODISCARD reference operator[](size_t i);
 
-    N_NODISCARD bool starts_with(const NaoString& other) const noexcept;
-    N_NODISCARD bool starts_with(const char* other) const noexcept;
-    N_NODISCARD bool starts_with(char ch) const noexcept;
+    /**
+     * \brief `const` version of operator[]().
+     */
+    N_NODISCARD const_reference operator[](size_t i) const;
 
-    N_NODISCARD bool ends_with(const NaoString& other) const noexcept;
-    N_NODISCARD bool ends_with(const char* other) const noexcept;
-    N_NODISCARD bool ends_with(char ch) const noexcept;
+    /**
+     * \brief Checks if the string starts with another string.
+     * \param[in] other The string to check for.
+     * \return Whether this string starts with the input string.
+     */
+    N_NODISCARD bool starts_with(const NaoString& other) const;
 
+    /**
+     * \brief C-string overload of starts_with(const NaoString&) const.
+     */
+    N_NODISCARD bool starts_with(const char* other) const;
+
+    /**
+     * \brief Single-character overload of starts_with(const NaoString&) const.
+     */
+    N_NODISCARD bool starts_with(char ch) const;
+
+    /**
+     * \brief Checks if the string ends with another string.
+     * \param[in] other The string to check for.
+     * \return Whether this string ends with the input string.
+     */
+    N_NODISCARD bool ends_with(const NaoString& other) const;
+
+    /**
+     * \brief C-string overload of ends_with(const NaoString&) const.
+     */
+    N_NODISCARD bool ends_with(const char* other) const;
+
+    /**
+     * \brief Single-character overload of ends_with(const NaoString&) const.
+     */
+    N_NODISCARD bool ends_with(char ch) const;
+
+    /**
+     * \brief Returns a substring.
+     * \param[in] index The index of the first character of the substring.
+     * \param[in] len The maximum length of the returned substring.
+     * \return The substring starting at `index` and with a length of at most `len` characters.
+     * \note If `index + len > size()` then this function returns a substring starting at
+     * `index` up to the end of the string.
+     */
     N_NODISCARD NaoString substr(size_t index, size_t len = size_t(-1)) const;
 
-    N_NODISCARD iterator last_pos_of(char ch) const noexcept;
-    N_NODISCARD size_t last_index_of(char ch) const noexcept;
-    N_NODISCARD bool contains(char ch) const noexcept;
+    /**
+     * \brief Find the last position of a specified character, or end() if not found.
+     * \param[in] ch The character to search for.
+     * \return An iterator pointing to the position of the character if found, else end().
+     */
+    N_NODISCARD iterator last_pos_of(char ch) const;
 
+    /**
+     * \brief Find the index of a specified character, or size() if not found.
+     * \param[in] ch The character to search for.
+     * \return The last index of the character, or size() if not found.
+     */
+    N_NODISCARD size_t last_index_of(char ch) const;
+
+    /**
+     * \brief Check whether the string contains a character.
+     * \param[in] ch The character to check.
+     * \return Whether this string contains the character.
+     */
+    N_NODISCARD bool contains(char ch) const;
+
+    /**
+     * \brief Replaces 1 character with another.
+     * \param[in] target The character to replace.
+     * \param[in] replace The character to replace `in` with.
+     * \return The number of replaced characters.
+     */
     size_t replace(char target, char replace);
 
 #pragma endregion
