@@ -643,7 +643,7 @@ NaoString NaoString::bytes(uint64_t n) {
     return number(n) + " bytes";
 }
 
-NaoString NaoString::fromUtf8(const char* str) {
+NaoString NaoString::fromUTF8(const char* str) {
     return str;
 }
 

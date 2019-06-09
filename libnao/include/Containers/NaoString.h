@@ -528,7 +528,7 @@ class LIBNAO_API NaoString {
     static NaoString number(long double n, int precision = 6);
 
     static NaoString bytes(uint64_t n);
-    static NaoString fromUtf8(const char* str);
+    static NaoString fromUTF8(const char* str);
     static NaoString fromWide(const wchar_t* str);
     static NaoString fromShiftJIS(const char* str);
 
@@ -590,7 +590,7 @@ class LIBNAO_API NaoString {
 
     N_ESCAPE_DLLSPEC
     operator QString() const {
-        return QString::fromUtf8(_m_data);
+        return QString::fromUTF8(_m_data);
     }
 
     N_ESCAPE_DLLSPEC

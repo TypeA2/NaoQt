@@ -112,7 +112,7 @@ void NaoUTFReader::_parse() {
                 d_ptr->io->seek(header.strings_start + offset);
 
                 field = (header.encoding ?
-                    NaoString::fromShiftJIS : NaoString::fromUtf8)(d_ptr->io->read_cstring());
+                    NaoString::fromShiftJIS : NaoString::fromUTF8)(d_ptr->io->read_cstring());
 
                 d_ptr->io->seek(current);
                 break;
