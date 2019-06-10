@@ -35,4 +35,8 @@ class TestNaoString : public QObject {
     void extra_utility();
     void memory();
     void iterators();
+    void utility();
+    void statics();
+    void stl();
+    void operators();
 };

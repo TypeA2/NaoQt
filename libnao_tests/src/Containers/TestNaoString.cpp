@@ -18,6 +18,7 @@
 #include "Containers/TestNaoString.h"
 
 #include <Containers/NaoString.h>
+#include <Filesystem/Filesystem.h>
 
 void TestNaoString::wstring() {
     Q_UNUSED(this);
@@ -215,4 +216,104 @@ void TestNaoString::iterators() {
     QVERIFY(str.cbegin() == begin);
     QCOMPARE(str.end(), end);
     QCOMPARE(str.cend(), end);
+}
+
+void TestNaoString::utility() {
+    Q_UNUSED(this);
+
+    NaoString str("FooBar");
+    QVERIFY(str.copy() == "FooBar");
+    QVERIFY(str.copy().data() != str.data());
+
+    QVERIFY(str[0] == 'F');
+    QVERIFY(str[3] == 'B');
+    QVERIFY(&str[0] == str.data());
+    QVERIFY_EXCEPTION_THROWN((void) str[-1], std::out_of_range);
+    QVERIFY_EXCEPTION_THROWN((void) str[str.size() + 1], std::out_of_range);
+
+    const NaoString str_c(str);
+
+    QVERIFY(str_c[0] == 'F');
+    QVERIFY(str_c[3] == 'B');
+    QVERIFY(&str_c[0] == str_c.data());
+    QVERIFY_EXCEPTION_THROWN((void) str_c[-1], std::out_of_range);
+    QVERIFY_EXCEPTION_THROWN((void) str_c[str.size() + 1], std::out_of_range);
+
+    QVERIFY_EXCEPTION_THROWN((void) str.substr(str.size()), std::out_of_range);
+
+    NaoString str2("F");
+
+    QVERIFY(str2.last_pos_of('F') == str2.begin());
+    QVERIFY(str2.last_pos_of('Y') == str2.end());
+}
+
+void TestNaoString::statics() {
+    QVERIFY(NaoString::number(123) == "123");
+    QVERIFY(NaoString::number(0x123, 16) == "123");
+    QVERIFY(NaoString::number(456U) == "456");
+    QVERIFY(NaoString::number(789L) == "789");
+    QVERIFY(NaoString::number(789UL) == "789");
+
+    QVERIFY(NaoString::number(1.234567) == "1.23457");
+    QVERIFY(NaoString::number(1.234567L, 3) == "1.23");
+
+    QVERIFY(NaoString::bytes(0x1000000000000001) == "1 EiB");
+    QVERIFY(NaoString::bytes(0x4000000000001) == "1 PiB");
+    QVERIFY(NaoString::bytes(0x10000000001) == "1 TiB");
+    QVERIFY(NaoString::bytes(0x40000001) == "1 GiB");
+    QVERIFY(NaoString::bytes(0x100001) == "1 MiB");
+    QVERIFY(NaoString::bytes(0x401) == "1 KiB");
+    QVERIFY(NaoString::bytes(15) == "15 bytes");
+
+    QVERIFY(NaoString::fromUTF8("FooBar") == "FooBar");
+    QVERIFY(NaoString::fromWide(L"FooBar") == "FooBar");
+    QVERIFY(NaoString::fromShiftJIS("\x46\x6F\x6F\x42\x61\x72") == "FooBar");
+}
+
+void TestNaoString::stl() {
+    Q_UNUSED(this);
+
+    QVERIFY(NaoString(std::string("Foo")) == "Foo");
+
+    NaoString str;
+    str = std::string("Bar");
+
+    QVERIFY(str == "Bar");
+
+    // To force std::string conversion
+    auto tmp = [](const std::string& s) -> const std::string& { return s; };
+
+    QVERIFY(tmp(str) == "Bar");
+
+    str = NaoString(fs::path("/usr"));
+    QVERIFY(str == "/usr");
+
+    str = fs::path("/home");
+    QVERIFY(str == "/home");
+
+    // To force std::path conversion
+    auto tmp2 = [](const fs::path& p) -> const fs::path & { return p; };
+
+    QVERIFY(tmp2(str) == "/home");
+
+    QVERIFY(NaoString("/usr\\bin").normalize_path() == "\\usr\\bin");
+
+    NaoString dirty("/home\\:a/?b\"/cd<e>|f/");
+    NaoString dirty2 = dirty;
+
+    QVERIFY(dirty.clean_path() == "/home\\_a/_b_/cd_e__f/");
+    QVERIFY(dirty2.clean_dir_name() == "/home\\_a/_b_/cd_e__f/");
+}
+
+void TestNaoString::operators() {
+    Q_UNUSED(this);
+
+    NaoString a = "Foo";
+    NaoString b = "Bar";
+
+    QVERIFY(a + b == "FooBar");
+    QVERIFY(a + "Baz" == "FooBaz");
+    QVERIFY(a + 'B' == "FooB");
+    QVERIFY("Foo" + b == "FooBar");
+    QVERIFY('F' + b == "FBar");
 }

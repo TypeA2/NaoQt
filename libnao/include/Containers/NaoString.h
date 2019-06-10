@@ -644,7 +644,7 @@ class LIBNAO_API NaoString {
      * \param[in] replacement The character to replace all illegal characters by.
      * \return `*this`.
      * 
-     * Replaces all occurences of any of the following with `replacement`: `\\/:?"'<>|`.
+     * Replaces all occurences of any of the following with `replacement`: `:?"'<>|`.
      */
     NaoString& clean_path(char replacement = '_');
 

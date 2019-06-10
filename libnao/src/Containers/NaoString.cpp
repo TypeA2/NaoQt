@@ -410,10 +410,18 @@ NaoString NaoString::copy() const {
 }
 
 NaoString::reference NaoString::operator[](size_t i) {
+    if (i > _m_size) {
+        throw std::out_of_range("index out of range");
+    }
+
     return _m_data[i];
 }
 
 NaoString::const_reference NaoString::operator[](size_t i) const {
+    if (i > _m_size) {
+        throw std::out_of_range("index out of range");
+    }
+
     return _m_data[i];
 }
 
@@ -776,7 +784,7 @@ NaoString& NaoString::normalize_path() {
 
 NaoString& NaoString::clean_path(char replacement) {
 
-    static NaoString illegal_chars = R"(\\/:?"'<>|)";
+    static NaoString illegal_chars = R"(:?"'<>|)";
 
     // Remove all illegal characters
     for (iterator it = begin(); it != end(); ++it) {
@@ -789,7 +797,7 @@ NaoString& NaoString::clean_path(char replacement) {
 }
 
 NaoString& NaoString::clean_dir_name(char replacement) {
-    static NaoString illegal_chars = R"(\\/:?"'<>|.)";
+    static NaoString illegal_chars = R"(:?"'<>|.)";
 
     for (iterator it = begin(); it != end(); ++it) {
         if (illegal_chars.contains(*it)) {
