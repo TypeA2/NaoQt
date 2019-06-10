@@ -39,6 +39,7 @@
 
 /**
  * \ingroup containers
+ * \relates NaoString
  * 
  * \brief Encapsulates a wide (UTF-16) string.
  * 
@@ -62,8 +63,8 @@ class LIBNAO_API NaoWStringConst {
     ~NaoWStringConst();
 
     /**
-     * \brief Access the owned wide string
      * \name String access
+     * \brief Access the owned wide string
      * \{
      */
     operator const wchar_t*() const;
@@ -98,8 +99,8 @@ class LIBNAO_API NaoString {
 #pragma region Types
 
     /**
-     * \brief Type aliases to make the STL happy.
      * \name Typedefs
+     * \brief Type aliases to make the STL happy.
      * \{
      */
     using reference = char & ;
@@ -518,6 +519,14 @@ class LIBNAO_API NaoString {
 
 #pragma region Static functions
 
+    /**
+     * \name Number conversion
+     * \brief Convert a number to a NaoString.
+     * \param[in] n The numerical value to convert.
+     * \param[in] radix The base for the output string (2-36).
+     * \return String representation of the input number `n` in base `radix`.
+     * \{
+     */
     static NaoString number(int n, int radix = 10);
     static NaoString number(unsigned int n, int radix = 10);
     static NaoString number(long n, int radix = 10);
@@ -526,60 +535,171 @@ class LIBNAO_API NaoString {
     static NaoString number(unsigned long long n, int radix = 10);
     static NaoString number(double n, int precision = 6);
     static NaoString number(long double n, int precision = 6);
+    /**
+     * \}
+     */
 
+    /**
+     * \brief Converts a number of bytes into a human-readable format.
+     * \param[in] n The number of bytes that are to be represented.
+     * \return String representing the number of bytes in the appropiate order of magnitude.
+     * \note Smallest unit is bytes, largest unit is EiB.
+     */
     static NaoString bytes(uint64_t n);
+
+    /**
+     * \brief Constructs a string from a UTF-8 C-string.
+     * \param[in] str The C-string to construct from.
+     * \return A NaoString with the same contents as the C-string.
+     * \note Performs no actual conversion, but implicitly calls a constructor. 
+     * Used for when a function pointer is needed.
+     */
     static NaoString fromUTF8(const char* str);
+
+    /**
+     * \brief Constructs a string from a wide (UTF-16) C-string.
+     * \param[in] str The UTF-16 string to convert.
+     * \return A NaoString with the same contents, but in UTF-8.
+     * \note Uses native converison methods.
+     */
     static NaoString fromWide(const wchar_t* str);
+
+    /**
+     * \brief Constructs a string from Shift-JIS encoded string.
+     * \param[in] str The Shift-JIS string to convert.
+     * \return The NaoString with the same contents, but in UTF-8.
+     * \note Uses native conversion methods.
+     */
     static NaoString fromShiftJIS(const char* str);
 
 #pragma endregion
 
 #pragma region STL container compatibility
 
+    /**
+     * \name STL string compatibility.
+     * \brief Provides compatibility with the STL's std::string.
+     * \{
+     */
+
+    /**
+     * \brief Constructs from a std::string.
+     * \param[in] other The std::string to copy from.
+     */
     NaoString(const std::string& other);
 
+    /**
+     * \brief Assign a std::string to a NaoString.
+     * \param[in] other The std::string assign to this string.
+     * \return `*this`.
+     */
     NaoString& operator=(const std::string& other);
 
+    /**
+     * \brief Convert this string to a std::string.
+     * \return This string as a std::string.
+     */
     operator std::string() const;
+    /**
+     * \}
+     */
 
 #pragma endregion
 
 #pragma region Filesystem compatibility
 
+    /**
+     * \name Filesystem compatibility.
+     * \brief Provides compatibility with the STL's filesystem library.
+     * \{
+     */
+
+    /**
+     * \brief Constructs from a std::filesystem::path.
+     * \param[in] path The path to copy from.
+     */
     NaoString(const fs::path& path);
 
+    /**
+     * \brief Assigns from a std::filesystem::path.
+     * \param[in] path The path to copy.
+     * \return `*this`.
+     */
     NaoString& operator=(const fs::path& path);
 
+    /**
+     * \brief Convert this string to a std::filesystem::path.
+     * \return This string as a std::filesystem::path.
+     */
     operator fs::path() const;
 
+    /**
+     * \brief Applies std::filesystem::path::lexically_normal to this string.
+     * \return `*this`.
+     */
     NaoString& normalize_path();
 
+    /**
+     * \brief Remove known illegal characters from a path.
+     * \param[in] replacement The character to replace all illegal characters by.
+     * \return `*this`.
+     * 
+     * Replaces all occurences of any of the following with `replacement`: `\\/:?"'<>|`.
+     */
     NaoString& clean_path(char replacement = '_');
+
+    /**
+     * \brief Performs the same action as clean_path().
+     */
     NaoString& clean_dir_name(char replacement = '_');
+
+    /**
+     * \}
+     */
 
 #pragma endregion
 
 #pragma region Qt compatibility
 
+    /**
+     * \name Qt compatiblity.
+     * \brief Provides compatibility with Qt containers.
+     * \{
+     */
+
 #ifdef NAOSTRING_QT_EXTENSIONS
+
+    /**
+     * \brief Constructs from a QString.
+     * \param[in] other The QString to copy from.
+     */
     N_ESCAPE_DLLSPEC
     NaoString(const QString& other) {
+        // Get UTF-8 data
         const QByteArray data = other.toUtf8();
 
+        // Use that as a C-string.
         _m_size = std::size(data);
         _m_allocated = NaoMath::round_up(_m_size, data_alignment);
         _m_data = new char[_m_allocated]();
         _m_end = std::copy(std::begin(data), std::end(data), _m_data);
     }
 
+    /**
+     * \brief Assigns from a QString.
+     * \param[in] other the QString to copy from.
+     * \return `*this`.
+     */
     N_ESCAPE_DLLSPEC
     NaoString& operator=(const QString& other) {
         if (_m_allocated) {
             delete[] _m_data;
         }
 
+        // Get UTF-8
         const QByteArray data = other.toUtf8();
 
+        // Use as C-string
         _m_size = std::size(data);
         _m_allocated = NaoMath::round_up(_m_size, data_alignment);
         _m_data = new char[_m_allocated]();
@@ -588,27 +708,90 @@ class LIBNAO_API NaoString {
         return *this;
     }
 
+    /**
+     * \brief Converts to a QString.
+     * \return This string as a UTF-8 QString.
+     */
     N_ESCAPE_DLLSPEC
     operator QString() const {
         return QString::fromUTF8(_m_data);
     }
 
+    /**
+     * \brief Compares to a QString.
+     * \param[in] other The QString to compare to.
+     * \return Whether this string matches the QString.
+     */
     N_ESCAPE_DLLSPEC
     bool operator==(const QString& other) const {
         return operator==(other.toUtf8());
     }
 #endif
 
+    /**
+     * \}
+     */
+
 #pragma endregion
 };
 
 #pragma region Global operators
 
+/**
+ * \name Global operators.
+ * \brief Global append operators for NaoString.
+ * \{
+ */
+
+/**
+
+ * \brief Concatenates 2 NaoStrings.
+ * \param[in] lhs The base string.
+ * \param[in] rhs The string to append to the base.
+ * \return `rhs` appended to `lhs`.
+ */
 LIBNAO_API NaoString operator+(const NaoString& lhs, const NaoString& rhs);
+
+/**
+ * \relates NaoString
+ * \brief Concatenates a NaoString and a C-string.
+ * \param[in] lhs The base string.
+ * \param[in] rhs The string to append to the base string.
+ * \return `rhs` appended to `lhs`.
+ */
 LIBNAO_API NaoString operator+(const NaoString& lhs, const char* rhs);
+
+/**
+ * \relates NaoString
+ * \brief Concatenates a NaoString and a single character.
+ * \param[in] lhs The base string.
+ * \param[in] rhs The character to append to the base string.
+ * \return `rhs` appended to `lhs`.
+ */
 LIBNAO_API NaoString operator+(const NaoString& lhs, char rhs);
 
+/**
+ * \relates NaoString
+ * \copybrief operator+(const NaoString&, const char*)
+ * \brief Concatenates a NaoString and a C-string.
+ * \param[in] lhs The base string.
+ * \param[in] rhs The string to append to the base string.
+ * \return `rhs` appended to `lhs`.
+ */
 LIBNAO_API NaoString operator+(const char* lhs, const NaoString& rhs);
+
+/**
+ * \relates NaoString
+ * \copybrief operator+(const NaoString&, char)
+ * \brief Concatenates a NaoString and a single character
+ * \param[in] lhs The base character.
+ * \param[in] rhs The string to append to the base character.
+ * \return `rhs` appended to `lhs`.
+ */
 LIBNAO_API NaoString operator+(char lhs, const NaoString& rhs);
+
+/**
+ * \}
+ */
 
 #pragma endregion

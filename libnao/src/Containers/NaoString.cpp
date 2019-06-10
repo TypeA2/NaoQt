@@ -595,7 +595,7 @@ NaoString NaoString::number(long long n, int radix) {
 NaoString NaoString::number(unsigned long long n, int radix) {
     char buf[8 * sizeof(n)];
 
-    if (_i64toa_s(n, buf, sizeof(buf), radix) != 0) {
+    if (_ui64toa_s(n, buf, sizeof(buf), radix) != 0) {
         nerr << "_i64toa_s failed";
         return NaoString();
     }
@@ -608,6 +608,7 @@ NaoString NaoString::number(double n, int precision) {
 }
 
 NaoString NaoString::number(long double n, int precision) {
+    // Just use STL
     std::ostringstream out;
     out.precision(precision);
     out << n;
@@ -617,27 +618,27 @@ NaoString NaoString::number(long double n, int precision) {
 
 NaoString NaoString::bytes(uint64_t n) {
     if (n > 0x1000000000000000) {
-        return number((n >> 50) / 1024., 3) + " EiB";;
+        return number((n >> 50) / 1024.L, 3) + " EiB";;
     }
 
     if (n > 0x4000000000000) {
-        return number((n >> 40) / 1024., 3) + " PiB";;
+        return number((n >> 40) / 1024.L, 3) + " PiB";;
     }
 
     if (n > 0x10000000000) {
-        return number((n >> 30) / 1024., 3) + " TiB";;
+        return number((n >> 30) / 1024.L, 3) + " TiB";;
     }
 
     if (n > 0x40000000) {
-        return number((n >> 20) / 1024., 3) + " GiB";;
+        return number((n >> 20) / 1024.L, 3) + " GiB";;
     }
 
     if (n > 0x100000) {
-        return number((n >> 10) / 1024., 3) + " MiB";;
+        return number((n >> 10) / 1024.L, 3) + " MiB";;
     }
 
     if (n > 0x400) {
-        return number(n / 1024., 3) + " KiB";;
+        return number(n / 1024.L, 3) + " KiB";;
     }
 
     return number(n) + " bytes";
@@ -650,6 +651,7 @@ NaoString NaoString::fromUTF8(const char* str) {
 NaoString NaoString::fromWide(const wchar_t* str) {
 #ifdef N_WINDOWS
 
+    // Get resulting string size
     int size = WideCharToMultiByte(CP_UTF8,
         WC_COMPOSITECHECK,
         str, 
@@ -659,13 +661,14 @@ NaoString NaoString::fromWide(const wchar_t* str) {
         nullptr, 
         nullptr);
 
-    char* utf8 = new char[size]();
+    // Allocate the C-string
+    std::vector<char> utf8(size_t(size) + 1);
 
     if (WideCharToMultiByte(CP_UTF8,
         WC_COMPOSITECHECK,
         str,
         -1,
-        utf8,
+        utf8.data(),
         size,
         nullptr,
         nullptr) == 0) {
@@ -673,9 +676,8 @@ NaoString NaoString::fromWide(const wchar_t* str) {
         return NaoString();
     }
 
-    NaoString result = utf8;
-    delete[] utf8;
-    return result;
+    // Implicitly convert
+    return utf8.data();
 
 #endif
 }
@@ -688,23 +690,21 @@ NaoString NaoString::fromShiftJIS(const char* str) {
         nullptr,
         0);
 
-    wchar_t* utf16 = new wchar_t[utf16_size]();
+    // Allocate string
+    std::vector<wchar_t> utf16(size_t(utf16_size) + 1);
 
     if (MultiByteToWideChar(932,
         MB_ERR_INVALID_CHARS,
         str,
         -1,
-        utf16,
+        utf16.data(),
         utf16_size) == 0) {
         nerr << "MultiByteToWideChar failed with error " << GetLastError();
         return NaoString();
     }
 
-    NaoWStringConst wstring(utf16);
-
-    delete[] utf16;
-
-    return fromWide(wstring);
+    // Convert to UTF-8
+    return fromWide(utf16.data());
 }
 
 #pragma endregion
@@ -712,6 +712,7 @@ NaoString NaoString::fromShiftJIS(const char* str) {
 #pragma region STL container compatibility
 
 NaoString::NaoString(const std::string& other) {
+    // Basically just copy
     _m_size = std::size(other);
     _m_allocated = NaoMath::round_up(_m_size, data_alignment);
     _m_data = new char[_m_allocated]();
@@ -740,6 +741,7 @@ NaoString::operator std::string() const {
 #pragma region Filesystem compatibility
 
 NaoString::NaoString(const fs::path& path) {
+    // Copy from the string
     std::string str = path.string();
 
     _m_size = std::size(str);
@@ -776,6 +778,7 @@ NaoString& NaoString::clean_path(char replacement) {
 
     static NaoString illegal_chars = R"(\\/:?"'<>|)";
 
+    // Remove all illegal characters
     for (iterator it = begin(); it != end(); ++it) {
         if (illegal_chars.contains(*it)) {
             *it = replacement;
