@@ -714,7 +714,7 @@ class LIBNAO_API NaoString {
      */
     N_ESCAPE_DLLSPEC
     operator QString() const {
-        return QString::fromUTF8(_m_data);
+        return QString::fromUtf8(_m_data);
     }
 
     /**

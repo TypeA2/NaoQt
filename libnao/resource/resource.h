@@ -2,6 +2,9 @@
 // Microsoft Visual C++ generated include file.
 // Used by libnao.rc
 //
+
+#pragma once
+
 #define IDD_LIBNAO_PROGRESS_DIALOG      102
 #define IDC_PROGRESS_BAR                1002
 #define IDC_DIALOG_TEXT                 1003
