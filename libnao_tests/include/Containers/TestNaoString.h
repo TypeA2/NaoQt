@@ -23,6 +23,8 @@ class TestNaoString : public QObject {
     Q_OBJECT
 
     private slots:
+    void wstring();
+
     void constructors();
     void comparison_operators();
     void assignment_operators();
@@ -31,4 +33,6 @@ class TestNaoString : public QObject {
     void erase();
     void starts_ends_with();
     void extra_utility();
+    void memory();
+    void iterators();
 };

@@ -36,31 +36,44 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
+		OpenCppCoverage|x64 = OpenCppCoverage|x64
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.Debug|x64.ActiveCfg = Debug|x64
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.Debug|x64.Build.0 = Debug|x64
+		{B12702AD-ABFB-343A-A199-8E24837244A3}.OpenCppCoverage|x64.ActiveCfg = OpenCppCoverage|x64
+		{B12702AD-ABFB-343A-A199-8E24837244A3}.OpenCppCoverage|x64.Build.0 = OpenCppCoverage|x64
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|x64.ActiveCfg = Release|x64
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|x64.Build.0 = Release|x64
 		{AA8269E4-9123-4F7E-99FC-7D2567CABD2A}.Debug|x64.ActiveCfg = Debug|x64
 		{AA8269E4-9123-4F7E-99FC-7D2567CABD2A}.Debug|x64.Build.0 = Debug|x64
+		{AA8269E4-9123-4F7E-99FC-7D2567CABD2A}.OpenCppCoverage|x64.ActiveCfg = OpenCppCoverage|x64
+		{AA8269E4-9123-4F7E-99FC-7D2567CABD2A}.OpenCppCoverage|x64.Build.0 = OpenCppCoverage|x64
 		{AA8269E4-9123-4F7E-99FC-7D2567CABD2A}.Release|x64.ActiveCfg = Release|x64
 		{AA8269E4-9123-4F7E-99FC-7D2567CABD2A}.Release|x64.Build.0 = Release|x64
 		{42A15C74-8F7D-48BB-94F9-6F283E533903}.Debug|x64.ActiveCfg = Debug|x64
 		{42A15C74-8F7D-48BB-94F9-6F283E533903}.Debug|x64.Build.0 = Debug|x64
+		{42A15C74-8F7D-48BB-94F9-6F283E533903}.OpenCppCoverage|x64.ActiveCfg = OpenCppCoverage|x64
+		{42A15C74-8F7D-48BB-94F9-6F283E533903}.OpenCppCoverage|x64.Build.0 = OpenCppCoverage|x64
 		{42A15C74-8F7D-48BB-94F9-6F283E533903}.Release|x64.ActiveCfg = Release|x64
 		{42A15C74-8F7D-48BB-94F9-6F283E533903}.Release|x64.Build.0 = Release|x64
 		{170F1CEE-5C3E-4FC1-966B-00A0DB7192D4}.Debug|x64.ActiveCfg = Debug|x64
 		{170F1CEE-5C3E-4FC1-966B-00A0DB7192D4}.Debug|x64.Build.0 = Debug|x64
+		{170F1CEE-5C3E-4FC1-966B-00A0DB7192D4}.OpenCppCoverage|x64.ActiveCfg = OpenCppCoverage|x64
+		{170F1CEE-5C3E-4FC1-966B-00A0DB7192D4}.OpenCppCoverage|x64.Build.0 = OpenCppCoverage|x64
 		{170F1CEE-5C3E-4FC1-966B-00A0DB7192D4}.Release|x64.ActiveCfg = Release|x64
 		{170F1CEE-5C3E-4FC1-966B-00A0DB7192D4}.Release|x64.Build.0 = Release|x64
 		{88D269C5-8F98-4755-BD2C-CAC6D25E78D5}.Debug|x64.ActiveCfg = Debug|x64
 		{88D269C5-8F98-4755-BD2C-CAC6D25E78D5}.Debug|x64.Build.0 = Debug|x64
+		{88D269C5-8F98-4755-BD2C-CAC6D25E78D5}.OpenCppCoverage|x64.ActiveCfg = OpenCppCoverage|x64
+		{88D269C5-8F98-4755-BD2C-CAC6D25E78D5}.OpenCppCoverage|x64.Build.0 = OpenCppCoverage|x64
 		{88D269C5-8F98-4755-BD2C-CAC6D25E78D5}.Release|x64.ActiveCfg = Release|x64
 		{88D269C5-8F98-4755-BD2C-CAC6D25E78D5}.Release|x64.Build.0 = Release|x64
 		{CB74AFAB-D425-4653-A55C-C3BF5A0501C4}.Debug|x64.ActiveCfg = Debug|x64
 		{CB74AFAB-D425-4653-A55C-C3BF5A0501C4}.Debug|x64.Build.0 = Debug|x64
+		{CB74AFAB-D425-4653-A55C-C3BF5A0501C4}.OpenCppCoverage|x64.ActiveCfg = OpenCppCoverage|x64
+		{CB74AFAB-D425-4653-A55C-C3BF5A0501C4}.OpenCppCoverage|x64.Build.0 = OpenCppCoverage|x64
 		{CB74AFAB-D425-4653-A55C-C3BF5A0501C4}.Release|x64.ActiveCfg = Release|x64
 		{CB74AFAB-D425-4653-A55C-C3BF5A0501C4}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection

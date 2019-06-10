@@ -19,6 +19,18 @@
 
 #include <Containers/NaoString.h>
 
+void TestNaoString::wstring() {
+    Q_UNUSED(this);
+
+    NaoWStringConst str = NaoString("FooBarBaz").utf16();
+    constexpr wchar_t wide[] = L"FooBarBaz";
+
+    QVERIFY(wmemcmp(str, wide, wcslen(wide) + 1) == 0);
+    QVERIFY(wmemcmp(str.data(), wide, wcslen(wide) + 1) == 0);
+    QVERIFY(wmemcmp(str.utf16(), wide, wcslen(wide) + 1) == 0);
+    QVERIFY(wmemcmp(str.c_str(), wide, wcslen(wide) + 1) == 0);
+}
+
 void TestNaoString::constructors() {
     QCOMPARE(NaoString(), "");
     QCOMPARE(NaoString("Foo"), "Foo");
@@ -42,6 +54,7 @@ void TestNaoString::comparison_operators() {
     QVERIFY(!(NaoString("Foo") != NaoString("Foo")));
     QVERIFY(NaoString("Foo") != NaoString("Bar"));
     QVERIFY(!(NaoString("Y") != 'Y'));
+    QVERIFY(NaoString("Foo") != "Bar");
 
     QCOMPARE(NaoString("A"), 'A');
 }
@@ -85,6 +98,7 @@ void TestNaoString::append() {
     QCOMPARE(NaoString("Foo").append(NaoString("BarBaz"), 3), "FooBar");
     QCOMPARE(NaoString("Foo").append("Bar"), "FooBar");
     QCOMPARE(NaoString("Foo").append("BarBaz", 3), "FooBar");
+    QCOMPARE(NaoString("FooBa").append('r'), "FooBar");
 
     QVERIFY_EXCEPTION_THROWN(NaoString("Foo").append(NaoString("Bar"), 4), std::out_of_range);
     QVERIFY_EXCEPTION_THROWN(NaoString("Foo").append("Bar", 4), std::out_of_range);
@@ -175,3 +189,30 @@ void TestNaoString::extra_utility() {
     QCOMPARE(foo, "FeeBarBaz");
 }
 
+void TestNaoString::memory() {
+    NaoString str("FooBar");
+    QCOMPARE(str, "FooBar");
+    str.clear();
+    QVERIFY(str.empty());
+    QVERIFY(*str.data() == '\0');
+    QVERIFY(str.capacity() == NaoString::data_alignment);
+    str.reserve(NaoString::data_alignment + 1);
+    QVERIFY(str.capacity() == NaoString::data_alignment * 2);
+}
+
+void TestNaoString::iterators() {
+    Q_UNUSED(this);
+
+    const NaoString str("FooBar");
+    const char* begin = str.data();
+    const char* end = str.data() + str.size() + 1;
+
+    QVERIFY(begin != end);
+    QVERIFY(*begin == 'F');
+    QVERIFY(*end == '\0');
+    QVERIFY(std::distance(begin, end) == ptrdiff_t(str.size() + 1));
+    QVERIFY(str.begin() == begin);
+    QVERIFY(str.cbegin() == begin);
+    QCOMPARE(str.end(), end);
+    QCOMPARE(str.cend(), end);
+}

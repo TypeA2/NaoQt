@@ -20,7 +20,7 @@
 /**
  * \file NaoString.h
  * 
- * \brief Contains NaoString and helper classes
+ * \brief Contains NaoString and helper classes.
  * 
  * Contains the NaoString class, the helper class NaoWStringConst
  * and implementations for optional functionalities.
