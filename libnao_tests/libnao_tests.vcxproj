@@ -171,10 +171,18 @@
       <ExecutionDescription Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Moc'ing %(Identity)...</ExecutionDescription>
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtTest;$(ProjectDir)include</IncludePath>
     </ClCompile>
+    <ClCompile Include="src\Containers\TestNaoVector.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="include\Containers\TestNaoString.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="include\Containers\TestNaoVector.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtTest;$(ProjectDir)include;$(SolutionDir)libnao\include</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtTest;$(ProjectDir)include;$(SolutionDir)libnao\include</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='OpenCppCoverage|x64'">.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtTest;$(ProjectDir)include;$(SolutionDir)libnao\include</IncludePath>
+    </QtMoc>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

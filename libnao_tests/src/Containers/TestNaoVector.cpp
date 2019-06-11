@@ -15,22 +15,4 @@
     along with libnao.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <QtTest/QtTest>
-
-#include "Containers/TestNaoString.h"
 #include "Containers/TestNaoVector.h"
-
-#define ASSERT_TEST(T) \
-{ \
-    T tmp; \
-    status |= QTest::qExec(&tmp, argc, argv); \
-}
-
-int main(int argc, char* argv[]){
-    int status = 0;
-
-    ASSERT_TEST(TestNaoString);
-    ASSERT_TEST(TestNaoVector);
-
-    return status;
-}

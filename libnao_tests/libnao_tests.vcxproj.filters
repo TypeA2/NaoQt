@@ -36,9 +36,15 @@
     <ClCompile Include="src\Containers\TestNaoString.cpp">
       <Filter>Sources\Containers</Filter>
     </ClCompile>
+    <ClCompile Include="src\Containers\TestNaoVector.cpp">
+      <Filter>Sources\Containers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="include\Containers\TestNaoString.h">
+      <Filter>Headers\Containers</Filter>
+    </QtMoc>
+    <QtMoc Include="include\Containers\TestNaoVector.h">
       <Filter>Headers\Containers</Filter>
     </QtMoc>
   </ItemGroup>
