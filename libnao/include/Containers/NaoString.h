@@ -32,6 +32,9 @@
 #include "Filesystem/Filesystem.h"
 
 #ifdef QT_VERSION
+/**
+ * \brief Defined if Qt is detected, and Qt extension need to be enabled.
+ */
 #   define NAOSTRING_QT_EXTENSIONS
 #   include <QString>
 #   include "Functionality/NaoMath.h"

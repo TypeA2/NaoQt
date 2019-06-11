@@ -20,7 +20,7 @@
 // Doxygen setup stuff
 /**
  * \defgroup containers Containers
- * All container classes.
+ * \brief Container classes.
  * 
  */
 
