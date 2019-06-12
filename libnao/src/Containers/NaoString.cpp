@@ -34,7 +34,7 @@
 #pragma region NaoWString
 
 // Create from a wchar_t*
-NaoWStringConst::NaoWStringConst(wchar_t* str) 
+NaoWStringConst::NaoWStringConst(wchar_t* str)
     : _m_data(str) {
 
 }
@@ -72,7 +72,7 @@ NaoString::NaoString()
     , _m_allocated(data_alignment) // Default allocated amount
     , _m_data(new char[_m_allocated]()) // Allocate bytes
     , _m_end(_m_data) // Assign end iterator
-{ } 
+{ }
 
 // Construct from a C-string
 NaoString::NaoString(const char* str)
@@ -170,14 +170,14 @@ NaoWStringConst NaoString::utf16() const {
     // Windows conversion function
 #ifdef N_WINDOWS
     // Get the resulting string size (including null terminator)
-    int target_size = MultiByteToWideChar(CP_UTF8, 
+    int target_size = MultiByteToWideChar(CP_UTF8,
         MB_COMPOSITE, _m_data, -1, nullptr, 0);
 
     // Allocate memory
     wchar_t* wstring = new wchar_t[target_size]();
 
     // Perform conversion
-    if (!MultiByteToWideChar(CP_UTF8, 
+    if (!MultiByteToWideChar(CP_UTF8,
         MB_COMPOSITE, _m_data, -1, wstring, target_size)) {
 
         // Return null string if not successful
@@ -190,7 +190,7 @@ NaoWStringConst NaoString::utf16() const {
 
 }
 
-#pragma endregion 
+#pragma endregion
 
 #pragma region Comparison functions and operators
 
@@ -227,7 +227,7 @@ bool NaoString::operator!=(char other) const {
     return !operator==(other);
 }
 
-#pragma endregion 
+#pragma endregion
 
 #pragma region Append functions
 
@@ -367,7 +367,7 @@ NaoString::const_iterator NaoString::cend() const {
 
 NaoString::iterator NaoString::erase(const_iterator first, const_iterator last) {
     // Move everything after last to directly have it follow first
-    _m_end = std::move(last, cend(), 
+    _m_end = std::move(last, cend(),
         begin() + std::distance(cbegin(), first));
 
     // Reduce the total size
@@ -568,8 +568,69 @@ size_t NaoString::replace(char target, char replace) {
     return count;
 }
 
+NaoVector<NaoString> NaoString::split(char delim) const {
+    // Fixed size
+    NaoVector<NaoString> parts(count(delim) + 1);
 
-#pragma endregion 
+    char const* str = _m_data;
+
+    size_t i = 0;
+
+    while (*str) {
+        if (*str == delim) {
+            ++i;
+        } else {
+            parts[i].append(*str);
+        }
+
+        ++str;
+    }
+
+    return parts;
+}
+
+size_t NaoString::count(char ch) const {
+    size_t n = 0;
+
+    for (char c : *this) {
+        if (ch == c) {
+            ++n;
+        }
+    }
+
+    return n;
+}
+
+NaoString::reference NaoString::front() {
+    return *_m_data;
+}
+
+NaoString::const_reference NaoString::front() const {
+    return *_m_data;
+}
+
+NaoString::reference NaoString::back() {
+    return *(_m_end - 1);
+}
+
+NaoString::const_reference NaoString::back() const {
+    return *(_m_end - 1);
+}
+
+void NaoString::pop_front() {
+    _m_end = std::copy(_m_data + 1, _m_end, _m_data);
+    --_m_size;
+}
+
+
+void NaoString::pop_back() {
+    *(_m_end - 1) = '\0';
+    --_m_end;
+    --_m_size;
+}
+
+
+#pragma endregion
 
 #pragma region Static functions
 
@@ -662,11 +723,11 @@ NaoString NaoString::fromWide(const wchar_t* str) {
     // Get resulting string size
     int size = WideCharToMultiByte(CP_UTF8,
         WC_COMPOSITECHECK,
-        str, 
-        -1, 
-        nullptr, 
-        0, 
-        nullptr, 
+        str,
+        -1,
+        nullptr,
+        0,
+        nullptr,
         nullptr);
 
     // Allocate the C-string

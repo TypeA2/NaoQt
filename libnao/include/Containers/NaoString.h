@@ -19,17 +19,18 @@
 
 /**
  * \file NaoString.h
- * 
+ *
  * \brief Contains NaoString and helper classes.
- * 
+ *
  * Contains the NaoString class, the helper class NaoWStringConst
  * and implementations for optional functionalities.
- * 
+ *
  */
 
 #include "libnao.h"
 
 #include "Filesystem/Filesystem.h"
+#include "Containers/NaoVector.h"
 
 #ifdef QT_VERSION
 /**
@@ -43,9 +44,9 @@
 /**
  * \ingroup containers
  * \relates NaoString
- * 
+ *
  * \brief Encapsulates a wide (UTF-16) string.
- * 
+ *
  * Temporary class to take ownership of a `wchar*` wide string,
  * and deallocates it at the end of it's lifetime.
  */
@@ -53,9 +54,9 @@ class LIBNAO_API NaoWStringConst {
     public:
     /**
      * \brief Takes ownership of an existing wide string.
-     * 
+     *
      * \param[in] str The wide string to take ownership of.
-     * 
+     *
      * No checks are done on the string, the pointer is merely stored.
      */
     NaoWStringConst(wchar_t* str);
@@ -87,12 +88,12 @@ class LIBNAO_API NaoWStringConst {
 
 /**
  * \ingroup containers
- * 
+ *
  * \brief Encapsulates a C-string
- * 
+ *
  * Generic string class. Does not care about encoding specifically,
  * as long as code units fit into 1 byte, but expects UTF-8.
- * 
+ *
  * \note Does not check for encoding, size() returns number of bytes
  * stored and expects UTF-8 when converting to UTF-16.
  */
@@ -129,13 +130,13 @@ class LIBNAO_API NaoString {
      */
     static constexpr size_t data_alignment = 16 * sizeof(char);
 
-#pragma endregion 
+#pragma endregion
 
 #pragma region Constructors
 
     /**
      * \brief Empty constructor
-     * 
+     *
      * Allocates the default amount of bytes, all to 0.
      */
     NaoString();
@@ -143,7 +144,7 @@ class LIBNAO_API NaoString {
     /**
      * \brief Construct from a C-string.
      * \param[in] str Null-terminated C-string.
-     * 
+     *
      * Takes the string length as returned by strlen() and copies
      * that number of bytes from the source buffer to the internal buffer.
      */
@@ -152,7 +153,7 @@ class LIBNAO_API NaoString {
     /**
      * \brief Constructs from a single character.
      * \param[in] c The initial single character value.
-     * 
+     *
      * Allocates the default amount of bytes and sets the value
      * of the first byte to the value of the given character
      */
@@ -161,7 +162,7 @@ class LIBNAO_API NaoString {
     /**
      * \brief Copy constructor
      * \param[in] other - The instance to copy from.
-     * 
+     *
      * Copies parameters from the source instance and also copies it's buffer.
      */
     NaoString(const NaoString& other);
@@ -169,19 +170,19 @@ class LIBNAO_API NaoString {
     /**
      * \brief Move constructor
      * \param[in] other The instance to move from.
-     * 
+     *
      * Moves the contents to this new instance.
      */
     NaoString(NaoString&& other) noexcept;
 
-#pragma endregion 
+#pragma endregion
 
 #pragma region Assignment operators
 
     /**
      * \brief Assign from a C-string
      * \param[in] str - Null-terminated C-string to copy from.
-     * 
+     *
      * Assigns from an existing C-string, discarding the current contents.
      */
     NaoString& operator=(const char* str);
@@ -189,7 +190,7 @@ class LIBNAO_API NaoString {
     /**
      * \brief Assign from another NaoString
      * \param[in] other - The NaoString to copy from
-     * 
+     *
      * Copies all information and data from the source string.
      */
     NaoString& operator=(const NaoString& other);
@@ -215,14 +216,14 @@ class LIBNAO_API NaoString {
      * \brief Convert to UTF-16.
      * \return A temporary NaoWStringConst instance.
      * \note Expects the source string to be in UTF-8 encoding.
-     * 
+     *
      * Uses a (possibly native) function to convert the existing UTF-8
      * string to UTF-16, and wraps the buffer in a NaoWStringConst,
      * so it gets freed after use.
      */
     N_NODISCARD NaoWStringConst utf16() const;
 
-#pragma endregion 
+#pragma endregion
 
 #pragma region Comparison functions and operators
 
@@ -262,7 +263,7 @@ class LIBNAO_API NaoString {
      */
     bool operator!=(char other) const;
 
-#pragma endregion 
+#pragma endregion
 
 #pragma region Append functions
 
@@ -403,7 +404,7 @@ class LIBNAO_API NaoString {
     /**
      * \brief Reallocates the string to a new, larger buffer
      * \param[in] size The new target size
-     * 
+     *
      * Rounds up the new `size` to a multiple of `data_alignment`,
      * then, if this number is larger than the current allocated amount,
      * allocate the new buffer, copy the old buffer's contents, and
@@ -518,11 +519,57 @@ class LIBNAO_API NaoString {
      */
     size_t replace(char target, char replace);
 
+    /**
+     * \brief Splits the string at the specified delimiter.
+     * \param[in] delim The delimiter to split at.
+     * \return A vector containing all parts, split at the delimiter.
+     */
+    N_NODISCARD NaoVector<NaoString> split(char delim) const;
+
+    /**
+     * \brief Counts the number of occurences of a character.
+     * \param[in] ch The character to count.
+     * \return The number of occurences of `ch` in this string.
+     */
+    N_NODISCARD size_t count(char ch) const;
+
+    /**
+     * \brief Access the first character.
+     * \return Reference to the first character of the string.
+     */
+    N_NODISCARD reference front();
+
+    /**
+     * \brief `const` version of front().
+     */
+    N_NODISCARD const_reference front() const;
+
+    /**
+     * \brief Access the last character.
+     * \return Reference to the last character of the string.
+     */
+    N_NODISCARD reference back();
+
+    /**
+     * \brief `const` version of back().
+     */
+    N_NODISCARD const_reference back() const;
+
+    /**
+     * \brief Removes a character from the front of the string.
+     */
+    void pop_front();
+
+    /**
+     * \brief Removes a character from the back of the string.
+     */
+    void pop_back();
+
 #pragma endregion
 
 #pragma region Static functions
 
-    /**
+        /**
      * \name Number conversion
      * \brief Convert a number to a NaoString.
      * \param[in] n The numerical value to convert.
@@ -530,7 +577,7 @@ class LIBNAO_API NaoString {
      * \return String representation of the input number `n` in base `radix`.
      * \{
      */
-    static NaoString number(int n, int radix = 10);
+        static NaoString number(int n, int radix = 10);
     static NaoString number(unsigned int n, int radix = 10);
     static NaoString number(long n, int radix = 10);
     static NaoString number(unsigned long n, int radix = 10);
@@ -554,7 +601,7 @@ class LIBNAO_API NaoString {
      * \brief Constructs a string from a UTF-8 C-string.
      * \param[in] str The C-string to construct from.
      * \return A NaoString with the same contents as the C-string.
-     * \note Performs no actual conversion, but implicitly calls a constructor. 
+     * \note Performs no actual conversion, but implicitly calls a constructor.
      * Used for when a function pointer is needed.
      */
     static NaoString fromUTF8(const char* str);
@@ -646,7 +693,7 @@ class LIBNAO_API NaoString {
      * \brief Remove known illegal characters from a path.
      * \param[in] replacement The character to replace all illegal characters by.
      * \return `*this`.
-     * 
+     *
      * Replaces all occurences of any of the following with `replacement`: `:?"'<>|`.
      */
     NaoString& clean_path(char replacement = '_');
