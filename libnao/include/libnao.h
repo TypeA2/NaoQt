@@ -21,12 +21,21 @@
 /**
  * \defgroup containers Containers
  * \brief Container classes.
- * 
+ */
+
+/**
+ * \defgroup libnao libnao
+ * \brief Classes which provide libnao's main functionalities.
+ */
+
+/**
+ * \defgroup internal Internal
+ * \brief Internal classes.
  */
 
 /**
  * \file libnao.h
- * 
+ *
  * \brief Contains global definitions used in libnao.
  */
 
@@ -150,4 +159,4 @@
 #define NAO_WIDGET \
     friend class NaoUIManager; \
     friend class NaoUIManagerPrivate;
-    
+

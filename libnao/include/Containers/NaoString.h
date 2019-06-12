@@ -690,6 +690,12 @@ class LIBNAO_API NaoString {
     NaoString& normalize_path();
 
     /**
+     * \brief `const` version of normalize_path() that returns a copy instead.
+     * \return Copy of the current string in the leixcally normal form.
+     */
+    NaoString normalize_path() const;
+
+    /**
      * \brief Remove known illegal characters from a path.
      * \param[in] replacement The character to replace all illegal characters by.
      * \return `*this`.

@@ -577,12 +577,16 @@ NaoVector<NaoString> NaoString::split(char delim) const {
     size_t i = 0;
 
     while (*str) {
+        // If we have a delimiter
         if (*str == delim) {
+            // Move on to next part
             ++i;
         } else {
+            // Else append the character to this string
             parts[i].append(*str);
         }
 
+        // Move forward one character
         ++str;
     }
 
@@ -842,6 +846,11 @@ NaoString& NaoString::normalize_path() {
     *this = fs::path(_m_data).lexically_normal();
     return *this;
 }
+
+NaoString NaoString::normalize_path() const {
+    return fs::path(_m_data).lexically_normal();
+}
+
 
 NaoString& NaoString::clean_path(char replacement) {
 

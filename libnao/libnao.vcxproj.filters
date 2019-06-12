@@ -163,6 +163,9 @@
     <ClInclude Include="include\Decoding\Parsing\NaoUTFReader.h">
       <Filter>Headers\Decoding\Parsing</Filter>
     </ClInclude>
+    <ClInclude Include="include\Filesystem\NaoFileSystemManager_p.h">
+      <Filter>Headers\Filesystem</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\libnao.cpp">

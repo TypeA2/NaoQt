@@ -15,9 +15,13 @@
     along with libnao.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "Filesystem/NaoFileSystemManager.h"
+/**
+ * \file NaoFileSystemManager.cpp
+ * \brief Contains implementations for NaoFileSystemManager and it's related classes.
+ */
 
-#include "NaoObject.h"
+#include "Filesystem/NaoFileSystemManager.h"
+#include "Filesystem/NaoFileSystemManager_p.h"
 
 #include "Filesystem/Filesystem.h"
 #include "Plugin/NaoPluginManager.h"
@@ -26,48 +30,176 @@
 #include "Logging/NaoLogging.h"
 
 #ifdef N_WINDOWS
-#   include <shellapi.h>
+#   define WIN32_LEAN_AND_MEAN
+#   define VC_EXTRALEAN
+
+#   include <Windows.h>
+
+#   undef VC_EXTRALEAN
+#   undef WIN32_LEAN_AND_MEAN
 #endif
 
-//// D-pointer
+#pragma region NaoFileSystemManager
 
-class NaoFileSystemManager::NFSMPrivate {
-    public:
+NaoFileSystemManager& NaoFileSystemManager::global_instance() {
+    static NaoFileSystemManager global;
+    return global;
+}
 
-    ~NFSMPrivate();
+NaoFileSystemManager::NaoFileSystemManager() {
+    d_ptr = std::make_unique<NFSMPrivate>();
+}
 
-    // Initialise in the root directory
-    bool init(const NaoString& root_dir);
+bool NaoFileSystemManager::init(const NaoString& root_dir) {
+    // Need plugins
+    if (!PluginManager.initialised()) {
+        nerr << "Plugins not present";
+        return false;
+    }
 
-    // Move to the target directory (may be relative)
-    bool move(const NaoString& target);
+    // Must be first time
+    if (d_ptr->root()) {
+        nerr << "Already initialised";
+        return false;
+    }
 
-    NaoString description_for_object(NaoObject* object) const;
+    // Must start in a directory
+    if (!fs::is_directory(root_dir)) {
+        nerr << "Path is not a directory";
+        return false;
+    }
 
-    // Current object
-    NaoObject* m_current_object = nullptr;
+    return d_ptr->init(root_dir);
+}
 
-    // Currently used plugin
-    NaoPlugin* m_current_plugin = nullptr;
+#pragma endregion
 
-    // Latest error code
-    NaoString m_last_error;
 
-    private:
 
-    NaoObject* _try_locate_child(const NaoString& path);
-};
+#pragma region NFSMPrivate
 
+NFSMPrivate::NFSMPrivate()
+    : _m_root(nullptr){
+
+}
+
+NFSMPrivate::~NFSMPrivate() {
+    delete _m_root;
+}
+
+
+bool NFSMPrivate::init(const NaoString& root_dir) {
+    _m_root = new NTreeNode();
+
+    return true;
+}
+
+NTreeNode* NFSMPrivate::create_node(const NaoString& path) {
+    NaoVector<NaoString> parts = path.normalize_path().split(N_PATHSEP);
+
+#ifdef N_WINDOWS
+    if (parts.front().size() != 2 || parts.front().back() != ':') {
+        nerr << "Invalid drive at beginning of path";
+        return nullptr;
+    }
+
+    if (GetDriveTypeA(parts.front() + '/') < 2) {
+        nerr << "Drive is not present";
+        return nullptr;
+    }
+#endif
+
+    NTreeNode* current = _m_root;
+
+    for (const NaoString& part : parts) {
+        if (current->children.find(part) == current->children.end()) {
+            // Child does not exist, create it
+            current->children[part] = new NTreeNode();
+
+        }
+    }
+
+    return nullptr;
+}
+
+NTreeNode* NFSMPrivate::root() {
+    return _m_root;
+}
+
+
+#pragma endregion
+
+
+
+#pragma region NTreeNode
+
+NTreeNode::~NTreeNode() {
+    for (NTreeNode* child : _m_children) {
+        delete child;
+    }
+}
+
+NTreeNode::NTreeNode(const NaoString& name, NTreeNode* parent)
+    : _m_name(name) {
+    // If parent exists
+    if (parent) {
+        // Try to add this node as a child
+        if (!parent->add_child(this)) {
+            nerr << "Failed to add new node " << name << "to parent node" << parent->name();
+        }
+    }
+}
+
+bool NTreeNode::lock() {
+    if (_m_locked) {
+        return false;
+    }
+
+    _m_locked = true;
+
+    return true;
+}
+
+bool NTreeNode::unlock() {
+    if (!_m_locked) {
+        return false;
+    }
+
+    _m_locked = false;
+
+    return true;
+}
+
+bool NTreeNode::locked() const {
+    return _m_locked;
+}
+
+bool NTreeNode::set_name(const NaoString& name) {
+    // Can't have child with same name
+    if (_m_parent && _m_parent->has_child(name)) {
+        return false;
+    }
+
+    _m_name = name;
+    return true;
+}
+
+const NaoString& NTreeNode::name() const {
+    return _m_name;
+}
+
+#pragma endregion
+
+
+
+#if 0
 #pragma region NaoFileSystemManager
 
 //// NaoFileSystemManager
 
 //// Public
 
-NaoFileSystemManager& NaoFileSystemManager::global_instance() {
-    static NaoFileSystemManager global;
-    return global;
-}
+
 
 bool NaoFileSystemManager::init(const NaoString& root_dir) {
     return d_ptr->init(root_dir);
@@ -99,11 +231,9 @@ NaoString NaoFileSystemManager::description(NaoObject* object) const {
 
 //// Private
 
-NaoFileSystemManager::NaoFileSystemManager() {
-    d_ptr = std::make_unique<NFSMPrivate>();
-}
 
-#pragma endregion 
+
+#pragma endregion
 
 #pragma region NFSMPRivate
 
@@ -115,25 +245,7 @@ NaoFileSystemManager::NFSMPrivate::~NFSMPrivate() {
     delete m_current_object;
 }
 
-bool NaoFileSystemManager::NFSMPrivate::init(const NaoString& root_dir) {
 
-    if (!PluginManager.initialised() || m_current_object) {
-        return false;
-    }
-
-    if (!fs::is_directory(root_dir)) {
-
-        nerr << "Path is not a directory";
-
-        m_last_error = "NaoFSM::init - Path is not a directory";
-
-        return false;
-    }
-
-    move(root_dir);
-
-    return true;
-}
 
 bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
 
@@ -274,3 +386,4 @@ NaoObject* NaoFileSystemManager::NFSMPrivate::_try_locate_child(const NaoString&
 }
 
 #pragma endregion
+#endif

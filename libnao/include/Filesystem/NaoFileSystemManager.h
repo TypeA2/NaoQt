@@ -19,41 +19,51 @@
 
 #include "libnao.h"
 
-#include "Containers/NaoString.h"
-#include "NaoObject.h"
-
-#ifdef N_WINDOWS
-#define WIN32_LEAN_AND_MEAN
-#define VC_EXTRALEAN
-#include <Windows.h>
-#undef VC_EXTRALEAN
-#undef WIN32_LEAN_AND_MEAN
-#endif
+#include <memory>
 
 #define NaoFSM NaoFileSystemManager::global_instance()
 
+class NaoString;
 class NaoPlugin;
 
+class NFSMPrivate;
+
+/**
+ * \ingroup libnao
+ *
+ * \brief Singleton class which keeps track of a filesystm tree.
+ */
 class NaoFileSystemManager {
     public:
-    // Global instance
+    /**
+     * \brief Access the singleton instance.
+     * \return Reference to the global instance of the NaoFileSystemManager class.
+     */
     LIBNAO_API static NaoFileSystemManager& global_instance();
 
+    /**
+     * \brief Initialise the NaoFileSystemManager with the specified starting directory.
+     * \param[in] root_dir The initial directory.
+     * \return Whether the operation succeeded.
+     */
     LIBNAO_API bool init(const NaoString& root_dir);
-    LIBNAO_API bool move(const NaoString& target);
 
-    N_NODISCARD LIBNAO_API NaoObject* current_object() const;
-    N_NODISCARD LIBNAO_API const NaoString& current_path() const;
-    N_NODISCARD LIBNAO_API NaoPlugin* current_plugin() const;
 
-    N_NODISCARD LIBNAO_API const NaoString& last_error() const;
 
-    LIBNAO_API NaoString description(NaoObject* object) const;
+
+    //LIBNAO_API bool move(const NaoString& target);
+
+    //N_NODISCARD LIBNAO_API NaoObject* current_object() const;
+    //N_NODISCARD LIBNAO_API const NaoString& current_path() const;
+    //N_NODISCARD LIBNAO_API NaoPlugin* current_plugin() const;
+
+    //N_NODISCARD LIBNAO_API const NaoString& last_error() const;
+
+    //LIBNAO_API NaoString description(NaoObject* object) const;
 
     private:
 
     NaoFileSystemManager();
 
-    class NFSMPrivate;
     std::unique_ptr<NFSMPrivate> d_ptr;
 };

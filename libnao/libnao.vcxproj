@@ -297,6 +297,7 @@
     <ClInclude Include="include\Decoding\Parsing\NaoUTFReader.h" />
     <ClInclude Include="include\Filesystem\Filesystem.h" />
     <ClInclude Include="include\Filesystem\NaoFileSystemManager.h" />
+    <ClInclude Include="include\Filesystem\NaoFileSystemManager_p.h" />
     <ClInclude Include="include\Functionality\NaoEndian.h" />
     <ClInclude Include="include\Functionality\NaoMath.h" />
     <ClInclude Include="include\IO\NaoChunkIO.h" />
