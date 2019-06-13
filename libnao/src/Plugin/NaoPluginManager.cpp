@@ -16,23 +16,27 @@
 */
 
 #include "Plugin/NaoPluginManager.h"
+#include "Plugin/NaoPluginManager_p.h"
 
 #define N_LOG_ID "NPM"
 #include "Logging/NaoLogging.h"
-#include "NaoObject.h"
-#include "Plugin/NaoPlugin.h"
-#include "Filesystem/Filesystem.h"
 
-#include <map>
+NaoPluginManager& NaoPluginManager::global_instance() {
+    static NaoPluginManager global;
+    return global;
+}
 
-#ifdef N_WINDOWS
-#   define WIN32_LEAN_AND_MEAN
-#   define VC_EXTRALEAN
-#   include <Windows.h>
-#   undef VC_EXTRALEAN
-#   undef WIN32_LEAN_AND_MEAN
-#endif
+bool NaoPluginManager::init(const NaoString& plugin_dir) {
+    return d_ptr->init(plugin_dir);
+}
 
+
+NaoPluginManager::NaoPluginManager() {
+    d_ptr = std::make_unique<NPMPrivate>();
+}
+
+
+#if 0
 //// D-pointer class
 
 class NaoPluginManager::NaoPluginManagerPrivate {
@@ -91,10 +95,7 @@ class NaoPluginManager::NaoPluginManagerPrivate {
 
 //// Public
 
-NaoPluginManager& NaoPluginManager::global_instance() {
-    static NaoPluginManager global;
-    return global;
-}
+
 
 bool NaoPluginManager::init(const NaoString& plugins_dir) {
     return d_ptr->init(plugins_dir);
@@ -168,9 +169,6 @@ void NaoPluginManager::trigger_event(NaoPlugin::Event event, NaoPlugin::EventArg
 
 //// Private
 
-NaoPluginManager::NaoPluginManager() {
-    d_ptr = std::make_unique<NaoPluginManagerPrivate>();
-}
 
 #pragma endregion
 
@@ -178,96 +176,7 @@ NaoPluginManager::NaoPluginManager() {
 
 //////// NaoPluginManagerPrivate
 
-NaoPluginManager::NaoPluginManagerPrivate::~NaoPluginManagerPrivate() {
-    for (Plugin plugin : m_plugins) {
-        delete plugin.plugin;
-        FreeLibrary(plugin.handle);
-    }
-}
 
-bool NaoPluginManager::NaoPluginManagerPrivate::init(const NaoString& plugins_dir) {
-    
-    m_plugins_dir = fs::absolute(plugins_dir);
-
-    nlog << "Loading plugins from" << m_plugins_dir;
-
-    for (const fs::directory_entry& file : fs::directory_iterator(m_plugins_dir)) {
-        NaoString target_lib;
-        if (!is_directory(file.path()) &&
-            !is_empty(file.path()) &&
-            file.path().extension() == LIBNAO_PLUGIN_EXTENSION) {
-
-            target_lib = file.path();
-        } else if (is_directory(file.path())) {
-            
-            NaoString target = file.path() + N_PATHSEP + file.path().filename() + LIBNAO_PLUGIN_EXTENSION;
-            if (fs::exists(target)) {
-                target_lib = target;
-            } else {
-                continue;
-            }
-        } else {
-            continue;
-        }
-
-        if (!load(target_lib)) {
-            m_errored_list.push_back({
-                file.path().filename(),
-                m_error
-                });
-        } else {
-            if (!std::empty(m_error)) {
-                m_error.clear();
-            }
-        }
-    }
-
-    m_initialised = true;
-
-    nlog << "Finished loading plugins";
-
-    return std::empty(m_errored_list);
-}
-
-bool NaoPluginManager::NaoPluginManagerPrivate::load(const NaoString& plugin_name) {
-#ifdef N_WINDOWS
-
-    Plugin plugin;
-
-    plugin.handle = LoadLibraryA(plugin_name);
-
-    if (plugin.handle == nullptr) {
-        return false;
-    }
-
-    PluginFunc plugin_func = reinterpret_cast<PluginFunc>(
-        GetProcAddress(plugin.handle, "GetNaoPlugin"));
-
-    if (plugin_func) {
-
-        plugin.plugin = plugin_func();
-
-        m_plugins.push_back(plugin);
-        m_plugins_raw.push_back(plugin.plugin);
-
-        for (NaoPlugin::Event event : NaoPlugin::AllEvents) {
-            if (plugin->SubscribedEvents() & event) {
-                m_event_subscribers[event].push_back(plugin.plugin);
-            }
-        }
-
-        nlog << "Loaded plugin" << fs::path(plugin_name).filename()
-            << ("(\"" + plugin->Name() + "\")");
-
-        return true;
-    }
-
-    m_error = "Could not get address of GetNaoPlugin() function.";
-
-#endif
-
-    return false;
-}
 
 NaoPlugin* NaoPluginManager::NaoPluginManagerPrivate::enter_plugin(NaoObject* object) const {
     for (const Plugin& plugin : m_plugins) {
@@ -325,4 +234,6 @@ bool NaoPluginManager::NaoPluginManagerPrivate::set_description_for_object(NaoOb
     return true;
 }
 
-#pragma endregion 
+#pragma endregion
+
+#endif

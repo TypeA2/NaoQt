@@ -20,26 +20,38 @@
 #include "libnao.h"
 
 #include "Containers/NaoString.h"
-#include "Containers/NaoPair.h"
-#include "Containers/NaoVector.h"
-#include "Plugin/NaoPlugin.h"
 
-#define PluginManager NaoPluginManager::global_instance()
+#define NPM NaoPluginManager::global_instance()
 
-/*
- * Loads and manages all plugins.
+class NPMPrivate;
+
+/**
+ * \ingroup libnao
+ * \brief Loads and manages all plugins.
+ *
  * Plugins need to expose the following functions (with LIBNAO_CALL):
- * 
- *  - NaoPlugin NaoPlugin();
+ *
+ * - `NaoPlugin NaoPlugin()`;
  */
 class NaoPluginManager {
     public:
-    // Getter for global instance
+    /**
+     * \return Reference to the global singleton instance.
+     */
     LIBNAO_API static NaoPluginManager& global_instance();
 
-    LIBNAO_API bool init(const NaoString& plugins_dir);
-    
+    /**
+     * \brief Initialise the plugin manager with a plugin directory.
+     * \param[in] plugins_dir The path (relative or absolute) in which the plugins are located.
+     * \return Whether the initialisation succeeded.
+     */
+    LIBNAO_API bool init(const NaoString& plugin_dir);
+
+#if 0
+
+
     LIBNAO_API bool load(const NaoString& plugin_name);
+
 
 	N_NODISCARD LIBNAO_API const NaoVector<NaoPair<NaoString, NaoString>>& errored_list() const;
 	N_NODISCARD LIBNAO_API const NaoVector<NaoPlugin*>& loaded() const;
@@ -52,16 +64,15 @@ class NaoPluginManager {
 	N_NODISCARD LIBNAO_API NaoPlugin* context_menu_plugin(NaoObject* object) const;
 	N_NODISCARD LIBNAO_API NaoPlugin* child_plugin(const NaoString& name) const;
 	N_NODISCARD LIBNAO_API NaoPlugin* root_plugin(NaoObject* from, NaoObject* to) const;
-	
+
 	LIBNAO_API void trigger_event(NaoPlugin::Event event, NaoPlugin::EventArgs* args);
 
     LIBNAO_API bool set_description(NaoObject* object);
-
+#endif
     private:
 
     // Constructor for initialising d_ptr
     NaoPluginManager();
 
-    class NaoPluginManagerPrivate;
-    std::unique_ptr<NaoPluginManagerPrivate> d_ptr;
+    std::unique_ptr<NPMPrivate> d_ptr;
 };

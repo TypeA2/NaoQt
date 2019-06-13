@@ -22,6 +22,7 @@
 
 #include "Filesystem/NaoFileSystemManager.h"
 #include "Filesystem/NaoFileSystemManager_p.h"
+#include "Filesystem/NTreeNode.h"
 
 #include "Filesystem/Filesystem.h"
 #include "Plugin/NaoPluginManager.h"
@@ -50,7 +51,7 @@ NaoFileSystemManager::NaoFileSystemManager() {
     d_ptr = std::make_unique<NFSMPrivate>();
 }
 
-bool NaoFileSystemManager::init(const NaoString& root_dir) {
+bool NaoFileSystemManager::init(const NaoString& start_dir) {
     // Need plugins
     if (!PluginManager.initialised()) {
         nerr << "Plugins not present";
@@ -64,133 +65,50 @@ bool NaoFileSystemManager::init(const NaoString& root_dir) {
     }
 
     // Must start in a directory
-    if (!fs::is_directory(root_dir)) {
+    if (!fs::is_directory(start_dir)) {
         nerr << "Path is not a directory";
         return false;
     }
 
-    return d_ptr->init(root_dir);
+    if (!d_ptr->init()) {
+        nerr << "d_ptr init failed.";
+        return false;
+    }
+
+    return create_node(start_dir) != nullptr;;
 }
 
-#pragma endregion
-
-
-
-#pragma region NFSMPrivate
-
-NFSMPrivate::NFSMPrivate()
-    : _m_root(nullptr){
-
-}
-
-NFSMPrivate::~NFSMPrivate() {
-    delete _m_root;
-}
-
-
-bool NFSMPrivate::init(const NaoString& root_dir) {
-    _m_root = new NTreeNode();
-
-    return true;
-}
-
-NTreeNode* NFSMPrivate::create_node(const NaoString& path) {
+NTreeNode* NaoFileSystemManager::create_node(const NaoString& path) {
     NaoVector<NaoString> parts = path.normalize_path().split(N_PATHSEP);
 
+    // Check root drive
 #ifdef N_WINDOWS
     if (parts.front().size() != 2 || parts.front().back() != ':') {
         nerr << "Invalid drive at beginning of path";
         return nullptr;
     }
 
-    if (GetDriveTypeA(parts.front() + '/') < 2) {
+    if (GetDriveTypeA(parts.front() + '/') <= DRIVE_NO_ROOT_DIR) {
         nerr << "Drive is not present";
         return nullptr;
     }
 #endif
 
-    NTreeNode* current = _m_root;
+    NTreeNode* current = d_ptr->root();
 
     for (const NaoString& part : parts) {
-        if (current->children.find(part) == current->children.end()) {
+        if (!current->has_child(part)) {
             // Child does not exist, create it
-            current->children[part] = new NTreeNode();
-
+            current = new NTreeNode(part, current);
+        } else {
+            current = current->get_child(part);
         }
     }
 
-    return nullptr;
-}
-
-NTreeNode* NFSMPrivate::root() {
-    return _m_root;
-}
-
-
-#pragma endregion
-
-
-
-#pragma region NTreeNode
-
-NTreeNode::~NTreeNode() {
-    for (NTreeNode* child : _m_children) {
-        delete child;
-    }
-}
-
-NTreeNode::NTreeNode(const NaoString& name, NTreeNode* parent)
-    : _m_name(name) {
-    // If parent exists
-    if (parent) {
-        // Try to add this node as a child
-        if (!parent->add_child(this)) {
-            nerr << "Failed to add new node " << name << "to parent node" << parent->name();
-        }
-    }
-}
-
-bool NTreeNode::lock() {
-    if (_m_locked) {
-        return false;
-    }
-
-    _m_locked = true;
-
-    return true;
-}
-
-bool NTreeNode::unlock() {
-    if (!_m_locked) {
-        return false;
-    }
-
-    _m_locked = false;
-
-    return true;
-}
-
-bool NTreeNode::locked() const {
-    return _m_locked;
-}
-
-bool NTreeNode::set_name(const NaoString& name) {
-    // Can't have child with same name
-    if (_m_parent && _m_parent->has_child(name)) {
-        return false;
-    }
-
-    _m_name = name;
-    return true;
-}
-
-const NaoString& NTreeNode::name() const {
-    return _m_name;
+    return current;
 }
 
 #pragma endregion
-
-
 
 #if 0
 #pragma region NaoFileSystemManager

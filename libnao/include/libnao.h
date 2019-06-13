@@ -29,6 +29,11 @@
  */
 
 /**
+ * \defgroup plugin_interface Plugin interface
+ * \brief Classes which are used to interface with plugins.
+ */
+
+/**
  * \defgroup internal Internal
  * \brief Internal classes.
  */

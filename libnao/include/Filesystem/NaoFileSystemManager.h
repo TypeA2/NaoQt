@@ -26,6 +26,7 @@
 class NaoString;
 class NaoPlugin;
 
+class NTreeNode;
 class NFSMPrivate;
 
 /**
@@ -43,12 +44,17 @@ class NaoFileSystemManager {
 
     /**
      * \brief Initialise the NaoFileSystemManager with the specified starting directory.
-     * \param[in] root_dir The initial directory.
+     * \param[in] start_dir The initial directory.
      * \return Whether the operation succeeded.
      */
-    LIBNAO_API bool init(const NaoString& root_dir);
+    LIBNAO_API bool init(const NaoString& start_dir);
 
-
+    /**
+     * \brief Creates a node (and all it's parent nodes if needed).
+     * \param[in] path The path of the node to create.
+     * \return Pointer to the newly created node.
+     */
+    LIBNAO_API NTreeNode* create_node(const NaoString& path);
 
 
     //LIBNAO_API bool move(const NaoString& target);

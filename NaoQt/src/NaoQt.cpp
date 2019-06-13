@@ -56,7 +56,7 @@ NaoQt::NaoQt(QWidget *parent)
     , _is_moving(false) {
 
     _load_settings();
-    
+
     NaoLogging::set_log_file(_m_settings.at("logging/log_file"));
 
     nlog << "Loaded settings";
@@ -99,7 +99,7 @@ void NaoQt::_load_settings() {
         if (!existings_keys.contains(pair.first)) {
             settings.setValue(pair.first, pair.second);
         }
-        
+
         _m_settings.insert(pair);
     }
 }
@@ -124,7 +124,7 @@ void NaoQt::_init_window() {
 
     _m_up_button = new QPushButton(QIcon(":/NaoQt/Resources/icons/up.png"), "", central_widget);
     _m_up_button->setToolTip("Go up");
-    
+
     _m_refresh_button = new QPushButton(QIcon(":/NaoQt/Resources/icons/refresh.svg"), "", central_widget);
     _m_refresh_button->setToolTip("Refresh view");
 
@@ -259,7 +259,7 @@ void NaoQt::_init_filesystem() {
                 NaoFSM.last_error());
 
             throw std::exception(NaoFSM.last_error());
-        } 
+        }
 
         nlog << "Initialised filesystem";
 
@@ -340,7 +340,7 @@ void NaoQt::view_context_menu(const QPoint& pos) {
     connect(menu, &QMenu::triggered, menu, &QMenu::deleteLater);
 
     QTreeWidgetItem* item = _m_tree_widget->itemAt(pos);
-    
+
     if (!item) {
         nlog << "No item";
 
@@ -353,7 +353,7 @@ void NaoQt::view_context_menu(const QPoint& pos) {
                 }
             });
         }
-        
+
     } else {
         NaoObject* object = item->data(0, ObjectRole).value<NaoObject*>();
 
@@ -424,7 +424,7 @@ void NaoQt::view_context_menu(const QPoint& pos) {
             const int64_t count = menu->actions().size();
 
             for (NaoAction* action : current_plugin->ContextMenu(object)) {
-                
+
                 QAction* act = new QAction(action->ActionName(), menu);
                 connect(act, &QAction::triggered, this, [this, action, object] {
                     if (!action->Execute(object)) {
@@ -472,14 +472,14 @@ void NaoQt::view_sort_column(int index, Qt::SortOrder order) {
     }
 
     // Always sort directories alphabetically
-    std::sort(std::begin(directories), std::end(directories), 
+    std::sort(std::begin(directories), std::end(directories),
         [](QTreeWidgetItem* a, QTreeWidgetItem* b) -> bool {
         return a->text(0).compare(b->text(0), Qt::CaseInsensitive) < 0;
     });
 
-    std::sort(std::begin(files), std::end(files), 
+    std::sort(std::begin(files), std::end(files),
         [index](QTreeWidgetItem* a, QTreeWidgetItem* b) -> bool {
-       
+
         if (index == 1) {
             const qint64 size_a = a->data(1, ItemSizeRole).toLongLong();
             const qint64 size_b = b->data(1, ItemSizeRole).toLongLong();
@@ -620,7 +620,7 @@ void NaoQt::fsm_object_changed() {
                 item->setText(3, QString("%0%").arg(qRound(100. * ratio)));
             }
         }
-        
+
         _m_tree_widget->addTopLevelItem(item);
     }
 
