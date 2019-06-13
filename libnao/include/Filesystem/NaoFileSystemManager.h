@@ -31,7 +31,7 @@ class NFSMPrivate;
 /**
  * \ingroup libnao
  *
- * \brief Singleton class which keeps track of a filesystm tree.
+ * \brief Singleton class which keeps track of a filesystem tree.
  */
 class NaoFileSystemManager {
     public:
