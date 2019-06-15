@@ -17,6 +17,12 @@
 
 #include "Plugin/NaoPlugin.h"
 
+bool NaoPlugin::can_populate(N_UNUSED NTreeNode* node) {
+    return false;
+}
+
+
+#if 0
 NaoPlugin::MoveEventArgs::MoveEventArgs(NaoObject* from, NaoObject* to)
     : from(from), to(to){ }
 
@@ -99,3 +105,5 @@ NaoPlugin* NaoAction::parent() const {
 }
 
 #pragma endregion
+
+#endif

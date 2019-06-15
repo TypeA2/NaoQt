@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "libnao.h"
+
 class NTreeNode;
 
 /**
@@ -50,13 +52,44 @@ class NFSMPrivate {
      * \brief Access the root node.
      * \return Pointer to the root tree node.
      */
-    NTreeNode* root();
+    N_NODISCARD NTreeNode* root() const;
+
+    /**
+     * \brief Sets the currently active node.
+     * \param[in] node The new active node.
+     */
+    void set_current(NTreeNode* node);
+
+    /**
+     * \return Pointer to the currently active node.
+     */
+    N_NODISCARD NTreeNode* current() const;
+
+    /**
+     * \brief Perform garbage collection.
+     *
+     * Frees up memory by removing unneeded nodes.
+     * A node is considered needed if any of the following apply:
+     *  - It's a descendant of a locked node.
+     *  - It's a direct parent of a locked node.
+     * The currently selected node is also considered locked.
+     */
+    void gc();
+
+    /**
+     * \brief Retrieve the lowest locked node.
+     * \return Pointer to the first node, starting at the root, which is locked.
+     * \todo Maybe try without recursion.
+     */
+    N_NODISCARD NTreeNode* first_locked() const;
 
     private:
 
     // Root tree node
     NTreeNode* _m_root;
 
+    // Current node
+    NTreeNode* _m_current;
 
 #if 0
     public:

@@ -19,7 +19,8 @@
 #include "Filesystem/NTreeNode.h"
 
 NFSMPrivate::NFSMPrivate()
-    : _m_root(nullptr) {
+    : _m_root(nullptr)
+    , _m_current(nullptr) {
 
 }
 
@@ -27,14 +28,26 @@ NFSMPrivate::~NFSMPrivate() {
     delete _m_root;
 }
 
-
 bool NFSMPrivate::init() {
     _m_root = new NTreeNode();
 
     return true;
 }
 
-NTreeNode* NFSMPrivate::root() {
+NTreeNode* NFSMPrivate::root() const {
     return _m_root;
+}
+
+void NFSMPrivate::set_current(NTreeNode* node) {
+    _m_current = node;
+}
+
+NTreeNode* NFSMPrivate::current() const {
+    return _m_current;
+}
+
+void NFSMPrivate::gc() {
+    // Work from end to start
+    NTreeNode* node = _m_current;
 }
 

@@ -166,6 +166,12 @@
     <ClInclude Include="include\Filesystem\NaoFileSystemManager_p.h">
       <Filter>Headers\Filesystem</Filter>
     </ClInclude>
+    <ClInclude Include="include\Plugin\NaoPluginManager_p.h">
+      <Filter>Headers\Plugin</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Filesystem\NTreeNode.h">
+      <Filter>Headers\Filesystem</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\libnao.cpp">
@@ -230,6 +236,15 @@
     </ClCompile>
     <ClCompile Include="src\Decoding\Parsing\NaoUTFReader.cpp">
       <Filter>Sources\Decoding\Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Plugin\NaoPluginManager_p.cpp">
+      <Filter>Sources\Plugin</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Filesystem\NaoFileSystemManager_p.cpp">
+      <Filter>Sources\Filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Filesystem\NTreeNode.cpp">
+      <Filter>Sources\Filesystem</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

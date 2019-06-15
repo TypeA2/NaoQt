@@ -30,9 +30,16 @@ bool NaoPluginManager::init(const NaoString& plugin_dir) {
     return d_ptr->init(plugin_dir);
 }
 
+bool NaoPluginManager::initialised() const {
+    return d_ptr->initialised();
+}
 
 NaoPluginManager::NaoPluginManager() {
     d_ptr = std::make_unique<NPMPrivate>();
+}
+
+NaoPlugin* NaoPluginManager::populate_plugin(NTreeNode* node) const {
+    return d_ptr->populate_plugin(node);
 }
 
 

@@ -82,8 +82,30 @@ bool NPMPrivate::init(const NaoString& plugin_dir) {
 
     nlog << "Loaded" << _m_plugins.size() << "plugins";
 
-    return !_m_plugins.empty();
+    // Success determined by whether we have any plugins at all
+    _m_initialised = !_m_plugins.empty();
+
+    return _m_initialised;
 }
+
+bool NPMPrivate::initialised() const {
+    return _m_initialised;
+}
+
+NaoPlugin* NPMPrivate::populate_plugin(NTreeNode* node) const {
+    // Check all plugins
+    for (const Plugin& plugin : _m_plugins) {
+        // If it can populate
+        if (plugin->can_populate(node)) {
+            // Return it
+            return plugin.plugin;
+        }
+    }
+
+    // Base case
+    return nullptr;
+}
+
 
 bool NPMPrivate::_load(const NaoString& name) {
 #ifdef N_WINDOWS
@@ -111,15 +133,16 @@ bool NPMPrivate::_load(const NaoString& name) {
         // Save the plugin
         _m_plugins.push_back(plugin);
 
+        /*
         // For all events
         for (NaoPlugin::Event event : NaoPlugin::AllEvents) {
             // Add plugin to subscribers if needed
             if (plugin->SubscribedEvents() & event) {
                 _m_event_subscribers[event].push_back(plugin.plugin);
             }
-        }
+        }*/
 
-        nlog << "Loaded plugin" << name << ("(\"" + plugin->Name() + "\")");
+        nlog << "Loaded plugin" << name << ("(\"" + plugin->name() + "\")");
 
         return true;
     }

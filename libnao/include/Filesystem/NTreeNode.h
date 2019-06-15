@@ -51,6 +51,8 @@ class LIBNAO_API NTreeNode {
      * \return Whether the lock state was successfully changed.
      *
      * If a node is locked, none of it's descendants will be deleted automatically.
+     * This can be used to prevent an expensive operation to happen multiple times.
+     * Locked nodes will however be deleted if they are no longer in scope.
      */
     bool lock();
 
@@ -127,11 +129,30 @@ class LIBNAO_API NTreeNode {
      */
     N_NODISCARD NTreeNode* get_child(const NaoString& name) const;
 
+    /**
+     * \brief Sets whether the node has been populated already, or needs to be populated again.
+     * \param[in] state The new populated state of this node.
+     */
+    void set_populated(bool state);
+
+    /**
+     * \return Whether this node hasb een populated already.
+     */
+    N_NODISCARD bool populated() const;
+
     private:
+    // Parent node of this node
     NTreeNode* _m_parent;
+
+    // Name of this node
     NaoString _m_name;
 
+    // This node's children
     NaoVector<NTreeNode*> _m_children;
 
+    // Whether this node is locked
     bool _m_locked;
+
+    // Whether this node has been populated already
+    bool _m_populated;
 };

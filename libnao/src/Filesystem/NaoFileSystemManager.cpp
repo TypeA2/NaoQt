@@ -23,9 +23,10 @@
 #include "Filesystem/NaoFileSystemManager.h"
 #include "Filesystem/NaoFileSystemManager_p.h"
 #include "Filesystem/NTreeNode.h"
-
 #include "Filesystem/Filesystem.h"
+
 #include "Plugin/NaoPluginManager.h"
+#include "Plugin/NaoPlugin.h"
 
 #define N_LOG_ID "NaoFSM"
 #include "Logging/NaoLogging.h"
@@ -40,8 +41,6 @@
 #   undef WIN32_LEAN_AND_MEAN
 #endif
 
-#pragma region NaoFileSystemManager
-
 NaoFileSystemManager& NaoFileSystemManager::global_instance() {
     static NaoFileSystemManager global;
     return global;
@@ -53,7 +52,7 @@ NaoFileSystemManager::NaoFileSystemManager() {
 
 bool NaoFileSystemManager::init(const NaoString& start_dir) {
     // Need plugins
-    if (!PluginManager.initialised()) {
+    if (!NPM.initialised()) {
         nerr << "Plugins not present";
         return false;
     }
@@ -75,10 +74,10 @@ bool NaoFileSystemManager::init(const NaoString& start_dir) {
         return false;
     }
 
-    return create_node(start_dir) != nullptr;;
+    return move(start_dir);
 }
 
-NTreeNode* NaoFileSystemManager::create_node(const NaoString& path) {
+NTreeNode* NaoFileSystemManager::retrieve_node(const NaoString& path) {
     NaoVector<NaoString> parts = path.normalize_path().split(N_PATHSEP);
 
     // Check root drive
@@ -108,7 +107,37 @@ NTreeNode* NaoFileSystemManager::create_node(const NaoString& path) {
     return current;
 }
 
-#pragma endregion
+bool NaoFileSystemManager::move(const NaoString& path) {
+    nlog << "Moving to path" << path;
+
+    // Retrieve (possibly new) target node
+    NTreeNode* node = retrieve_node(path);
+
+    if (!node) {
+        return false;
+    }
+
+    // Retrieve plugin used to populate the node
+    NaoPlugin* plugin = NPM.populate_plugin(node);
+
+    // Make sure a plugin supports it
+    if (!plugin) {
+        nerr << "Failed to retrive populate plugin";
+        return false;
+    }
+
+    // Populate the new node
+    if (!plugin->populate(node) || !node->populated()) {
+        nerr << "Failed to populate using plugin" << plugin->name();
+        return false;
+    }
+
+    d_ptr->set_current(node);
+    d_ptr->gc();
+
+    return true;
+}
+
 
 #if 0
 #pragma region NaoFileSystemManager

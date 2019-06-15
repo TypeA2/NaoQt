@@ -54,7 +54,14 @@ class NaoFileSystemManager {
      * \param[in] path The path of the node to create.
      * \return Pointer to the newly created node.
      */
-    LIBNAO_API NTreeNode* create_node(const NaoString& path);
+    LIBNAO_API NTreeNode* retrieve_node(const NaoString& path);
+
+    /**
+     * \brief Moves the current node to the new path.
+     * \param[in] path The path of the new position.
+     * \return Whether the operation succeeded.
+     */
+    LIBNAO_API bool move(const NaoString& path);
 
 
     //LIBNAO_API bool move(const NaoString& target);
@@ -69,7 +76,11 @@ class NaoFileSystemManager {
 
     private:
 
+    /**
+     * \brief Constructor to initialise d_ptr
+     */
     NaoFileSystemManager();
 
+    // Opaque pointer
     std::unique_ptr<NFSMPrivate> d_ptr;
 };

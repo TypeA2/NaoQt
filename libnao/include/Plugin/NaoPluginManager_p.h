@@ -50,6 +50,18 @@ class NPMPrivate {
      */
     bool init(const NaoString& plugin_dir);
 
+    /**
+     * \return Whether the NPMPrivate was initialised already.
+     */
+    N_NODISCARD bool initialised() const;
+
+    /**
+     * \brief Find the plugin which can populate the given noe.
+     * \param[in] node The node to check for.
+     * \return Plugin which can populate the node, else `nullptr`.
+     */
+    N_NODISCARD NaoPlugin* populate_plugin(NTreeNode* node) const;
+
     private:
     /**
      * \brief Loads a single plugin.
@@ -76,5 +88,8 @@ class NPMPrivate {
     NaoVector<Plugin> _m_plugins;
 
     // Which plugins are subscribed to which events
-    std::map<NaoPlugin::Event, NaoVector<NaoPlugin*>> _m_event_subscribers;
+    //std::map<NaoPlugin::Event, NaoVector<NaoPlugin*>> _m_event_subscribers;
+
+    // Whether we are initialised already
+    bool _m_initialised;
 };

@@ -25,6 +25,9 @@
 
 class NPMPrivate;
 
+class LIBNAO_API NaoPlugin;
+class LIBNAO_API NTreeNode;
+
 /**
  * \ingroup libnao
  * \brief Loads and manages all plugins.
@@ -42,22 +45,24 @@ class NaoPluginManager {
 
     /**
      * \brief Initialise the plugin manager with a plugin directory.
-     * \param[in] plugins_dir The path (relative or absolute) in which the plugins are located.
+     * \param[in] plugin_dir The path (relative or absolute) in which the plugins are located.
      * \return Whether the initialisation succeeded.
      */
     LIBNAO_API bool init(const NaoString& plugin_dir);
 
+    /**
+     * \return Whether the NaoPluginManager has been initialised already.
+     */
+    N_NODISCARD LIBNAO_API bool initialised() const;
+
+    /**
+     * \brief Find the plugin which can populate the given node.
+     * \param[in] node The node to check.
+     * \return The selected plugin.
+     */
+    N_NODISCARD LIBNAO_API NaoPlugin* populate_plugin(NTreeNode* node) const;
+
 #if 0
-
-
-    LIBNAO_API bool load(const NaoString& plugin_name);
-
-
-	N_NODISCARD LIBNAO_API const NaoVector<NaoPair<NaoString, NaoString>>& errored_list() const;
-	N_NODISCARD LIBNAO_API const NaoVector<NaoPlugin*>& loaded() const;
-
-	N_NODISCARD LIBNAO_API bool initialised() const;
-
 	N_NODISCARD LIBNAO_API NaoPlugin* enter_plugin(NaoObject* object) const;
 	N_NODISCARD LIBNAO_API NaoPlugin* leave_plugin(NaoObject* object) const;
 	N_NODISCARD LIBNAO_API NaoPlugin* description_plugin(NaoObject* object) const;

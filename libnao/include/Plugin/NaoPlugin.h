@@ -20,19 +20,80 @@
 #include "libnao.h"
 
 #include "Containers/NaoString.h"
-#include "Containers/NaoVector.h"
 
-class NaoObject;
-class NaoIO;
+//class NaoObject;
+//class NaoIO;
 
 class LIBNAO_API NaoPlugin;
-class LIBNAO_API NaoAction;
+class LIBNAO_API NTreeNode;
+//class LIBNAO_API NaoAction;
 
 using PluginFunc = NaoPlugin*(*)();
 
+/**
+ * \ingroup libnao
+ *
+ * \brief Base class from which all plugins inherit.
+ *
+ * This class outlines the basic functionalities of every plugin.
+ */
 class LIBNAO_API NaoPlugin {
     public:
 
+    /**
+     * \brief Virtual destructor.
+     */
+    virtual ~NaoPlugin() = default;
+
+    /**
+     * \return The name of the plugin.
+     */
+    N_NODISCARD virtual NaoString name() const = 0;
+
+    /**
+     * \return The (possibly shorted) display name of the plugin.
+     */
+    N_NODISCARD virtual NaoString display_name() const = 0;
+
+    /**
+     * \return A description of the plugin.
+     */
+    N_NODISCARD virtual NaoString plugin_description() const = 0;
+
+    /**
+     * \return A string representing the plugin's version.
+     */
+    N_NODISCARD virtual NaoString version_string() const = 0;
+
+    /**
+     * \return The name of the author of the plugin.
+     */
+    N_NODISCARD virtual NaoString author_name() const = 0;
+
+    /**
+     * \return A custom text by the author of the plugin.
+     */
+    N_NODISCARD virtual NaoString author_description() const = 0;
+
+
+
+    /**
+     * \brief Whether this plugin can populate a node.
+     * \param[in] node The node to check.
+     * \return Whether this plugin can populate the node.
+     */
+    N_NODISCARD virtual bool can_populate(NTreeNode* node);
+
+    /**
+     * \brief Populates a node.
+     * \param[in] node The node to populate.
+     * \return Whether the operation succeeded.
+     *
+     * Populating a node means to fill in it's children and any possible sub-children.
+     */
+    virtual bool populate(NTreeNode* node) = 0;
+
+#if 0
     enum Event : uint64_t {
         None = 0x0,
         Move = 0x1
@@ -50,17 +111,9 @@ class LIBNAO_API NaoPlugin {
         NaoObject* to;
     };
 
-    virtual ~NaoPlugin() = default;
 
-    // Plugin info
-    N_NODISCARD virtual NaoString Name() const = 0;
-    N_NODISCARD virtual NaoString DisplayName() const = 0;
-    N_NODISCARD virtual NaoString PluginDescription() const = 0;
-    N_NODISCARD virtual NaoString VersionString() const = 0;
 
-    // Author info
-    N_NODISCARD virtual NaoString AuthorName() const = 0;
-    N_NODISCARD virtual NaoString AuthorDescription() const = 0;
+
 
     // Supported file description
     N_NODISCARD virtual bool HasDescription(NaoObject* object) = 0;
@@ -94,8 +147,10 @@ class LIBNAO_API NaoPlugin {
 
     N_NODISCARD virtual bool ProvidesChild(const NaoString& name);
     N_NODISCARD virtual NaoObject* GetChild(const NaoString& name);
+#endif
 };
 
+#if 0
 class LIBNAO_API NaoAction {
     public:
     NaoAction(NaoPlugin* parent);
@@ -109,3 +164,4 @@ class LIBNAO_API NaoAction {
     private:
     NaoPlugin* _m_parent;
 };
+#endif

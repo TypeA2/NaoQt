@@ -28,7 +28,9 @@ NTreeNode::~NTreeNode() {
 
 NTreeNode::NTreeNode(const NaoString& name, NTreeNode* parent)
     : _m_name(name)
-    , _m_parent(parent) {
+    , _m_parent(parent)
+    , _m_locked(false)
+    , _m_populated(false) {
     // If parent exists
     if (parent) {
         // Try to add this node as a child
@@ -124,5 +126,13 @@ NTreeNode* NTreeNode::get_child(const NaoString& name) const {
     }
 
     return nullptr;
+}
+
+void NTreeNode::set_populated(bool state) {
+    _m_populated = state;
+}
+
+bool NTreeNode::populated() const {
+    return _m_populated;
 }
 
