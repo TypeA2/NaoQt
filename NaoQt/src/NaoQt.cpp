@@ -58,19 +58,30 @@ NaoQt::NaoQt(QWidget *parent)
     : QMainWindow(parent)
     , _is_moving(false) {
 
-    _load_settings();
+    try {
+        // First load settings for configuration
+        _load_settings();
 
-    NaoLogging::set_log_file(_m_settings.at("logging/log_file"));
+        // Set log output file
+        NaoLogging::set_log_file(_m_settings.at("logging/log_file"));
 
-    nlog << "Loaded settings";
+        nlog << "Loaded settings";
 
-    _init_window();
-    nlog << "Initialised window";
+        // Create window
+        _init_window();
+        nlog << "Initialised window";
 
-    _load_plugins();
-    nlog << "Loaded plugins";
+        // Load all plugins
+        _load_plugins();
+        nlog << "Loaded plugins";
 
-    _init_filesystem();
+        // Initialise filesystem
+        _init_filesystem();
+    } catch (const std::runtime_error& e) {
+        QMessageBox::critical(this, "Initialisation error", e.what());
+
+        QTimer::singleShot(0, this, &QMainWindow::close);
+    }
 }
 
 QString NaoQt::get_config_path() {
@@ -91,15 +102,19 @@ QString NaoQt::get_text_resource(const QString& path) {
 //// Private
 
 void NaoQt::_load_settings() {
+    // If the settings file doesn't exist, create a new one
     if (!QFile(get_config_path()).exists()) {
         _write_default_settings();
     }
 
+    // Load the settings
     QSettings settings(get_config_path(), QSettings::IniFormat);
     QStringList existings_keys = settings.allKeys();
 
     for (const std::pair<const char*, const char*> pair : DefaultSettings) {
+        // If a key doesn't exist
         if (!existings_keys.contains(pair.first)) {
+            // Use it's default value
             settings.setValue(pair.first, pair.second);
         }
 
@@ -229,13 +244,8 @@ void NaoQt::_init_window() {
 }
 
 void NaoQt::_load_plugins() {
-    bool success = NPM.init(_m_settings.at("plugins/plugins_directory"));
-
-    if (!success) {
-        QMessageBox::critical(
-            this,
-            "Plugins failed to load",
-            "Plugins failed to load.");
+    if (!NPM.init(_m_settings.at("plugins/plugins_directory"))) {
+        throw std::runtime_error("Plugins failed to load.");
     }
 }
 
@@ -565,66 +575,78 @@ void NaoQt::path_display_changed() {
 }
 
 void NaoQt::fsm_object_changed() {
-    /*NaoObject* current_object = NaoFSM.current_object();
+    // Retrieve current node
+    NTreeNode* current_object = NFSM.current();
 
+    // Clear view
     _m_tree_widget->clear();
 
-    _m_path_display->setText(current_object->name());
+    // Set path display to path of current object
+    _m_path_display->setText(current_object->path());
 
+    // Static file provider
     static QFileIconProvider ficonprovider;
 
-    const NaoString base_path = current_object->name().copy().append(N_PATHSEP).normalize_path();
+    //NaoString base_path = current_object->path().append(N_PATHSEP).normalize_path();
 
-    for (NaoObject* child : current_object->children()) {
+    // Iterate over all children
+    for (NTreeNode* const& child : current_object->children()) {
+        // New item
         QTreeWidgetItem* item = new QTreeWidgetItem(_m_tree_widget);
 
-        item->setData(0, ObjectRole, QVariant::fromValue(child));
+        //item->setData(0, ObjectRole, QVariant::fromValue(child));
 
-        NaoString name = child->name().copy().normalize_path();
+        //NaoString name = child->name().copy().normalize_path();
 
-        if (name.starts_with(base_path)) {
-            name = name.substr(std::size(base_path));
-        }
+        //if (name.starts_with(base_path)) {
+        //    name = name.substr(std::size(base_path));
+        //}
 
-        item->setText(0, name);
+        item->setText(0, child->name());
 
-        item->setText(2, NaoFSM.description(child));
+        //item->setText(2, NaoFSM.description(child));
 
         item->setData(0, IsDirectoryRole, child->is_dir());
 
+        // Icon based on if it's a directory or not
         if (child->is_dir()) {
+            // Folder icon
             item->setIcon(0, ficonprovider.icon(QFileIconProvider::Folder));
 
+            // No size
             item->setData(1, ItemSizeRole, -1i64);
         } else {
-            const NaoObject::File& file = child->file_ref();
+            //const NaoObject::File& file = child->file_ref();
 
             item->setIcon(0, ficonprovider.icon(QFileInfo(child->name())));
 
-            item->setText(1, NaoString::bytes(file.real_size));
-            item->setData(1, ItemSizeRole, file.real_size);
+            //item->setText(1, NaoString::bytes(file.real_size));
+            //item->setData(1, ItemSizeRole, file.real_size);
 
+            // Try to get the actual file icon
             if (item->text(2).isEmpty()) {
                 static QMimeDatabase db;
                 item->setText(2, db.mimeTypeForUrl(QUrl::fromLocalFile(child->name())).comment());
             }
 
-            double ratio = file.binary_size / double(file.real_size);
-            item->setData(3, CompressionRatioRole, ratio);
-            if (!QFile(child->name()).exists()) {
-                item->setText(3, QString("%0%").arg(qRound(100. * ratio)));
-            }
+            //double ratio = file.binary_size / double(file.real_size);
+            //item->setData(3, CompressionRatioRole, ratio);
+            //if (!QFile(child->name()).exists()) {
+            //    item->setText(3, QString("%0%").arg(qRound(100. * ratio)));
+            //}
         }
 
+        // Add item
         _m_tree_widget->addTopLevelItem(item);
     }
 
+    // Resize all columns
     for (int i = 0; i < _m_tree_widget->columnCount(); ++i) {
         _m_tree_widget->resizeColumnToContents(i);
     }
 
+    // Re-sort
     view_sort_column(_m_tree_widget->header()->sortIndicatorSection(), _m_tree_widget->header()->sortIndicatorOrder());
-    */
 }
 
 #pragma region About

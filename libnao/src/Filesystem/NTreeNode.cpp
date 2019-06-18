@@ -17,20 +17,25 @@
 
 #include "Filesystem/NTreeNode.h"
 
+#include "IO/NaoIO.h"
+
 #define N_LOG_ID "NTreeNode"
 #include "Logging/NaoLogging.h"
 
 NTreeNode::~NTreeNode() {
+    delete _m_io;
+
     for (NTreeNode* child : _m_children) {
         delete child;
     }
 }
 
-NTreeNode::NTreeNode(const NaoString& name, NTreeNode* parent)
+NTreeNode::NTreeNode(const NaoString& name, NTreeNode* parent, NaoIO* io)
     : _m_name(name)
     , _m_parent(parent)
     , _m_locked(false)
-    , _m_populated(false) {
+    , _m_populated(false)
+    , _m_io(io) {
     // If parent exists
     if (parent) {
         // Try to add this node as a child
@@ -138,5 +143,37 @@ void NTreeNode::set_populated(bool state) {
 
 bool NTreeNode::populated() const {
     return _m_populated;
+}
+
+NaoString NTreeNode::path() const {
+    NaoString path;
+
+    NTreeNode const* walker = this;
+    while (walker) {
+        path = walker->name() + N_PATHSEP + path;
+
+        walker = walker->parent();
+    }
+
+#ifdef N_WINDOWS
+    // On Windows, remove leading separator
+    if (path.starts_with(N_PATHSEP)) {
+        return path.substr(1);
+    }
+#endif
+
+    return path;
+}
+
+void NTreeNode::set_io(NaoIO* io) {
+    _m_io = io;
+}
+
+NaoIO* NTreeNode::io() const {
+    return _m_io;
+}
+
+bool NTreeNode::is_dir() const {
+    return _m_io == nullptr;
 }
 

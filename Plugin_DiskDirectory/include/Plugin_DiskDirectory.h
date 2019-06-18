@@ -25,18 +25,14 @@ LIBNAO_PLUGIN_CALL LIBNAO_PLUGIN_DECL NaoPlugin* GetNaoPlugin();
 
 class Plugin_DiskDirectory final : public NaoPlugin {
     public:
-    N_NODISCARD NaoString Name() const override;
-    N_NODISCARD NaoString DisplayName() const override;
-    N_NODISCARD NaoString PluginDescription() const override;
-    N_NODISCARD NaoString VersionString() const override;
+    N_NODISCARD NaoString name() const override;
+    N_NODISCARD NaoString display_name() const override;
+    N_NODISCARD NaoString plugin_description() const override;
+    N_NODISCARD NaoString version_string() const override;
 
-    N_NODISCARD NaoString AuthorName() const override;
-    N_NODISCARD NaoString AuthorDescription() const override;
+    N_NODISCARD NaoString author_name() const override;
+    N_NODISCARD NaoString author_description() const override;
 
-    N_NODISCARD bool HasDescription(NaoObject* object) override;
-    N_NODISCARD bool PrioritiseDescription() const override;
-    N_NODISCARD NaoString Description() const override;
-
-    N_NODISCARD bool CanEnter(NaoObject* object) override;
-    bool Enter(NaoObject* object) override;
+    N_NODISCARD bool can_populate(NTreeNode* node) override;
+    bool populate(NTreeNode* node) override;
 };

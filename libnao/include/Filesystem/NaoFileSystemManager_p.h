@@ -68,7 +68,7 @@ class NFSMPrivate {
     /**
      * \brief Perform garbage collection.
      *
-     * Frees up memory by removing unneeded nodes.
+     * Free up memory by removing unneeded nodes.
      * A node is considered needed if any of the following apply:
      *  - It's a descendant of a locked node.
      *  - It's a parent of a locked node.

@@ -42,6 +42,21 @@ bool NPMPrivate::init(const NaoString& plugin_dir) {
         return false;
     }
 
+    // If it's not a directory (or doesn't exist)
+    if (!fs::is_directory(plugin_dir)) {
+        // If it exists and isn't a directory, it's not valid
+        if (fs::exists(plugin_dir)) {
+            nerr << "Plugin path is not a directory";
+            return false;
+        }
+
+        // Create the new directory
+        if (!fs::create_directory(plugin_dir)) {
+            nerr << "Failed to create new plugins directory";
+            return false;
+        }
+    }
+
     nlog << "Loading plugins from" << plugin_dir;
 
     // Iterate over directory contents

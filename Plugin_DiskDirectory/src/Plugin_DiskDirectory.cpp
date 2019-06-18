@@ -20,10 +20,12 @@
 #define N_LOG_ID "Plugin_DiskDirectory"
 #include <Logging/NaoLogging.h>
 #include <Filesystem/Filesystem.h>
-#include <Filesystem/NaoFileSystemManager.h>
+#include <Filesystem/NTreeNode.h>
 #include <IO/NaoFileIO.h>
-#include <Plugin/NaoPluginManager.h>
-#include <NaoObject.h>
+
+#ifdef N_WINDOWS
+#   include <Windows.h>
+#endif
 
 NaoPlugin* GetNaoPlugin() {
     return new Plugin_DiskDirectory();
@@ -31,77 +33,58 @@ NaoPlugin* GetNaoPlugin() {
 
 #pragma region Plugin info
 
-NaoString Plugin_DiskDirectory::Name() const {
+NaoString Plugin_DiskDirectory::name() const {
     return "libnao directory plugin";
 }
 
-NaoString Plugin_DiskDirectory::DisplayName() const {
+NaoString Plugin_DiskDirectory::display_name() const {
     return "libnao directory";
 }
 
-NaoString Plugin_DiskDirectory::PluginDescription() const {
+NaoString Plugin_DiskDirectory::plugin_description() const {
     return "Adds support for existing directories";
 }
 
-NaoString Plugin_DiskDirectory::VersionString() const {
+NaoString Plugin_DiskDirectory::version_string() const {
     return "1.1";
 }
 
-#pragma endregion 
-
-#pragma region Author info
-
-NaoString Plugin_DiskDirectory::AuthorName() const {
+NaoString Plugin_DiskDirectory::author_name() const {
     return "TypeA2/I_Copy_Jokes";
 }
 
-NaoString Plugin_DiskDirectory::AuthorDescription() const {
-    return "License: LGPLv3 or later<br>"
+NaoString Plugin_DiskDirectory::author_description() const {
+    return "Licence: LGPLv3 or later<br>"
         "<a href=\"https://github.com/TypeA2\">Github</a><br>"
         "<a href=\"https://steamcommunity.com/id/TypeA2/\">Steam</a>";
 }
 
-#pragma endregion 
+#pragma endregion
 
-#pragma region Description
-
-bool Plugin_DiskDirectory::HasDescription(NaoObject* object) {
-    return CanEnter(object);
+bool Plugin_DiskDirectory::can_populate(NTreeNode* node) {
+    return node->is_dir() && fs::is_directory(node->path());
 }
 
-bool Plugin_DiskDirectory::PrioritiseDescription() const {
-    return false;
-}
-
-NaoString Plugin_DiskDirectory::Description() const {
-    return "Directory";
-}
-
-#pragma endregion 
-
-#pragma region Actions
-
-bool Plugin_DiskDirectory::CanEnter(NaoObject* object) {
-    return object->is_dir() && fs::is_directory(object->name());
-}
-
-bool Plugin_DiskDirectory::Enter(NaoObject* object) {
-    object->set_description(Description());
+bool Plugin_DiskDirectory::populate(NTreeNode* node) {
+    //new_node->set_description(Description());
     NaoString path_str;
 
-    for (const fs::directory_entry& entry : fs::directory_iterator(object->name())) {
+    // Check all contents
+    for (const fs::directory_entry& entry : fs::directory_iterator(node->path())) {
+        // Save the path for easy access
         path_str = entry.path();
 
-        NaoObject* new_object = nullptr;
-
+        // Windows extra check
 #ifdef N_WINDOWS
         DWORD attrs = GetFileAttributesA(path_str);
 
+        // Something went wrong
         if (attrs == INVALID_FILE_ATTRIBUTES) {
             nlog << "Invalid attributes, skipping" << path_str;
             continue;
         }
 
+        // OS stuff we don't want to touch
         if (attrs & FILE_ATTRIBUTE_SYSTEM) {
             nlog << "Skipping hidden"
                 << (attrs & FILE_ATTRIBUTE_DIRECTORY ? "directory" : "file")
@@ -109,6 +92,7 @@ bool Plugin_DiskDirectory::Enter(NaoObject* object) {
             continue;
         }
 
+        // Other hidden files and directories
         if (attrs & FILE_ATTRIBUTE_HIDDEN) {
             nlog << "Skipping hidden"
                 << (attrs & FILE_ATTRIBUTE_DIRECTORY ? "directory" : "file")
@@ -118,35 +102,23 @@ bool Plugin_DiskDirectory::Enter(NaoObject* object) {
 
 #endif
 
+        // New node
+        NTreeNode* new_node = nullptr;
+
         if (fs::is_directory(path_str)) {
-            new_object = new NaoObject({ path_str }, object);
-            new_object->set_description(Description());
+            new_node = new NTreeNode(entry.path().filename(), node);
+            //new_node->set_description(Description());
         } else if (is_regular_file(entry.path())) {
-
-#ifdef N_WINDOWS
-
-            if (attrs & FILE_ATTRIBUTE_SPARSE_FILE) {
-                nlog << "Skipping sparse file" << path_str;
-                continue;
-            }
-#endif
-
-            NaoFileIO* io = new NaoFileIO(path_str);
-
-            new_object = new NaoObject({
-                io,
-                io->size(),
-                io->size(),
-                false,
-                path_str
-                }, object);
-
-            PluginManager.set_description(new_object);
+            // Also create IO object
+            new_node = new NTreeNode(
+                entry.path().filename(),
+                node,
+                new NaoFileIO(path_str));
         }
     }
 
+    node->set_populated(true);
 
     return true;
 }
 
-#pragma endregion 

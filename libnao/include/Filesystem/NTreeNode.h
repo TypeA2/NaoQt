@@ -21,6 +21,8 @@
 #include "Containers/NaoVector.h"
 #include "Containers/NaoString.h"
 
+class LIBNAO_API NaoIO;
+
 class LIBNAO_API NTreeNode;
 
 // Export NaoVector instance of nodes
@@ -47,9 +49,10 @@ class LIBNAO_API NTreeNode {
     /**
      * \brief Constructor which assigns a name and a parent.
      * \param[in] name The name of this node.
-     * \param[in] parent Pointer to the parent element of this node.
+     * \param[in] parent Optional pointer to the parent element of this node.
+     * \param[in] io Optional pointer to an IO object. Will be deleted when this node is deleted.
      */
-    NTreeNode(const NaoString& name, NTreeNode* parent = nullptr);
+    NTreeNode(const NaoString& name, NTreeNode* parent = nullptr, NaoIO* io = nullptr);
 
     /**
      * \brief Lock this node.
@@ -150,6 +153,29 @@ class LIBNAO_API NTreeNode {
      */
     N_NODISCARD bool populated() const;
 
+    /**
+     * \brief Constructs the node's path.
+     * \return Complete path pointing to the node, using N_PATHSEP.
+     */
+    N_NODISCARD NaoString path() const;
+
+    /**
+     * \brief Sets this node's IO object.
+     * \param[in] io The new IO object.
+     */
+    void set_io(NaoIO* io);
+
+    /**
+     * \return This node's IO object.
+     */
+    N_NODISCARD NaoIO* io() const;
+
+    /**
+     * \return Whether this node represents a directory or a file.
+     * \note This function checks if an IO object is present. If so, it's considered a file.
+     */
+    N_NODISCARD bool is_dir() const;
+
     private:
     // Parent node of this node
     NTreeNode* _m_parent;
@@ -165,4 +191,7 @@ class LIBNAO_API NTreeNode {
 
     // Whether this node has been populated already
     bool _m_populated;
+
+    // Whether an IO object if this node represents a file, or nullptr if it's a directory
+    NaoIO* _m_io;
 };
