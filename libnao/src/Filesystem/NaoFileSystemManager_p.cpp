@@ -47,7 +47,46 @@ NTreeNode* NFSMPrivate::current() const {
 }
 
 void NFSMPrivate::gc() {
-    // Work from end to start
-    NTreeNode* node = _m_current;
+    // Find all nodes up to the current node
+    NaoVector<NTreeNode*> path { _m_current };
+    NTreeNode* current = _m_current;
+
+    do {
+        current = current->parent();
+        path.push_back(current);
+    } while (current && current != _m_root);
+
+    // Work from root to current
+    NTreeNode* node = _m_root;
+
+    while (node && node != _m_current) {
+        // If the node is locked, don't touch any of it's descendants
+        if (node->locked()) {
+            break;
+        }
+
+        NTreeNode* next = nullptr;
+
+        // Check all children
+        for (NTreeNode* child : node->children()) {
+            // Delete them if they're not in the path
+            if (!path.contains(child)) {
+                delete child;
+            } else {
+                next = child;
+            }
+        }
+
+        // Remove all children
+        node->clear_children();
+
+        // Add only needed child
+        node->add_child(next);
+
+        // Mark this node for population
+        node->set_populated(false);
+
+        node = next;
+    }
 }
 

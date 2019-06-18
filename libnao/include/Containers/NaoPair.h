@@ -21,10 +21,10 @@ template <typename First, typename Second>
 class NaoPair {
     public:
     // Explicit constructor with values
-    NaoPair(First _first, Second _second) 
+    NaoPair(First _first, Second _second)
         : first(_first)
         , second(_second) {
-        
+
     }
 
     NaoPair() = default;

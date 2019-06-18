@@ -23,12 +23,15 @@
 
 #define N_LOG_ID "NaoQt"
 #include <Logging/NaoLogging.h>
+
 #include <Plugin/NaoPluginManager.h>
 #include <Filesystem/NaoFileSystemManager.h>
 #include <Filesystem/Filesystem.h>
+#include <Filesystem/NTreeNode.h>
 #include <Utils/SteamUtils.h>
 #include <Utils/DesktopUtils.h>
 #include <UI/NaoUIManager.h>
+#include <Containers/NaoPair.h>
 
 #include <QMessageBox>
 #include <QVBoxLayout>
@@ -45,7 +48,7 @@
 #   include <shellapi.h>
 #endif
 
-Q_DECLARE_METATYPE(NaoObject*);
+Q_DECLARE_METATYPE(NTreeNode*);
 
 //// Public
 
@@ -226,21 +229,13 @@ void NaoQt::_init_window() {
 }
 
 void NaoQt::_load_plugins() {
-    bool success = PluginManager.init(_m_settings.at("plugins/plugins_directory"));
+    bool success = NPM.init(_m_settings.at("plugins/plugins_directory"));
 
     if (!success) {
-
-        QString msg = "Plugins failed to load:\n";
-
-        NaoVector<NaoPair<NaoString, NaoString>> errs = PluginManager.errored_list();
-        for (const NaoPair<NaoString, NaoString>& err : errs) {
-            msg.append(QString("%0: %1\n").arg(err.first, err.second));
-        }
-
         QMessageBox::critical(
             this,
             "Plugins failed to load",
-            msg);
+            "Plugins failed to load.");
     }
 }
 
@@ -255,10 +250,9 @@ void NaoQt::_init_filesystem() {
     connect(future_watcher, &QFutureWatcher<bool>::finished, this, [future_watcher, this] {
 
         if (!future_watcher->result()) {
-            QMessageBox::critical(this, "NaoFSM::init",
-                NaoFSM.last_error());
+            QMessageBox::critical(this, "NFSM::init", "Got invalid result");
 
-            throw std::exception(NaoFSM.last_error());
+            throw std::exception("Got invalid result");
         }
 
         nlog << "Initialised filesystem";
@@ -267,7 +261,7 @@ void NaoQt::_init_filesystem() {
     });
     connect(future_watcher, &QFutureWatcher<bool>::finished, &QFutureWatcher<bool>::deleteLater);
 
-    future_watcher->setFuture(QtConcurrent::run(&NaoFSM, &NaoFileSystemManager::init, default_path));
+    future_watcher->setFuture(QtConcurrent::run(&NFSM, &NaoFileSystemManager::init, default_path));
 }
 
 void NaoQt::_move_async(const QString& to, bool _refresh) {
@@ -277,7 +271,7 @@ void NaoQt::_move_async(const QString& to, bool _refresh) {
     }
 
     if (!_refresh) {
-        if (NaoFSM.current_path() == to) {
+        if (to.endsWith(NFSM.current()->name())) {
             return;
         }
     }
@@ -292,7 +286,7 @@ void NaoQt::_move_async(const QString& to, bool _refresh) {
         nlog << "Moved:" << future_watcher->result();
 
         if (!future_watcher->result()) {
-            QMessageBox::critical(this, "NaoFSM::move", NaoFSM.last_error());
+            QMessageBox::critical(this, "NaoFSM::move", "Move error");
         } else {
             fsm_object_changed();
         }
@@ -302,17 +296,17 @@ void NaoQt::_move_async(const QString& to, bool _refresh) {
 
     connect(future_watcher, &QFutureWatcher<bool>::finished, &QFutureWatcher<bool>::deleteLater);
 
-    future_watcher->setFuture(QtConcurrent::run(&NaoFSM, &NaoFileSystemManager::move, to));
+    future_watcher->setFuture(QtConcurrent::run(&NFSM, &NaoFileSystemManager::move, to));
 }
 
 //// Slots
 
-void NaoQt::view_double_click(QTreeWidgetItem* item, int col) {
+void NaoQt::view_double_click(N_UNUSED QTreeWidgetItem* item, int col) {
     Q_UNUSED(col);
 
-    NaoObject* object = item->data(0, ObjectRole).value<NaoObject*>();
+    //NTreeNode* node = item->data(0, ObjectRole).value<NTreeNode*>();
 
-    if (object->is_dir()) {
+    /*if (object->is_dir()) {
         _move_async(object->name());
         return;
     }
@@ -323,7 +317,7 @@ void NaoQt::view_double_click(QTreeWidgetItem* item, int col) {
         DesktopUtils::open_file(object->name());
     } else if (plugin) {
         _move_async(object->name());
-    }
+    }*/
 }
 
 void NaoQt::view_context_menu(const QPoint& pos) {
@@ -355,7 +349,7 @@ void NaoQt::view_context_menu(const QPoint& pos) {
         }
 
     } else {
-        NaoObject* object = item->data(0, ObjectRole).value<NaoObject*>();
+        /*NaoObject* object = item->data(0, ObjectRole).value<NaoObject*>();
 
         nlog << "Object name:" << object->name();
 
@@ -448,7 +442,7 @@ void NaoQt::view_context_menu(const QPoint& pos) {
             ADDOPT("Show in explorer", this, [object] {
                 DesktopUtils::show_in_explorer(object->name());
             });
-        }
+        }*/
     }
 
     if (menu->isEmpty()) {
@@ -526,19 +520,20 @@ void NaoQt::view_sort_column(int index, Qt::SortOrder order) {
 }
 
 void NaoQt::view_up() {
-    _move_async(NaoFSM.current_path() + N_PATHSEP + "..");
+    //_move_async(NFSM.current_path() + N_PATHSEP + "..");
 }
 
 void NaoQt::view_refresh() {
-    _move_async(NaoFSM.current_path(), true);
+    //_move_async(NaoFSM.current_path(), true);
 }
 
 void NaoQt::open_folder() {
-    QString target = QFileDialog::getExistingDirectory(this, "Open folder", NaoFSM.current_path());
+    //QString target = QFileDialog::getExistingDirectory(this, "Open folder",
+    //    NFSM.current_path());
 
-    if (!target.isNull() && !target.isEmpty()) {
-        _move_async(target);
-    }
+    //if (!target.isNull() && !target.isEmpty()) {
+    //    _move_async(target);
+    //}
 }
 
 void NaoQt::path_display_changed() {
@@ -566,11 +561,11 @@ void NaoQt::path_display_changed() {
         }
     }
 
-    _m_path_display->setText(NaoFSM.current_path());
+    //_m_path_display->setText(NaoFSM.current_path());
 }
 
 void NaoQt::fsm_object_changed() {
-    NaoObject* current_object = NaoFSM.current_object();
+    /*NaoObject* current_object = NaoFSM.current_object();
 
     _m_tree_widget->clear();
 
@@ -629,6 +624,7 @@ void NaoQt::fsm_object_changed() {
     }
 
     view_sort_column(_m_tree_widget->header()->sortIndicatorSection(), _m_tree_widget->header()->sortIndicatorOrder());
+    */
 }
 
 #pragma region About

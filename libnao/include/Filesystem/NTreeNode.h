@@ -21,6 +21,11 @@
 #include "Containers/NaoVector.h"
 #include "Containers/NaoString.h"
 
+class LIBNAO_API NTreeNode;
+
+// Export NaoVector instance of nodes
+template class LIBNAO_API NaoVector<NTreeNode*>;
+
 /**
  * \ingroup plugin_interface
  * \relates NaoFileSystemManager
@@ -128,6 +133,11 @@ class LIBNAO_API NTreeNode {
      * \return Pointer to the child if found, else `nullptr`.
      */
     N_NODISCARD NTreeNode* get_child(const NaoString& name) const;
+
+    /**
+     * \brief Remove all of a node's children.
+     */
+    void clear_children();
 
     /**
      * \brief Sets whether the node has been populated already, or needs to be populated again.

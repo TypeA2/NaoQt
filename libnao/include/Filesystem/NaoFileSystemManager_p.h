@@ -71,17 +71,10 @@ class NFSMPrivate {
      * Frees up memory by removing unneeded nodes.
      * A node is considered needed if any of the following apply:
      *  - It's a descendant of a locked node.
-     *  - It's a direct parent of a locked node.
+     *  - It's a parent of a locked node.
      * The currently selected node is also considered locked.
      */
     void gc();
-
-    /**
-     * \brief Retrieve the lowest locked node.
-     * \return Pointer to the first node, starting at the root, which is locked.
-     * \todo Maybe try without recursion.
-     */
-    N_NODISCARD NTreeNode* first_locked() const;
 
     private:
 

@@ -28,7 +28,7 @@
 #include "Plugin/NaoPluginManager.h"
 #include "Plugin/NaoPlugin.h"
 
-#define N_LOG_ID "NaoFSM"
+#define N_LOG_ID "NFSM"
 #include "Logging/NaoLogging.h"
 
 #ifdef N_WINDOWS
@@ -138,6 +138,9 @@ bool NaoFileSystemManager::move(const NaoString& path) {
     return true;
 }
 
+NTreeNode* NaoFileSystemManager::current() const {
+    return d_ptr->current();
+}
 
 #if 0
 #pragma region NaoFileSystemManager

@@ -35,8 +35,8 @@ void NaoPluginDialog::list(QWidget* parent) {
     QString author_text_template = template_file.readAll();
 
     template_file.close();
-
-    NaoVector<NaoPlugin*> plugins = PluginManager.loaded();
+    /*
+    NaoVector<NaoPlugin*> plugins = NPM.loaded();
 
     enum AuthorRoles {
         AuthorText = Qt::UserRole + 1,
@@ -52,7 +52,7 @@ void NaoPluginDialog::list(QWidget* parent) {
         item->setText(3, plugin->PluginDescription());
 
         item->setData(0, AutorTextRich, plugin->AuthorDescription().c_str());
-    }
+    }*/
 
     tree_widget->resizeColumnToContents(0);
     tree_widget->resizeColumnToContents(1);
@@ -66,11 +66,11 @@ void NaoPluginDialog::list(QWidget* parent) {
 
             subdialog->setWindowTitle(item->text(0));
 
-            QVBoxLayout* layout = new QVBoxLayout(subdialog);
+            //QVBoxLayout* layout = new QVBoxLayout(subdialog);
 
-            layout->addWidget(new QLabel(author_text_template
+            /*layout->addWidget(new QLabel(author_text_template
                 .arg(QString("Author: %0").arg(item->text(2)))
-                .arg(item->data(0, AutorTextRich).toString())));
+                .arg(item->data(0, AutorTextRich).toString())));*/
 
             subdialog->setModal(true);
 

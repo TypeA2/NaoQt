@@ -128,6 +128,10 @@ NTreeNode* NTreeNode::get_child(const NaoString& name) const {
     return nullptr;
 }
 
+void NTreeNode::clear_children() {
+    _m_children.clear();
+}
+
 void NTreeNode::set_populated(bool state) {
     _m_populated = state;
 }

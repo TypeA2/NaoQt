@@ -21,7 +21,7 @@
 
 #include <memory>
 
-#define NaoFSM NaoFileSystemManager::global_instance()
+#define NFSM NaoFileSystemManager::global_instance()
 
 class NaoString;
 class NaoPlugin;
@@ -62,6 +62,11 @@ class NaoFileSystemManager {
      * \return Whether the operation succeeded.
      */
     LIBNAO_API bool move(const NaoString& path);
+
+    /**
+     * \return Pointer to the currently active node.
+     */
+    LIBNAO_API NTreeNode* current() const;
 
 
     //LIBNAO_API bool move(const NaoString& target);

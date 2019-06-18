@@ -60,7 +60,7 @@ class LIBNAO_API NaoObject {
 
     N_NODISCARD bool has_children() const;
     N_NODISCARD bool is_dir() const;
-    
+
     N_NODISCARD const NaoVector<NaoObject*>& children() const;
 
     N_NODISCARD File file() const;
