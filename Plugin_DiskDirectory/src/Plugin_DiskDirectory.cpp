@@ -121,4 +121,3 @@ bool Plugin_DiskDirectory::populate(NTreeNode* node) {
 
     return true;
 }
-

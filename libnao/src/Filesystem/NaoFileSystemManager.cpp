@@ -31,14 +31,9 @@
 #define N_LOG_ID "NFSM"
 #include "Logging/NaoLogging.h"
 
+
 #ifdef N_WINDOWS
-#   define WIN32_LEAN_AND_MEAN
-#   define VC_EXTRALEAN
-
 #   include <Windows.h>
-
-#   undef VC_EXTRALEAN
-#   undef WIN32_LEAN_AND_MEAN
 #endif
 
 NaoFileSystemManager& NaoFileSystemManager::global_instance() {
@@ -142,60 +137,37 @@ NTreeNode* NaoFileSystemManager::current() const {
     return d_ptr->current();
 }
 
+NaoString NaoFileSystemManager::description(NTreeNode* node) const {
+    // Shut up ReSharper
+    (void) this;
+
+    // Find a plugin to supply the description
+    NaoPlugin* plugin = NPM.description_plugin(node);
+
+    // If found return the description
+    if (plugin) {
+        return plugin->description(node);
+    }
+
+#ifdef N_WINDOWS
+
+    // Windows-only WinAPI fallback
+    SHFILEINFOA finfo{ };
+    SHGetFileInfoA(node->path(),
+        node->is_dir() ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL,
+        &finfo,
+        sizeof(finfo),
+        SHGFI_USEFILEATTRIBUTES | SHGFI_TYPENAME);
+
+    return finfo.szTypeName;
+
+#else
+    return NaoString();
+#endif
+}
+
+
 #if 0
-#pragma region NaoFileSystemManager
-
-//// NaoFileSystemManager
-
-//// Public
-
-
-
-bool NaoFileSystemManager::init(const NaoString& root_dir) {
-    return d_ptr->init(root_dir);
-}
-
-bool NaoFileSystemManager::move(const NaoString& target) {
-    return d_ptr->move(target);
-}
-
-NaoObject* NaoFileSystemManager::current_object() const {
-    return d_ptr->m_current_object;
-}
-
-const NaoString& NaoFileSystemManager::current_path() const {
-    return d_ptr->m_current_object->name();
-}
-
-NaoPlugin* NaoFileSystemManager::current_plugin() const {
-    return d_ptr->m_current_plugin;
-}
-
-const NaoString& NaoFileSystemManager::last_error() const {
-    return d_ptr->m_last_error;
-}
-
-NaoString NaoFileSystemManager::description(NaoObject* object) const {
-    return d_ptr->description_for_object(object);
-}
-
-//// Private
-
-
-
-#pragma endregion
-
-#pragma region NFSMPRivate
-
-//////// NFSMPrivate
-
-//// Public
-
-NaoFileSystemManager::NFSMPrivate::~NFSMPrivate() {
-    delete m_current_object;
-}
-
-
 
 bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
 
@@ -280,26 +252,7 @@ bool NaoFileSystemManager::NFSMPrivate::move(const NaoString& target) {
 // ReSharper disable once CppMemberFunctionMayBeStatic
 NaoString NaoFileSystemManager::NFSMPrivate::description_for_object(NaoObject* object) const {
 
-    NaoPlugin* plugin = PluginManager.description_plugin(object);
 
-    if (plugin && plugin->PrioritiseDescription()) {
-        return plugin->Description(object);
-    }
-
-#ifdef N_WINDOWS
-
-    SHFILEINFOA finfo { };
-    SHGetFileInfoA(object->name(),
-        object->is_dir() ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL,
-        &finfo,
-        sizeof(finfo),
-        SHGFI_USEFILEATTRIBUTES | SHGFI_TYPENAME);
-
-    return finfo.szTypeName;
-
-#else
-    return NaoString();
-#endif
 }
 
 NaoObject* NaoFileSystemManager::NFSMPrivate::_try_locate_child(const NaoString& path) {

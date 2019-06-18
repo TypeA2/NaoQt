@@ -23,8 +23,6 @@
 
 #include "Plugin/NaoPlugin.h"
 
-#include <map>
-
 /**
  * \ingroup internal
  * \relates NaoPluginManager
@@ -56,11 +54,18 @@ class NPMPrivate {
     N_NODISCARD bool initialised() const;
 
     /**
-     * \brief Find the plugin which can populate the given noe.
+     * \brief Find the plugin which can populate the given node.
      * \param[in] node The node to check for.
      * \return Plugin which can populate the node, else `nullptr`.
      */
     N_NODISCARD NaoPlugin* populate_plugin(NTreeNode* node) const;
+
+    /**
+     * \brief Find the plugin which has a description for the node.
+     * \param[in] node The node to check for.
+     * \return The plugin if found, else `nullptr`.
+     */
+    N_NODISCARD NaoPlugin* description_plugin(NTreeNode* node) const;
 
     private:
     /**

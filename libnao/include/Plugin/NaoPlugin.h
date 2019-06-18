@@ -75,10 +75,7 @@ class LIBNAO_API NaoPlugin {
      */
     N_NODISCARD virtual NaoString author_description() const = 0;
 
-
-
     /**
-     * \brief Whether this plugin can populate a node.
      * \param[in] node The node to check.
      * \return Whether this plugin can populate the node.
      */
@@ -92,6 +89,18 @@ class LIBNAO_API NaoPlugin {
      * Populating a node means to fill in it's children and any possible sub-children.
      */
     virtual bool populate(NTreeNode* node) = 0;
+
+    /**
+     * \param[in] node The node to check.
+     * \return Whether this plugin has a description for `node`.
+     */
+    virtual bool has_description(NTreeNode* node);
+
+    /**
+     * \param[in] node The node to retrieve the description for.
+     * \return The node's description.
+     */
+    virtual NaoString description(NTreeNode* node);
 
 #if 0
     enum Event : uint64_t {

@@ -42,6 +42,10 @@ NaoPlugin* NaoPluginManager::populate_plugin(NTreeNode* node) const {
     return d_ptr->populate_plugin(node);
 }
 
+NaoPlugin* NaoPluginManager::description_plugin(NTreeNode* node) const {
+    return d_ptr->description_plugin(node);
+}
+
 
 #if 0
 //// D-pointer class

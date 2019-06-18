@@ -24,7 +24,7 @@
 // ReSharper disable once hicpp-use-equals-default
 
 NaoIO::~NaoIO() {
-    
+
 }
 
 bool NaoIO::seek(int64_t pos, SeekDir dir) {
@@ -98,6 +98,10 @@ int64_t NaoIO::write(const NaoBytes& bytes) {
 
 int64_t NaoIO::size() const {
     return __m_size;
+}
+
+int64_t NaoIO::virtual_size() const {
+    return size();
 }
 
 bool NaoIO::open(OpenMode mode) {
@@ -275,18 +279,18 @@ void NaoIO::set_size(int64_t size) {
     __m_size = size;
 }
 
-NaoIO::NaoIO(int64_t size) 
+NaoIO::NaoIO(int64_t size)
     : __m_size(size)
     , __m_open_mode(Closed)
     , __m_default_byte_order(LE) {
-    
+
 }
 
-NaoIO::NaoIO() 
+NaoIO::NaoIO()
     : __m_size(-1i64)
     , __m_open_mode(Closed)
     , __m_default_byte_order(LE) {
-    
+
 }
 
 //// Private

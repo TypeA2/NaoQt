@@ -155,6 +155,11 @@ NaoString NTreeNode::path() const {
         walker = walker->parent();
     }
 
+    // Trailing slash if we are a directory, else remove it
+    if (!is_dir()) {
+        path = path.substr(0, path.size() - 1);
+    }
+
 #ifdef N_WINDOWS
     // On Windows, remove leading separator
     if (path.starts_with(N_PATHSEP)) {

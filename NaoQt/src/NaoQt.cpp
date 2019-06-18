@@ -31,7 +31,7 @@
 #include <Utils/SteamUtils.h>
 #include <Utils/DesktopUtils.h>
 #include <UI/NaoUIManager.h>
-#include <Containers/NaoPair.h>
+#include <IO/NaoIO.h>
 
 #include <QMessageBox>
 #include <QVBoxLayout>
@@ -587,25 +587,18 @@ void NaoQt::fsm_object_changed() {
     // Static file provider
     static QFileIconProvider ficonprovider;
 
-    //NaoString base_path = current_object->path().append(N_PATHSEP).normalize_path();
-
     // Iterate over all children
     for (NTreeNode* const& child : current_object->children()) {
         // New item
         QTreeWidgetItem* item = new QTreeWidgetItem(_m_tree_widget);
 
-        //item->setData(0, ObjectRole, QVariant::fromValue(child));
-
-        //NaoString name = child->name().copy().normalize_path();
-
-        //if (name.starts_with(base_path)) {
-        //    name = name.substr(std::size(base_path));
-        //}
-
+        // Display name
         item->setText(0, child->name());
 
-        //item->setText(2, NaoFSM.description(child));
+        // Description
+        item->setText(2, NFSM.description(child));
 
+        // If it's a directory
         item->setData(0, IsDirectoryRole, child->is_dir());
 
         // Icon based on if it's a directory or not
@@ -616,24 +609,32 @@ void NaoQt::fsm_object_changed() {
             // No size
             item->setData(1, ItemSizeRole, -1i64);
         } else {
-            //const NaoObject::File& file = child->file_ref();
+            // Icon from existing file
+            item->setIcon(0, ficonprovider.icon(QFileInfo(child->path())));
 
-            item->setIcon(0, ficonprovider.icon(QFileInfo(child->name())));
+            // Store IO
+            NaoIO* io = child->io();
 
-            //item->setText(1, NaoString::bytes(file.real_size));
-            //item->setData(1, ItemSizeRole, file.real_size);
+            // Set real size attributes
+            item->setText(1, NaoString::bytes(io->size()));
+            item->setData(1, ItemSizeRole, io->size());
 
-            // Try to get the actual file icon
+            // If no description was set
             if (item->text(2).isEmpty()) {
+                // Try to retrieve it
                 static QMimeDatabase db;
-                item->setText(2, db.mimeTypeForUrl(QUrl::fromLocalFile(child->name())).comment());
+                item->setText(2, db.mimeTypeForUrl(
+                    QUrl::fromLocalFile(child->name())).comment());
             }
 
-            //double ratio = file.binary_size / double(file.real_size);
-            //item->setData(3, CompressionRatioRole, ratio);
-            //if (!QFile(child->name()).exists()) {
-            //    item->setText(3, QString("%0%").arg(qRound(100. * ratio)));
-            //}
+            // Compression ratio
+            double ratio = io->size() / double(io->virtual_size());
+            item->setData(3, CompressionRatioRole, ratio);
+
+            // If the file doesn't exist it can be compressed
+            if (!QFile(child->path()).exists()) {
+                item->setText(3, QString("%0%").arg(qRound(100. * ratio)));
+            }
         }
 
         // Add item
@@ -644,6 +645,8 @@ void NaoQt::fsm_object_changed() {
     for (int i = 0; i < _m_tree_widget->columnCount(); ++i) {
         _m_tree_widget->resizeColumnToContents(i);
     }
+
+    _m_tree_widget->header()->resizeSection(0, _m_tree_widget->width() / 4);
 
     // Re-sort
     view_sort_column(_m_tree_widget->header()->sortIndicatorSection(), _m_tree_widget->header()->sortIndicatorOrder());

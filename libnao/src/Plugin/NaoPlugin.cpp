@@ -21,6 +21,13 @@ bool NaoPlugin::can_populate(N_UNUSED NTreeNode* node) {
     return false;
 }
 
+bool NaoPlugin::has_description(N_UNUSED NTreeNode* node) {
+    return false;
+}
+
+NaoString NaoPlugin::description(N_UNUSED NTreeNode* node) {
+    return NaoString();
+}
 
 #if 0
 NaoPlugin::MoveEventArgs::MoveEventArgs(NaoObject* from, NaoObject* to)

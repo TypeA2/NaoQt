@@ -32,7 +32,8 @@ class LIBNAO_API NTreeNode;
  * \ingroup libnao
  * \brief Loads and manages all plugins.
  *
- * Plugins need to expose the following functions (with LIBNAO_CALL):
+ * Plugins need to expose the following functions
+ * (with the LIBNAO_CALL calling convention):
  *
  * - `NaoPlugin NaoPlugin()`;
  */
@@ -61,6 +62,13 @@ class NaoPluginManager {
      * \return The selected plugin.
      */
     N_NODISCARD LIBNAO_API NaoPlugin* populate_plugin(NTreeNode* node) const;
+
+    /**
+     * \brief Find the plugin which can give a description to the given node.
+     * \param[in] node The node to check.
+     * \return The plugin which supplies a description, or `nullptr` if not found.
+     */
+    N_NODISCARD LIBNAO_API NaoPlugin* description_plugin(NTreeNode* node) const;
 
 #if 0
 	N_NODISCARD LIBNAO_API NaoPlugin* enter_plugin(NaoObject* object) const;

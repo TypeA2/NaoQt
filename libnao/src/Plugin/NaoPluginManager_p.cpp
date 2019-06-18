@@ -121,6 +121,20 @@ NaoPlugin* NPMPrivate::populate_plugin(NTreeNode* node) const {
     return nullptr;
 }
 
+NaoPlugin* NPMPrivate::description_plugin(NTreeNode* node) const {
+    // Check all plugins
+    for (const Plugin& plugin : _m_plugins) {
+        // If it can populate
+        if (plugin->has_description(node)) {
+            // Return it
+            return plugin.plugin;
+        }
+    }
+
+    // Base case
+    return nullptr;
+}
+
 
 bool NPMPrivate::_load(const NaoString& name) {
 #ifdef N_WINDOWS

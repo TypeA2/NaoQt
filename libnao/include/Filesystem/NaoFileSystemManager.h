@@ -40,7 +40,7 @@ class NaoFileSystemManager {
      * \brief Access the singleton instance.
      * \return Reference to the global instance of the NaoFileSystemManager class.
      */
-    LIBNAO_API static NaoFileSystemManager& global_instance();
+    N_NODISCARD LIBNAO_API static NaoFileSystemManager& global_instance();
 
     /**
      * \brief Initialise the NaoFileSystemManager with the specified starting directory.
@@ -54,7 +54,7 @@ class NaoFileSystemManager {
      * \param[in] path The path of the node to create.
      * \return Pointer to the newly created node.
      */
-    LIBNAO_API NTreeNode* retrieve_node(const NaoString& path);
+    N_NODISCARD LIBNAO_API NTreeNode* retrieve_node(const NaoString& path);
 
     /**
      * \brief Moves the current node to the new path.
@@ -66,8 +66,14 @@ class NaoFileSystemManager {
     /**
      * \return Pointer to the currently active node.
      */
-    LIBNAO_API NTreeNode* current() const;
+    N_NODISCARD LIBNAO_API NTreeNode* current() const;
 
+    /**
+     * \brief Get a node's plugin-supplied description.
+     * \param[in] node The node to fetch the description for.
+     * \return The description for the specified note.
+     */
+    N_NODISCARD LIBNAO_API NaoString description(NTreeNode* node) const;
 
     //LIBNAO_API bool move(const NaoString& target);
 
@@ -77,7 +83,7 @@ class NaoFileSystemManager {
 
     //N_NODISCARD LIBNAO_API const NaoString& last_error() const;
 
-    //LIBNAO_API NaoString description(NaoObject* object) const;
+
 
     private:
 
