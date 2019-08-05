@@ -47,21 +47,21 @@ class NaoFileSystemManager {
      * \param[in] start_dir The initial directory.
      * \return Whether the operation succeeded.
      */
-    LIBNAO_API bool init(const NaoString& start_dir);
+    LIBNAO_API bool init(const NaoString& start_dir) const;
 
     /**
      * \brief Creates a node (and all it's parent nodes if needed).
      * \param[in] path The path of the node to create.
      * \return Pointer to the newly created node.
      */
-    N_NODISCARD LIBNAO_API NTreeNode* retrieve_node(const NaoString& path);
+    N_NODISCARD LIBNAO_API NTreeNode* retrieve_node(const NaoString& path) const;
 
     /**
      * \brief Moves the current node to the new path.
      * \param[in] path The path of the new position.
      * \return Whether the operation succeeded.
      */
-    LIBNAO_API bool move(const NaoString& path);
+    LIBNAO_API bool move(const NaoString& path) const;
 
     /**
      * \return Pointer to the currently active node.
