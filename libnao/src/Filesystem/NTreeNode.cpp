@@ -23,7 +23,6 @@
 #include "Logging/NaoLogging.h"
 
 NTreeNode::~NTreeNode() {
-    //ndebug << "Deleted" << name();
     delete _m_io;
 
     for (NTreeNode* child : _m_children) {
@@ -31,27 +30,19 @@ NTreeNode::~NTreeNode() {
     }
 }
 
-NTreeNode::NTreeNode(const NaoString& name)
-    : _m_parent(nullptr)
-    , _m_name(name)
+NTreeNode::NTreeNode(const NaoString& name, NTreeNode* parent, NaoIO* io)
+    : _m_name(name)
+    , _m_parent(parent)
     , _m_locked(false)
     , _m_populated(false)
-    , _m_io(nullptr)
-    , _m_display_name(name) { }
-
-NTreeNode::NTreeNode(const NaoString& name, NTreeNode* parent)
-    : NTreeNode(name) {
+    , _m_io(io) {
+    // If parent exists
     if (parent) {
-        _m_parent = parent;
+        // Try to add this node as a child
         if (!parent->add_child(this)) {
-            nerr << "Failed to add new node" << name << "to parent node" << parent->name();
+            nerr << "Failed to add new node " << name << "to parent node" << parent->name();
         }
     }
-}
-
-NTreeNode::NTreeNode(const NaoString& name, NTreeNode* parent, const NaoString& display_name)
-    : NTreeNode(name, parent) {
-    _m_display_name = display_name;
 }
 
 bool NTreeNode::lock() {
@@ -106,10 +97,7 @@ NTreeNode* NTreeNode::parent() const {
 }
 
 bool NTreeNode::add_child(NTreeNode* child) {
-    if (std::find_if(_m_children.begin(), _m_children.end(),
-        [&child](NTreeNode* c) {
-            return c->name() == child->name();
-        }) != _m_children.end()) {
+    if (_m_children.contains(child)) {
         return false;
     }
 
@@ -174,8 +162,8 @@ NaoString NTreeNode::path() const {
 
 #ifdef N_WINDOWS
     // On Windows, remove leading separator
-    if (path.starts_with(N_PATHSEP) && path.size() > 1) {
-        return path.substr(1).uc_first();
+    if (path.starts_with(N_PATHSEP)) {
+        return path.substr(1);
     }
 #endif
 
@@ -192,13 +180,5 @@ NaoIO* NTreeNode::io() const {
 
 bool NTreeNode::is_dir() const {
     return _m_io == nullptr;
-}
-
-void NTreeNode::set_display_name(const NaoString& name) {
-    _m_display_name = name;
-}
-
-const NaoString& NTreeNode::display_name() const {
-    return _m_display_name;
 }
 

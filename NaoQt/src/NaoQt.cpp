@@ -43,7 +43,6 @@
 #include <QMenuBar>
 #include <QtConcurrent>
 #include <QFileDialog>
-#include <QMetaType>
 
 #ifdef N_WINDOWS
 #   include <shellapi.h>
@@ -259,11 +258,11 @@ void NaoQt::_init_filesystem() {
     auto future_watcher = new QFutureWatcher<bool>(this);
 
     connect(future_watcher, &QFutureWatcher<bool>::finished, this, [future_watcher, this] {
-        
-        if (future_watcher->isCanceled() || !future_watcher->result()) {
+
+        if (!future_watcher->result()) {
             QMessageBox::critical(this, "NFSM::init", "Got invalid result");
 
-            close();
+            throw std::exception("Got invalid result");
         }
 
         nlog << "Initialised filesystem";
@@ -289,10 +288,14 @@ void NaoQt::_move_async(const QString& to, bool _refresh) {
 
     _is_moving = true;
 
+    nlog << "Moving to" << NaoString(to);
+
     auto future_watcher = new QFutureWatcher<bool>(this);
 
-    (void) connect(future_watcher, &QFutureWatcher<bool>::finished, this, [future_watcher, this] {
-        if (future_watcher->isCanceled() || !future_watcher->result()) {
+    connect(future_watcher, &QFutureWatcher<bool>::finished, this, [future_watcher, this] {
+        nlog << "Moved:" << future_watcher->result();
+
+        if (!future_watcher->result()) {
             QMessageBox::critical(this, "NaoFSM::move", "Move error");
         } else {
             fsm_object_changed();
@@ -301,21 +304,17 @@ void NaoQt::_move_async(const QString& to, bool _refresh) {
         _is_moving = false;
     });
 
-    (void) connect(future_watcher, &QFutureWatcher<bool>::finished, &QFutureWatcher<bool>::deleteLater);
+    connect(future_watcher, &QFutureWatcher<bool>::finished, &QFutureWatcher<bool>::deleteLater);
 
     future_watcher->setFuture(QtConcurrent::run(&NFSM, &NaoFileSystemManager::move, to));
 }
 
 //// Slots
 
-void NaoQt::view_double_click(QTreeWidgetItem* item, int col) {
+void NaoQt::view_double_click(N_UNUSED QTreeWidgetItem* item, int col) {
     Q_UNUSED(col);
 
-    NTreeNode* node = item->data(0, NodeRole).value<NTreeNode*>();
-
-    if (node->is_dir()) {
-        _move_async(node->path());
-    }
+    //NTreeNode* node = item->data(0, ObjectRole).value<NTreeNode*>();
 
     /*if (object->is_dir()) {
         _move_async(object->name());
@@ -531,20 +530,20 @@ void NaoQt::view_sort_column(int index, Qt::SortOrder order) {
 }
 
 void NaoQt::view_up() {
-    _move_async(NFSM.current()->parent()->path());
+    //_move_async(NFSM.current_path() + N_PATHSEP + "..");
 }
 
 void NaoQt::view_refresh() {
-    _move_async(NFSM.current()->path(), true);
+    //_move_async(NaoFSM.current_path(), true);
 }
 
 void NaoQt::open_folder() {
-    QString target = QFileDialog::getExistingDirectory(this, "Open folder",
-        NFSM.current()->path());
+    //QString target = QFileDialog::getExistingDirectory(this, "Open folder",
+    //    NFSM.current_path());
 
-    if (!target.isNull() && !target.isEmpty()) {
-        _move_async(target);
-    }
+    //if (!target.isNull() && !target.isEmpty()) {
+    //    _move_async(target);
+    //}
 }
 
 void NaoQt::path_display_changed() {
@@ -568,6 +567,7 @@ void NaoQt::path_display_changed() {
 
         if (success) {
             _move_async(new_path);
+            return;
         }
     }
 
@@ -577,14 +577,6 @@ void NaoQt::path_display_changed() {
 void NaoQt::fsm_object_changed() {
     // Retrieve current node
     NTreeNode* current_object = NFSM.current();
-
-    // Disable buttons as needed
-    NTreeNode* parent = current_object->parent();
-    if (!parent) {
-        _m_up_button->setEnabled(false);
-    } else {
-        _m_up_button->setEnabled(true);
-    }
 
     // Clear view
     _m_tree_widget->clear();
@@ -601,16 +593,13 @@ void NaoQt::fsm_object_changed() {
         QTreeWidgetItem* item = new QTreeWidgetItem(_m_tree_widget);
 
         // Display name
-        item->setText(0, child->display_name());
+        item->setText(0, child->name());
 
         // Description
         item->setText(2, NFSM.description(child));
 
         // If it's a directory
         item->setData(0, IsDirectoryRole, child->is_dir());
-
-        // Set the node
-        item->setData(0, NodeRole, QVariant::fromValue(child));
 
         // Icon based on if it's a directory or not
         if (child->is_dir()) {

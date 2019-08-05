@@ -501,7 +501,7 @@ NaoString NaoString::substr(size_t index, size_t len) const {
         throw std::out_of_range("index out of range");
     }
 
-    // Check if we need to return the right part
+    // Easily check if we need to return the right part
     if (len == size_t(-1) || index + len >= _m_size) {
         return NaoString(_m_data + index);
     }
@@ -633,14 +633,6 @@ void NaoString::pop_back() {
     --_m_size;
 }
 
-NaoString& NaoString::uc_first() {
-    *_m_data = static_cast<char>(toupper(*_m_data));
-    return *this;
-}
-
-NaoString NaoString::uc_first() const {
-    return copy().uc_first();
-}
 
 #pragma endregion
 

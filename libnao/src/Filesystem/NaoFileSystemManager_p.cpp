@@ -15,9 +15,6 @@
     along with libnao.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#define N_LOG_ID "NFSMPrivate"
-#include "Logging/NaoLogging.h"
-
 #include "Filesystem/NaoFileSystemManager_p.h"
 #include "Filesystem/NTreeNode.h"
 
