@@ -71,7 +71,7 @@ class NaoQt : public QMainWindow {
     // Private members
 
     enum DataRoles : int {
-        ObjectRole = Qt::UserRole + 1,
+        NodeRole = Qt::UserRole + 1,
         ItemSizeRole,
         CompressionRatioRole,
         IsDirectoryRole

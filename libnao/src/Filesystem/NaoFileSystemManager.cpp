@@ -45,7 +45,7 @@ NaoFileSystemManager::NaoFileSystemManager() {
     d_ptr = std::make_unique<NFSMPrivate>();
 }
 
-bool NaoFileSystemManager::init(const NaoString& start_dir) {
+bool NaoFileSystemManager::init(const NaoString& start_dir) const {
     // Need plugins
     if (!NPM.initialised()) {
         nerr << "Plugins not present";
@@ -69,26 +69,37 @@ bool NaoFileSystemManager::init(const NaoString& start_dir) {
         return false;
     }
 
-    return move(start_dir);
+    return move(fs::canonical(start_dir));
 }
 
-NTreeNode* NaoFileSystemManager::retrieve_node(const NaoString& path) {
+NTreeNode* NaoFileSystemManager::retrieve_node(const NaoString& path) const {
     NaoVector<NaoString> parts = path.normalize_path().split(N_PATHSEP);
 
-    // Check root drive
-#ifdef N_WINDOWS
-    if (parts.front().size() != 2 || parts.front().back() != ':') {
-        nerr << "Invalid drive at beginning of path";
-        return nullptr;
-    }
-
-    if (GetDriveTypeA(parts.front() + '/') <= DRIVE_NO_ROOT_DIR) {
-        nerr << "Drive is not present";
-        return nullptr;
-    }
-#endif
+    // Remove any empty entries caused by duplicate separators
+    parts.erase(std::remove(parts.begin(), parts.end(), ""), parts.end());
 
     NTreeNode* current = d_ptr->root();
+
+#ifdef N_WINDOWS
+    // Check root drive
+    if (!parts.empty()) {
+        if (parts.front().size() != 2 || parts.front().back() != ':') {
+            nerr << "Invalid drive at beginning of path";
+            return nullptr;
+        }
+
+        if (GetDriveTypeA(parts.front() + '/') <= DRIVE_NO_ROOT_DIR) {
+            nerr << "Drive is not present";
+            return nullptr;
+        }
+
+        // Add drive with specific display name
+        if (!current->has_child(parts.front())) {
+            current = new NTreeNode(parts.front(), current, parts.front().substr(0, 1));
+            parts.erase(parts.begin());
+        }
+    }
+#endif
 
     for (const NaoString& part : parts) {
         if (!current->has_child(part)) {
@@ -102,35 +113,48 @@ NTreeNode* NaoFileSystemManager::retrieve_node(const NaoString& path) {
     return current;
 }
 
-bool NaoFileSystemManager::move(const NaoString& path) {
-    nlog << "Moving to path" << path;
+bool NaoFileSystemManager::move(const NaoString& path) const {
+    try {
+        nlog << "Moving to path" << path;
 
-    // Retrieve (possibly new) target node
-    NTreeNode* node = retrieve_node(path);
+        // Retrieve (possibly new) target node
+        NTreeNode* node = retrieve_node(path);
 
-    if (!node) {
+        if (!node) {
+            return false;
+        }
+
+        // Already populated
+        if (node->populated()) {
+            d_ptr->set_current(node);
+            d_ptr->gc();
+            return true;
+        }
+
+        // Retrieve plugin used to populate the node
+        NaoPlugin* plugin = NPM.populate_plugin(node);
+
+        // Make sure a plugin supports it
+        if (!plugin) {
+            nerr << "Failed to retrive populate plugin";
+            return false;
+        }
+
+        // Populate the new node
+        if (!plugin->populate(node) || !node->populated()) {
+            nerr << "Failed to populate using plugin" << plugin->name();
+            return false;
+        }
+
+
+        d_ptr->set_current(node);
+        d_ptr->gc();
+
+        return true;
+    } catch (const std::exception& e) {
+        nerr << e.what();
         return false;
     }
-
-    // Retrieve plugin used to populate the node
-    NaoPlugin* plugin = NPM.populate_plugin(node);
-
-    // Make sure a plugin supports it
-    if (!plugin) {
-        nerr << "Failed to retrive populate plugin";
-        return false;
-    }
-
-    // Populate the new node
-    if (!plugin->populate(node) || !node->populated()) {
-        nerr << "Failed to populate using plugin" << plugin->name();
-        return false;
-    }
-
-    d_ptr->set_current(node);
-    d_ptr->gc();
-
-    return true;
 }
 
 NTreeNode* NaoFileSystemManager::current() const {

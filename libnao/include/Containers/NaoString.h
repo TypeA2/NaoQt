@@ -565,6 +565,18 @@ class LIBNAO_API NaoString {
      */
     void pop_back();
 
+    /**
+     * \brief Converts the first letter to uppercase if applicable.
+     * \return `*this`.
+     */
+    NaoString& uc_first();
+
+    /**
+     * \brief `const` version of uc_first().
+     * \return The new string.
+     */
+    N_NODISCARD NaoString uc_first() const;
+
 #pragma endregion
 
 #pragma region Static functions

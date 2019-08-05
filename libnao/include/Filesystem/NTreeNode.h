@@ -47,12 +47,28 @@ class LIBNAO_API NTreeNode {
     NTreeNode() = default;
 
     /**
-     * \brief Constructor which assigns a name and a parent.
-     * \param[in] name The name of this node.
-     * \param[in] parent Optional pointer to the parent element of this node.
-     * \param[in] io Optional pointer to an IO object. Will be deleted when this node is deleted.
+     * \brief Constructor which defines a name.
+     * \param[in] name The name of the node.
+     * \note The display name will be set to the same name.
      */
-    NTreeNode(const NaoString& name, NTreeNode* parent = nullptr, NaoIO* io = nullptr);
+    explicit NTreeNode(const NaoString& name);
+
+    /**
+     * \brief Constructor which defines a name and a parent node.
+     * \param[in] name The name of the node.
+     * \param[in] parent The parent node.
+     * \note This node will be added as a child to `parent`.
+     */
+    explicit NTreeNode(const NaoString& name, NTreeNode* parent);
+
+    /**
+     * \brief Constructor which defines a name, a parent node and a display name.
+     * \param[in] name The name of the node.
+     * \param[in] parent The parent node.
+     * \param[in] display_name The display name of the node.
+     * \note This node will be added as a child to `parent`.
+     */
+    explicit NTreeNode(const NaoString& name, NTreeNode* parent, const NaoString& display_name);
 
     /**
      * \brief Lock this node.
@@ -176,6 +192,17 @@ class LIBNAO_API NTreeNode {
      */
     N_NODISCARD bool is_dir() const;
 
+    /**
+     * \brief Sets this node's display name.
+     * \param[in] name THe new display name.
+     */
+    void set_display_name(const NaoString& name);
+
+    /**
+     * \return This node's display name.
+     */
+    N_NODISCARD const NaoString& display_name() const;
+
     private:
     // Parent node of this node
     NTreeNode* _m_parent;
@@ -194,4 +221,7 @@ class LIBNAO_API NTreeNode {
 
     // Whether an IO object if this node represents a file, or nullptr if it's a directory
     NaoIO* _m_io;
+
+    // The node's display name
+    NaoString _m_display_name;
 };

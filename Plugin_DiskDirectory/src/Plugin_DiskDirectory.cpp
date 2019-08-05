@@ -62,62 +62,100 @@ NaoString Plugin_DiskDirectory::author_description() const {
 #pragma endregion
 
 bool Plugin_DiskDirectory::can_populate(NTreeNode* node) {
-    return node->is_dir() && fs::is_directory(node->path());
+    // Root node or existing directory
+    return !node->parent() || (node->is_dir() && fs::is_directory(node->path()));
 }
 
 bool Plugin_DiskDirectory::populate(NTreeNode* node) {
-    //new_node->set_description(Description());
-    NaoString path_str;
+    // New node
+    NTreeNode* new_node = nullptr;
 
-    // Check all contents
-    for (const fs::directory_entry& entry : fs::directory_iterator(node->path())) {
-        // Save the path for easy access
-        path_str = entry.path();
-
-        // Windows extra check
 #ifdef N_WINDOWS
-        DWORD attrs = GetFileAttributesA(path_str);
+    
+    // Root directory means drive view, only on windows
+    if (!node->parent()) {
+        // Bitmap for all drives
+        DWORD drives = GetLogicalDrives();
 
-        // Something went wrong
-        if (attrs == INVALID_FILE_ATTRIBUTES) {
-            nlog << "Invalid attributes, skipping" << path_str;
-            continue;
-        }
+        // Default drive path format
+        char str[3] = { 'A', ':', '\0'};
 
-        // OS stuff we don't want to touch
-        if (attrs & FILE_ATTRIBUTE_SYSTEM) {
-            nlog << "Skipping hidden"
-                << (attrs & FILE_ATTRIBUTE_DIRECTORY ? "directory" : "file")
-                << path_str;
-            continue;
-        }
+        for (char i = 0; i < sizeof(drives) * 8; ++i) {
+            // If it's used
+            if (drives & (1 << i)) {
+                *str = 'A' + i;
 
-        // Other hidden files and directories
-        if (attrs & FILE_ATTRIBUTE_HIDDEN) {
-            nlog << "Skipping hidden"
-                << (attrs & FILE_ATTRIBUTE_DIRECTORY ? "directory" : "file")
-                << path_str;
-            continue;
+                new_node = new NTreeNode(NaoString(str).substr(0, 2));
+                new_node->set_display_name(*str);
+
+                // Add new node
+                if (!node->has_child(new_node->name())) {
+                    node->add_child(new_node);
+                } else {
+                    // Delete if it already exists
+                    delete new_node;
+                }
+            }
         }
+    } else {
+#endif
+        //new_node->set_description(Description());
+        NaoString path_str;
+
+        // Check all contents
+        for (const fs::directory_entry& entry : fs::directory_iterator(node->path())) {
+            // Save the path for easy access
+            path_str = entry.path();
+
+            // Windows extra check
+#ifdef N_WINDOWS
+            DWORD attrs = GetFileAttributesA(path_str);
+
+            // Something went wrong
+            if (attrs == INVALID_FILE_ATTRIBUTES) {
+                nlog << "Invalid attributes, skipping" << path_str;
+                continue;
+            }
+
+            // OS stuff we don't want to touch
+            if (attrs & FILE_ATTRIBUTE_SYSTEM) {
+                nlog << "Skipping hidden"
+                    << (attrs & FILE_ATTRIBUTE_DIRECTORY ? "directory" : "file")
+                    << path_str;
+                continue;
+            }
+
+            // Other hidden files and directories
+            if (attrs & FILE_ATTRIBUTE_HIDDEN) {
+                nlog << "Skipping hidden"
+                    << (attrs & FILE_ATTRIBUTE_DIRECTORY ? "directory" : "file")
+                    << path_str;
+                continue;
+            }
 
 #endif
 
-        // New node
-        NTreeNode* new_node = nullptr;
+            if (fs::is_directory(path_str)) {
+                new_node = new NTreeNode(entry.path().filename());
+            } else if (is_regular_file(entry.path())) {
+                // Also create IO object
+                new_node = new NTreeNode(entry.path().filename());
+                new_node->set_io(new NaoFileIO(path_str));
+            }
 
-        if (fs::is_directory(path_str)) {
-            new_node = new NTreeNode(entry.path().filename(), node);
-            //new_node->set_description(Description());
-        } else if (is_regular_file(entry.path())) {
-            // Also create IO object
-            new_node = new NTreeNode(
-                entry.path().filename(),
-                node,
-                new NaoFileIO(path_str));
+            // Add new node
+            if (!node->has_child(new_node->name())) {
+                node->add_child(new_node);
+            } else {
+                // Delete if it already exists
+                delete new_node;
+            }
         }
+
+#ifdef N_WINDOWS
     }
+#endif
 
     node->set_populated(true);
-
     return true;
 }
